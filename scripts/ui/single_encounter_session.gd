@@ -1,0 +1,117 @@
+class_name SingleEncounterSession
+extends RefCounted
+
+var controller: RoundController
+var hand: Array[CardDefinition]
+var selection := InteractionState.new()
+var last_error: String = ""
+
+func _init(
+	state: RoundState,
+	encounter: EncounterDefinition,
+	p_hand: Array[CardDefinition]
+) -> void:
+	controller = RoundController.new(state, encounter)
+	hand = p_hand
+
+func activate_die(die_id: StringName) -> bool:
+	if selection.kind == InteractionState.Kind.CARD:
+		var card := hand[selection.card_index]
+		if card.target_type != CardDefinition.TargetType.DIE:
+			return _fail("selected card requires another target")
+		return _accept(
+			controller.play_card(PlayedCard.new(card, die_id)),
+			true
+		)
+	selection.select_die(die_id)
+	last_error = ""
+	return true
+
+func activate_card(card_index: int) -> bool:
+	if card_index < 0 or card_index >= hand.size():
+		return _fail("card index is outside the hand")
+	if is_card_used(card_index):
+		return _fail("card is already used")
+	var card := hand[card_index]
+	if card.target_type == CardDefinition.TargetType.GLOBAL:
+		return _accept(controller.play_card(PlayedCard.new(card)), true)
+	selection.select_card(card_index)
+	last_error = ""
+	return true
+
+func activate_table(table_id: StringName) -> bool:
+	if selection.kind == InteractionState.Kind.DIE:
+		var rule := _find_rule(table_id)
+		if rule == null:
+			return _fail("rule table does not exist")
+		return _accept(
+			controller.assign_die(selection.die_id, table_id, rule.slot_count),
+			true
+		)
+	if selection.kind == InteractionState.Kind.CARD:
+		var card := hand[selection.card_index]
+		if card.target_type != CardDefinition.TargetType.TABLE:
+			return _fail("selected card does not target a table")
+		return _accept(controller.play_card(PlayedCard.new(card, table_id)), true)
+	return _fail("select a die or card first")
+
+func activate_gap(left_id: StringName, right_id: StringName) -> bool:
+	if selection.kind != InteractionState.Kind.CARD:
+		return _fail("select a gap card first")
+	var card := hand[selection.card_index]
+	if card.target_type != CardDefinition.TargetType.GAP:
+		return _fail("selected card does not target a gap")
+	return _accept(
+		controller.play_card(PlayedCard.new(card, left_id, right_id)),
+		true
+	)
+
+func assign_dropped_die(die_id: StringName, table_id: StringName) -> bool:
+	var rule := _find_rule(table_id)
+	if rule == null:
+		return _fail("rule table does not exist")
+	return _accept(controller.assign_die(die_id, table_id, rule.slot_count), false)
+
+func return_die_to_tray(die_id: StringName) -> bool:
+	return _accept(controller.unassign_die(die_id), false)
+
+func calibrate_die(die_id: StringName, delta: int) -> bool:
+	return _accept(controller.adjust_die(die_id, delta), false)
+
+func undo() -> bool:
+	var accepted := controller.undo()
+	if not accepted:
+		return _fail("nothing can be undone")
+	selection.clear()
+	last_error = ""
+	return true
+
+func preview() -> ResolutionReport:
+	return controller.preview()
+
+func commit() -> ResolutionReport:
+	return controller.commit()
+
+func is_card_used(card_index: int) -> bool:
+	var id := hand[card_index].id
+	return controller.state.played_cards.any(
+		func(played_card) -> bool: return played_card.definition.id == id
+	)
+
+func _find_rule(table_id: StringName) -> RuleDefinition:
+	for rule in controller.encounter.rules:
+		if rule.id == table_id:
+			return rule
+	return null
+
+func _accept(result: ActionResult, clear_selection: bool) -> bool:
+	if not result.accepted:
+		return _fail(result.reason)
+	if clear_selection:
+		selection.clear()
+	last_error = ""
+	return true
+
+func _fail(reason: String) -> bool:
+	last_error = reason
+	return false
