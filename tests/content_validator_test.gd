@@ -1,0 +1,44 @@
+extends "res://tests/test_case.gd"
+
+const ContentValidatorScript = preload("res://scripts/validation/content_validator.gd")
+const RuleDefinitionScript = preload("res://scripts/rules/rule_definition.gd")
+const CardDefinitionScript = preload("res://scripts/cards/card_definition.gd")
+const EffectSpecScript = preload("res://scripts/cards/effect_spec.gd")
+
+func run() -> void:
+	var valid_rule := RuleDefinitionScript.new()
+	valid_rule.id = &"left"
+	valid_rule.display_name = "精确为七"
+	valid_rule.slot_count = 2
+	valid_rule.target_value = 7
+	valid_rule.coefficient = 2
+
+	var valid_effect := EffectSpecScript.new()
+	valid_effect.operation = EffectSpecScript.Operation.MODIFY_COEFFICIENT
+	valid_effect.amount = 1
+	var valid_card := CardDefinitionScript.new()
+	valid_card.id = &"diamond_boost"
+	valid_card.display_name = "映射"
+	valid_card.target_type = CardDefinitionScript.TargetType.TABLE
+	valid_card.effects = [valid_effect]
+
+	var validator := ContentValidatorScript.new()
+	assert_equal(
+		validator.validate([valid_rule], [valid_card]),
+		[],
+		"well-formed content should pass"
+	)
+
+	var duplicate_rule = valid_rule.duplicate()
+	var duplicate_errors = validator.validate([valid_rule, duplicate_rule], [valid_card])
+	assert_true(
+		duplicate_errors.any(func(error: String) -> bool: return "duplicate rule ID" in error),
+		"duplicate rule IDs should be reported"
+	)
+
+	var empty_card := CardDefinitionScript.new()
+	var empty_errors = validator.validate([valid_rule], [empty_card])
+	assert_true(
+		empty_errors.any(func(error: String) -> bool: return "card ID is empty" in error),
+		"empty card IDs should be reported"
+	)
