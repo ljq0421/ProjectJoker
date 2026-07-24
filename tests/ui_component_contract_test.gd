@@ -17,3 +17,10 @@ func run() -> void:
 	card.free()
 	lane.free()
 	panel.free()
+
+	var screen_scene = load("res://scenes/run/single_encounter_screen.tscn")
+	assert_true(screen_scene != null, "single encounter screen should load")
+	if screen_scene != null:
+		var screen = screen_scene.instantiate()
+		assert_true(screen.has_method("refresh_from_session"), "screen should expose refresh binding")
+		screen.free()

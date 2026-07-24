@@ -1,0 +1,192 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/single_encounter_screen.gd" id="1"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/components/rule_lane.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/components/resolution_panel.tscn" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/dice_tray.gd" id="5"]
+
+[node name="SingleEncounterScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.025, 0.11, 1)
+mouse_filter = 2
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = -32.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RootColumn" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TopBar" type="HBoxContainer" parent="SafeArea/RootColumn"]
+layout_mode = 2
+
+[node name="AreaLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "梦层 01 · 无尽牌厅"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="GoalLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
+layout_mode = 2
+text = "解析目标：0 / 100　轮次 1 / 3"
+
+[node name="Body" type="HBoxContainer" parent="SafeArea/RootColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="DealerPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
+custom_minimum_size = Vector2(230, 0)
+layout_mode = 2
+
+[node name="DealerCopy" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="DealerEyebrow" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+layout_mode = 2
+text = "DEALER / 规则监理"
+theme_override_colors/font_color = Color(0.83, 0.48, 0.92, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="DealerName" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+layout_mode = 2
+text = "镜面夫人"
+theme_override_font_sizes/font_size = 24
+
+[node name="DealerRule" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+layout_mode = 2
+text = "本场规则\n从左向右逐轨解析。所有变化都会先出现在结算轨迹中。"
+autowrap_mode = 2
+
+[node name="DealerHint" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "把骰子拖入规则轨，或先选骰子再选规则轨。"
+vertical_alignment = 2
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
+
+[node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="Lanes" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LeftLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LeftGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "◇"
+tooltip_text = "左侧桌间槽"
+
+[node name="MiddleLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RightGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "◇"
+tooltip_text = "右侧桌间槽"
+
+[node name="RightLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DiceRow" type="PanelContainer" parent="SafeArea/RootColumn/Body/Center"]
+layout_mode = 2
+
+[node name="DiceTray" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center/DiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+script = ExtResource("5")
+
+[node name="Hand" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="ActionBar" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CalibrationLabel" type="Label" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "校准点：2"
+
+[node name="MinusButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "点数 -1"
+
+[node name="PlusButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "点数 +1"
+
+[node name="UndoButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "撤销"
+
+[node name="ConfirmButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "确认结算"
+
+[node name="ResolutionPanel" parent="SafeArea/RootColumn/Body" instance=ExtResource("4")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ErrorLabel" type="Label" parent="SafeArea/RootColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
