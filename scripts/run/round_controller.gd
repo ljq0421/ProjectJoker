@@ -16,22 +16,22 @@ func _init(p_state: RoundState, p_encounter: EncounterDefinition) -> void:
 
 func adjust_die(die_id: StringName, delta: int) -> ActionResult:
 	if committed:
-		return ActionResult.new(false, "round is already committed", state)
+		return ActionResult.new(false, "本轮已经结算", state)
 	return _accept(RoundActions.adjust_die(state, die_id, delta))
 
 func assign_die(die_id: StringName, table_id: StringName, slot_limit: int) -> ActionResult:
 	if committed:
-		return ActionResult.new(false, "round is already committed", state)
+		return ActionResult.new(false, "本轮已经结算", state)
 	return _accept(RoundActions.assign_die(state, die_id, table_id, slot_limit))
 
 func unassign_die(die_id: StringName) -> ActionResult:
 	if committed:
-		return ActionResult.new(false, "round is already committed", state)
+		return ActionResult.new(false, "本轮已经结算", state)
 	return _accept(RoundActions.unassign_die(state, die_id))
 
 func play_card(played_card: PlayedCard) -> ActionResult:
 	if committed:
-		return ActionResult.new(false, "round is already committed", state)
+		return ActionResult.new(false, "本轮已经结算", state)
 	return _accept(CardRules.play_card(state, played_card))
 
 func undo() -> bool:

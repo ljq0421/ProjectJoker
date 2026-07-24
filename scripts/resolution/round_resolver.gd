@@ -23,7 +23,7 @@ func resolve(state: RoundState, encounter: EncounterDefinition) -> ResolutionRep
 			match effect.operation:
 				EffectSpec.Operation.ADJUST_DIE:
 					if not die_values.has(played_card.primary_target):
-						return _invalid("card targets an unknown die")
+						return _invalid("手法牌指向了未知骰子")
 					die_values[played_card.primary_target] = clampi(
 						die_values[played_card.primary_target] + effect.amount,
 						1,
@@ -31,13 +31,13 @@ func resolve(state: RoundState, encounter: EncounterDefinition) -> ResolutionRep
 					)
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
 					if not table_ids.has(played_card.primary_target):
-						return _invalid("card targets an unknown table")
+						return _invalid("手法牌指向了未知规则轨")
 					coefficient_modifiers[played_card.primary_target] = (
 						coefficient_modifiers.get(played_card.primary_target, 0) + effect.amount
 					)
 				EffectSpec.Operation.REPEAT_TABLE:
 					if not table_ids.has(played_card.primary_target):
-						return _invalid("card targets an unknown table")
+						return _invalid("手法牌指向了未知规则轨")
 					repeat_counts[played_card.primary_target] = (
 						repeat_counts.get(played_card.primary_target, 0) + effect.amount
 					)
@@ -48,7 +48,7 @@ func resolve(state: RoundState, encounter: EncounterDefinition) -> ResolutionRep
 						not table_ids.has(played_card.primary_target)
 						or not table_ids.has(played_card.secondary_target)
 					):
-						return _invalid("link card targets unknown tables")
+						return _invalid("桥接牌指向了未知规则轨")
 					neighbor_links[played_card.secondary_target] = {
 						"source_table": played_card.primary_target,
 						"card_id": played_card.definition.id,
@@ -71,7 +71,7 @@ func resolve(state: RoundState, encounter: EncounterDefinition) -> ResolutionRep
 		var values: Array[int] = []
 		for die_id in assigned_ids:
 			if not die_values.has(die_id):
-				return _invalid("assignment references an unknown die")
+				return _invalid("规则轨包含未知骰子")
 			values.append(die_values[die_id])
 
 		var result := _evaluator.evaluate(

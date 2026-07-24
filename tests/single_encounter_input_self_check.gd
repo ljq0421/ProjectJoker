@@ -2,6 +2,7 @@ extends SceneTree
 
 var failures: Array[String] = []
 var screen: SingleEncounterScreen
+var pointer_position := Vector2.ZERO
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -35,17 +36,17 @@ func _run() -> void:
 	)
 
 	await _click(_find_die(&"d6"))
-	await _click(left)
+	await _click_lane(left)
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", []) == [&"d1", &"d6"],
 		"click fallback should assign d6 to left"
 	)
 
 	await _click(_find_die(&"d2"))
-	await _click(left)
+	await _click_lane(left)
 	_assert_true(
-		not screen.get_node("%ErrorLabel").text.is_empty(),
-		"invalid target should show a reason"
+		screen.get_node("%ErrorLabel").text == "规则轨已经放满",
+		"invalid target should show a concrete Chinese reason"
 	)
 	_assert_true(
 		&"d2" not in screen.session.controller.state.assignments.get(&"left", []),
@@ -54,9 +55,12 @@ func _run() -> void:
 
 	await _click(_find_card(0))
 	_assert_true(
-		_find_die(&"d2").self_modulate != Color.WHITE
-		and screen.get_node("%LeftLane").self_modulate == Color.WHITE,
-		"die cards should highlight dice without highlighting tables"
+		_find_die(&"d2").self_modulate != Color.WHITE,
+		"die cards should highlight dice"
+	)
+	_assert_true(
+		screen.get_node("%LeftLane").self_modulate == Color.WHITE,
+		"die cards should not highlight tables"
 	)
 	await _click(_find_card(2))
 	_assert_true(
@@ -71,7 +75,7 @@ func _run() -> void:
 		screen.get_node("%LeftLane").self_modulate != Color.WHITE,
 		"selecting a table card should highlight legal table targets"
 	)
-	await _click(left)
+	await _click_lane(left)
 	_assert_true(screen.session.preview().total >= 21, "table card should affect preview")
 
 	await _click(screen.get_node("%UndoButton"))
@@ -114,13 +118,13 @@ func _run() -> void:
 
 func _find_die(id: StringName) -> DieToken:
 	for node in screen.find_children("*", "Button", true, false):
-		if node is DieToken and node.die_id == id:
+		if node is DieToken and not node.is_queued_for_deletion() and node.die_id == id:
 			return node
 	return null
 
 func _find_card(index: int) -> CardToken:
 	for node in screen.find_children("*", "Button", true, false):
-		if node is CardToken and node.card_index == index:
+		if node is CardToken and not node.is_queued_for_deletion() and node.card_index == index:
 			return node
 	return null
 
@@ -129,17 +133,25 @@ func _click(control: Control) -> void:
 	if control == null:
 		return
 	var point := control.get_global_rect().get_center()
+	await _click_at_point(point)
+
+func _click_lane(lane: Control) -> void:
+	var point := lane.get_global_rect().position + Vector2(18.0, 18.0)
+	await _click_at_point(point)
+
+func _click_at_point(point: Vector2) -> void:
+	await _move_pointer(point)
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
 	press.position = point
-	Input.parse_input_event(press)
+	root.push_input(press, true)
 	await process_frame
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
 	release.position = point
-	Input.parse_input_event(release)
+	root.push_input(release, true)
 	await process_frame
 
 func _drag(source: Control, target: Control) -> void:
@@ -151,25 +163,35 @@ func _drag_to_point(source: Control, finish: Vector2) -> void:
 	if source == null:
 		return
 	var start := source.get_global_rect().get_center()
+	await _move_pointer(start)
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
 	press.position = start
-	Input.parse_input_event(press)
+	root.push_input(press, true)
 	await process_frame
 	for index in range(1, 7):
 		var motion := InputEventMouseMotion.new()
 		motion.position = start.lerp(finish, float(index) / 6.0)
-		motion.relative = (finish - start) / 6.0
+		motion.relative = motion.position - pointer_position
 		motion.button_mask = MOUSE_BUTTON_MASK_LEFT
-		Input.parse_input_event(motion)
+		root.push_input(motion, true)
+		pointer_position = motion.position
 		await process_frame
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
 	release.position = finish
-	Input.parse_input_event(release)
+	root.push_input(release, true)
 	await process_frame
+	await process_frame
+
+func _move_pointer(point: Vector2) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	motion.relative = point - pointer_position
+	root.push_input(motion, true)
+	pointer_position = point
 	await process_frame
 
 func _assert_true(value: bool, message: String) -> void:

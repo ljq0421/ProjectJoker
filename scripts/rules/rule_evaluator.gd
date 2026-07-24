@@ -7,23 +7,23 @@ func evaluate(
 	coefficient_modifier: int = 0
 ) -> RuleResult:
 	if values.size() != definition.slot_count:
-		return RuleResult.new(false, 0, 0, "requires %d dice" % definition.slot_count)
+		return RuleResult.new(false, 0, 0, "需要放入 %d 颗骰子" % definition.slot_count)
 
 	var typed_values: Array[int] = []
 	for value in values:
 		var int_value := int(value)
 		if int_value < 1 or int_value > 6:
-			return RuleResult.new(false, 0, 0, "die values must be between 1 and 6")
+			return RuleResult.new(false, 0, 0, "骰子点数必须在 1 到 6 之间")
 		typed_values.append(int_value)
 
 	var valid := _matches(definition, typed_values)
 	var base_sum := _sum(typed_values)
 	if not valid:
-		return RuleResult.new(false, base_sum, 0, "condition not satisfied")
+		return RuleResult.new(false, base_sum, 0, "未满足规则条件")
 
 	var effective_coefficient := definition.coefficient + coefficient_modifier
 	if effective_coefficient < 0:
-		return RuleResult.new(false, base_sum, 0, "effective coefficient cannot be negative")
+		return RuleResult.new(false, base_sum, 0, "最终系数不能为负数")
 	return RuleResult.new(
 		true,
 		base_sum,

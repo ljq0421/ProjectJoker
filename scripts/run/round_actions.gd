@@ -3,15 +3,15 @@ extends RefCounted
 
 static func adjust_die(state: RoundState, die_id: StringName, delta: int) -> ActionResult:
 	if delta != -1 and delta != 1:
-		return ActionResult.new(false, "calibration delta must be -1 or +1", state)
+		return ActionResult.new(false, "校准只能调整 -1 或 +1", state)
 	if state.calibration_points <= 0:
-		return ActionResult.new(false, "no calibration points remain", state)
+		return ActionResult.new(false, "校准点已经用完", state)
 	var current := state.find_die(die_id)
 	if current == null:
-		return ActionResult.new(false, "die does not exist", state)
+		return ActionResult.new(false, "骰子不存在", state)
 	var next_value := current.value + delta
 	if next_value < 1 or next_value > 6:
-		return ActionResult.new(false, "calibration would leave range 1..6", state)
+		return ActionResult.new(false, "校准后点数必须在 1 到 6 之间", state)
 
 	var next_state := state.clone()
 	next_state.find_die(die_id).value = next_value
@@ -25,13 +25,13 @@ static func assign_die(
 	slot_limit: int
 ) -> ActionResult:
 	if state.find_die(die_id) == null:
-		return ActionResult.new(false, "die does not exist", state)
+		return ActionResult.new(false, "骰子不存在", state)
 	if table_id == &"":
-		return ActionResult.new(false, "table ID is required", state)
+		return ActionResult.new(false, "请选择规则轨", state)
 
 	var occupied: Array = state.assignments.get(table_id, [])
 	if die_id not in occupied and occupied.size() >= slot_limit:
-		return ActionResult.new(false, "rule table is full", state)
+		return ActionResult.new(false, "规则轨已经放满", state)
 
 	var next_state := state.clone()
 	for assigned_table_id in next_state.assignments:
@@ -50,5 +50,5 @@ static func unassign_die(state: RoundState, die_id: StringName) -> ActionResult:
 			next_state.assignments[table_id].erase(die_id)
 			removed = true
 	if not removed:
-		return ActionResult.new(false, "die is not assigned", state)
+		return ActionResult.new(false, "骰子尚未分配", state)
 	return ActionResult.new(true, "", next_state)
