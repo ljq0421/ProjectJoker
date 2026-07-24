@@ -1,9 +1,15 @@
 class_name SingleEncounterScreen
 extends Control
 
+signal view_refreshed
+signal ui_action_accepted(action: StringName, payload: Dictionary)
+
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
 const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
+
+@export var tutorial_auto_start: bool = true
+@export var tutorial_config_path: String = "user://onboarding.cfg"
 
 @onready var lanes: Array[RuleLane] = [%LeftLane, %MiddleLane, %RightLane]
 @onready var dice_tray: DiceTray = %DiceTray
@@ -12,6 +18,7 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var error_label: Label = %ErrorLabel
 @onready var calibration_label: Label = %CalibrationLabel
 @onready var confirm_button: Button = %ConfirmButton
+@onready var tutorial: SingleEncounterTutorial = %SingleEncounterTutorial
 
 var session: SingleEncounterSession
 
@@ -33,6 +40,11 @@ func _ready() -> void:
 	%UndoButton.pressed.connect(_on_undo_pressed)
 	confirm_button.pressed.connect(_on_confirm_pressed)
 	refresh_from_session()
+	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
+	tutorial.persistence_warning.connect(_on_tutorial_persistence_warning)
+	%ReplayTutorialButton.pressed.connect(start_tutorial_replay)
+	if tutorial_auto_start:
+		tutorial.call_deferred("maybe_start")
 
 func refresh_from_session() -> void:
 	var state := session.controller.state
@@ -87,6 +99,57 @@ func refresh_from_session() -> void:
 	confirm_button.disabled = session.controller.committed
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
+	view_refreshed.emit()
+
+func reset_teaching_encounter() -> void:
+	session = SingleEncounterSession.new(
+		SingleEncounterFixture.make_state(),
+		SingleEncounterFixture.make_encounter(),
+		SingleEncounterFixture.make_hand()
+	)
+	refresh_from_session()
+
+func start_tutorial_replay() -> void:
+	tutorial.start(true)
+
+func find_tutorial_target(spec: Dictionary) -> Control:
+	match spec.get("kind"):
+		&"die":
+			for node in find_children("*", "Button", true, false):
+				if (
+					node is DieToken
+					and not node.is_queued_for_deletion()
+					and node.die_id == spec.get("id")
+				):
+					return node
+		&"card":
+			for node in find_children("*", "Button", true, false):
+				if (
+					node is CardToken
+					and not node.is_queued_for_deletion()
+					and node.card_index == spec.get("id")
+				):
+					return node
+		&"lane":
+			var lane_by_id := {
+				&"left": %LeftLane,
+				&"middle": %MiddleLane,
+				&"right": %RightLane,
+			}
+			return lane_by_id.get(spec.get("id"))
+		&"control":
+			return get_node_or_null(NodePath("%" + String(spec.get("id"))))
+	return null
+
+func _tutorial_allows(action: StringName, payload: Dictionary) -> bool:
+	return tutorial == null or tutorial.allows(action, payload)
+
+func _record_tutorial_action(action: StringName, payload: Dictionary) -> void:
+	ui_action_accepted.emit(action, payload)
+
+func _on_tutorial_persistence_warning(message: String) -> void:
+	session.last_error = message
+	error_label.text = message
 
 func _selected_card_target_type() -> int:
 	if session.selection.kind != InteractionState.Kind.CARD:
@@ -100,40 +163,98 @@ func _is_assigned(die_id: StringName) -> bool:
 	return false
 
 func _on_die_activated(die_id: StringName) -> void:
-	session.activate_die(die_id)
+	var action := &"select_die"
+	var payload := {"die_id": die_id}
+	if session.selection.kind == InteractionState.Kind.CARD:
+		action = &"card_die"
+		payload["card_index"] = session.selection.card_index
+	if not _tutorial_allows(action, payload):
+		return
+	if session.activate_die(die_id):
+		_record_tutorial_action(action, payload)
 	refresh_from_session()
 
 func _on_card_activated(card_index: int) -> void:
-	session.activate_card(card_index)
+	var card := session.hand[card_index]
+	var action := (
+		&"card_global"
+		if card.target_type == CardDefinition.TargetType.GLOBAL
+		else &"select_card"
+	)
+	var payload := {"card_index": card_index}
+	if not _tutorial_allows(action, payload):
+		return
+	if session.activate_card(card_index):
+		_record_tutorial_action(action, payload)
 	refresh_from_session()
 
 func _on_lane_activated(table_id: StringName) -> void:
-	session.activate_table(table_id)
+	var action := &"click_assign"
+	var payload: Dictionary
+	if session.selection.kind == InteractionState.Kind.DIE:
+		payload = {"die_id": session.selection.die_id, "table_id": table_id}
+	elif session.selection.kind == InteractionState.Kind.CARD:
+		action = &"card_table"
+		payload = {"card_index": session.selection.card_index, "table_id": table_id}
+	else:
+		payload = {"table_id": table_id}
+	if not _tutorial_allows(action, payload):
+		return
+	if session.activate_table(table_id):
+		_record_tutorial_action(action, payload)
 	refresh_from_session()
 
 func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
-	session.assign_dropped_die(die_id, table_id)
+	var payload := {"die_id": die_id, "table_id": table_id}
+	if not _tutorial_allows(&"drag_assign", payload):
+		return
+	if session.assign_dropped_die(die_id, table_id):
+		_record_tutorial_action(&"drag_assign", payload)
 	refresh_from_session()
 
 func _on_die_return_requested(die_id: StringName) -> void:
-	session.return_die_to_tray(die_id)
+	var payload := {"die_id": die_id}
+	if not _tutorial_allows(&"return_die", payload):
+		return
+	if session.return_die_to_tray(die_id):
+		_record_tutorial_action(&"return_die", payload)
 	refresh_from_session()
 
 func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
-	session.activate_gap(left_id, right_id)
+	var payload := {
+		"card_index": session.selection.card_index,
+		"left_id": left_id,
+		"right_id": right_id,
+	}
+	if not _tutorial_allows(&"card_gap", payload):
+		return
+	if session.activate_gap(left_id, right_id):
+		_record_tutorial_action(&"card_gap", payload)
 	refresh_from_session()
 
 func _on_calibrate_pressed(delta: int) -> void:
 	if session.selection.kind != InteractionState.Kind.DIE:
 		session.last_error = "请先选择一颗骰子"
-	else:
-		session.calibrate_die(session.selection.die_id, delta)
+		refresh_from_session()
+		return
+	var payload := {"die_id": session.selection.die_id, "delta": delta}
+	if not _tutorial_allows(&"calibrate", payload):
+		return
+	if session.calibrate_die(session.selection.die_id, delta):
+		_record_tutorial_action(&"calibrate", payload)
 	refresh_from_session()
 
 func _on_undo_pressed() -> void:
-	session.undo()
+	if not _tutorial_allows(&"undo", {}):
+		return
+	if session.undo():
+		_record_tutorial_action(&"undo", {})
 	refresh_from_session()
 
 func _on_confirm_pressed() -> void:
-	session.commit()
+	if not _tutorial_allows(&"commit", {}):
+		return
+	var report := session.commit()
+	if report.valid and session.controller.committed:
+		_record_tutorial_action(&"commit", {})
 	refresh_from_session()
