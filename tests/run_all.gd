@@ -19,6 +19,10 @@ func _run_all() -> void:
 	var failure_count := 0
 	for file_name in test_files:
 		var suite_script := load("res://tests/%s" % file_name)
+		if suite_script == null or not suite_script.can_instantiate():
+			push_error("%s: failed to load test suite" % file_name)
+			failure_count += 1
+			continue
 		var suite = suite_script.new()
 		suite.run()
 		if suite.failures.is_empty():
