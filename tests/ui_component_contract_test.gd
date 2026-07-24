@@ -24,3 +24,11 @@ func run() -> void:
 		var screen = screen_scene.instantiate()
 		assert_true(screen.has_method("refresh_from_session"), "screen should expose refresh binding")
 		screen.free()
+
+	var tutorial_scene = load("res://scenes/components/single_encounter_tutorial.tscn")
+	assert_true(tutorial_scene != null, "tutorial overlay scene should load")
+	if tutorial_scene != null:
+		var tutorial = tutorial_scene.instantiate()
+		assert_true(tutorial.has_method("configure"), "tutorial should accept screen and store")
+		assert_true(tutorial.has_method("allows"), "tutorial should guard gameplay actions")
+		tutorial.free()
