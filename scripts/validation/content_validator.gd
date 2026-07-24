@@ -58,4 +58,9 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 				EffectSpec.Operation.REVERSE_RESOLUTION:
 					if card.target_type != CardDefinition.TargetType.GLOBAL:
 						errors.append("card %s reverse effect requires a global target" % card.id)
+				EffectSpec.Operation.LINK_NEIGHBORS:
+					if card.target_type != CardDefinition.TargetType.GAP:
+						errors.append("card %s link effect requires a gap target" % card.id)
+					if effect.amount != 1:
+						errors.append("card %s link amount must equal one" % card.id)
 	return errors

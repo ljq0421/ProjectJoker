@@ -17,6 +17,29 @@ func run() -> void:
 	assert_equal(report.total, 51, "three tables and coefficient card should total 51")
 	assert_equal(report.events.size(), 4, "one card event and three table events are expected")
 	assert_equal(report.events[1].source_id, &"left", "left table should resolve first")
+	_test_neighbor_link()
+
+func _test_neighbor_link() -> void:
+	var state = _build_state()
+	var effect := EffectSpecScript.new()
+	effect.operation = EffectSpecScript.Operation.LINK_NEIGHBORS
+	effect.amount = 1
+	var card := CardDefinitionScript.new()
+	card.id = &"spade_link"
+	card.display_name = "桥接"
+	card.target_type = CardDefinitionScript.TargetType.GAP
+	card.effects = [effect]
+	state.played_cards = [PlayedCardScript.new(card, &"left", &"middle")]
+
+	var report = RoundResolverScript.new().resolve(state, _build_encounter())
+	assert_equal(report.total, 58, "left result 14 should add to middle result 18")
+	assert_true(
+		report.events.any(_is_link_event),
+		"link should create a visible 14-point event"
+	)
+
+func _is_link_event(event) -> bool:
+	return event.source_id == &"spade_link" and event.delta == 14
 
 func _build_state():
 	var state := RoundStateScript.new()

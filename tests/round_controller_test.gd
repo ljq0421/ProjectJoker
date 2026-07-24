@@ -12,6 +12,18 @@ const RoundControllerScript = preload("res://scripts/run/round_controller.gd")
 func run() -> void:
 	var controller = RoundControllerScript.new(_state(), _encounter())
 	assert_true(controller.assign_die(&"d1", &"left", 2).accepted, "assign d1")
+	assert_true(controller.unassign_die(&"d1").accepted, "tray return should unassign d1")
+	assert_equal(
+		controller.state.assignments[&"left"],
+		[],
+		"tray return should clear the lane"
+	)
+	assert_true(controller.undo(), "tray return should be undoable")
+	assert_equal(
+		controller.state.assignments[&"left"],
+		[&"d1"],
+		"undo should restore the lane assignment"
+	)
 	assert_true(controller.assign_die(&"d6", &"left", 2).accepted, "assign d6")
 	assert_true(controller.assign_die(&"d2", &"middle", 3).accepted, "assign d2")
 	assert_true(controller.assign_die(&"d3", &"middle", 3).accepted, "assign d3")

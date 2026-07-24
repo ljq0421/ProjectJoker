@@ -24,6 +24,11 @@ func assign_die(die_id: StringName, table_id: StringName, slot_limit: int) -> Ac
 		return ActionResult.new(false, "round is already committed", state)
 	return _accept(RoundActions.assign_die(state, die_id, table_id, slot_limit))
 
+func unassign_die(die_id: StringName) -> ActionResult:
+	if committed:
+		return ActionResult.new(false, "round is already committed", state)
+	return _accept(RoundActions.unassign_die(state, die_id))
+
 func play_card(played_card: PlayedCard) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "round is already committed", state)

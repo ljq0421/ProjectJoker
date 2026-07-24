@@ -6,6 +6,7 @@ enum Operation {
 	MODIFY_COEFFICIENT,
 	REPEAT_TABLE,
 	REVERSE_RESOLUTION,
+	LINK_NEIGHBORS,
 }
 
 @export var operation: Operation = Operation.ADJUST_DIE

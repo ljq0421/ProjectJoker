@@ -24,3 +24,18 @@ func run() -> void:
 
 	var no_target = CardRulesScript.play_card(state, PlayedCardScript.new(boost, &""))
 	assert_false(no_target.accepted, "targeted cards require a target ID")
+
+	var gap_card := CardDefinitionScript.new()
+	gap_card.id = &"spade_link"
+	gap_card.display_name = "桥接"
+	gap_card.target_type = CardDefinitionScript.TargetType.GAP
+	var missing_neighbor = CardRulesScript.play_card(
+		state,
+		PlayedCardScript.new(gap_card, &"left")
+	)
+	assert_false(missing_neighbor.accepted, "gap cards require two neighboring table IDs")
+	var complete_gap = CardRulesScript.play_card(
+		state,
+		PlayedCardScript.new(gap_card, &"left", &"middle")
+	)
+	assert_true(complete_gap.accepted, "gap cards accept two neighboring table IDs")
