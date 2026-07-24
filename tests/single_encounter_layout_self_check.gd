@@ -8,6 +8,7 @@ func _initialize() -> void:
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
 	var screen = load("res://scenes/run/single_encounter_screen.tscn").instantiate()
+	screen.tutorial_auto_start = false
 	root.add_child(screen)
 	await process_frame
 	await process_frame
