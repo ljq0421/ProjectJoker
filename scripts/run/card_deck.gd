@@ -1,0 +1,16 @@
+class_name CardDeck
+extends RefCounted
+
+const HAND_SIZE := 4
+
+var _draw_pile: Array[StringName] = []
+
+func start_encounter(card_ids: Array[StringName], run_rng: RunRng) -> void:
+	assert(card_ids.size() == 12, "an encounter deck must contain exactly twelve cards")
+	_draw_pile.assign(run_rng.shuffle(card_ids))
+
+func draw_round() -> Array[StringName]:
+	var hand: Array[StringName] = []
+	for draw_index in range(mini(HAND_SIZE, _draw_pile.size())):
+		hand.append(_draw_pile.pop_front())
+	return hand
