@@ -15,6 +15,7 @@ func _run() -> void:
 	root.content_scale_size = LOGICAL_SIZE
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
+	await _verify_shared_overlay_defaults()
 	for rendered_size in RENDERED_SIZES:
 		await _verify_size(rendered_size)
 	if failures.is_empty():
@@ -24,6 +25,17 @@ func _run() -> void:
 		for failure in failures:
 			push_error(failure)
 		quit(1)
+
+func _verify_shared_overlay_defaults() -> void:
+	var overlay: IronAbacusGuideOverlay = load(
+		"res://scenes/components/iron_abacus_guide_overlay.tscn"
+	).instantiate()
+	root.add_child(overlay)
+	await _settle()
+	_assert_true(not overlay.is_open(), "fresh shared overlay should start closed")
+	_assert_standard_card_style(overlay, "fresh closed shared overlay")
+	overlay.queue_free()
+	await process_frame
 
 func _verify_size(rendered_size: Vector2i) -> void:
 	root.size = rendered_size
@@ -190,7 +202,43 @@ func _assert_checkpoint(
 		Control.MOUSE_FILTER_IGNORE,
 		"%s %s close should restore ignored background input" % [size_label, checkpoint_id]
 	)
+	_assert_standard_card_style(
+		overlay,
+		"%s %s close should restore the shared overlay style" % [size_label, checkpoint_id]
+	)
 	await process_frame
+
+func _assert_standard_card_style(
+	overlay: IronAbacusGuideOverlay,
+	label: String
+) -> void:
+	var margins: MarginContainer = overlay.get_node("GuideCard/Margins")
+	var title: Label = overlay.get_node("%GuideTitle")
+	for margin_name in [
+		"margin_left",
+		"margin_top",
+		"margin_right",
+		"margin_bottom",
+	]:
+		var expected := 18 if margin_name in ["margin_left", "margin_right"] else 16
+		_assert_equal(
+			margins.get_theme_constant(margin_name),
+			expected,
+			"%s should retain %s" % [label, margin_name]
+		)
+		_assert_true(
+			margins.has_theme_constant_override(margin_name),
+			"%s should retain the scene override for %s" % [label, margin_name]
+		)
+	_assert_equal(
+		title.get_theme_font_size("font_size"),
+		25,
+		"%s should retain the 25px title font" % label
+	)
+	_assert_true(
+		title.has_theme_font_size_override("font_size"),
+		"%s should retain the scene title-font override" % label
+	)
 
 func _approved_targets(
 	screen: GoldCorridorRunScreen,

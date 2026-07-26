@@ -30,8 +30,13 @@ var _route_rail_allowed := false
 var _route_rail: HBoxContainer
 var _route_copy: VBoxContainer
 var _route_rail_active := false
+var _standard_card_minimum_size := STANDARD_CARD_MINIMUM_SIZE
+var _standard_margin_constants: Dictionary = {}
+var _standard_title_font_size := 25
+var _standard_layout_captured := false
 
 func _ready() -> void:
+	_capture_standard_card_layout()
 	dismiss_button.pressed.connect(dismiss_all)
 	acknowledge_button.pressed.connect(acknowledge_current)
 	close_card()
@@ -204,15 +209,9 @@ func _place_route_top_rail(target_rects: Array[Rect2]) -> void:
 	var rail_width: float = maxf(size.x - ROUTE_RAIL_MARGIN * 2.0, 1.0)
 	card.custom_minimum_size = Vector2(rail_width, 0.0)
 	var rail_height: float = card.get_combined_minimum_size().y
-	if rail_height > top_clearance - ROUTE_RAIL_TOP:
-		push_error(
-			"Gold Corridor route guide rail cannot fit above focus targets: "
-			+ "height=%s clearance=%s" % [rail_height, top_clearance]
-		)
-		return
 	_set_card_rect(Rect2(
 		Vector2(ROUTE_RAIL_MARGIN, ROUTE_RAIL_TOP),
-		Vector2(rail_width, rail_height)
+		Vector2(rail_width, minf(rail_height, top_clearance - ROUTE_RAIL_TOP))
 	))
 
 func _activate_route_rail() -> void:
@@ -230,6 +229,7 @@ func _activate_route_rail() -> void:
 	_move_to_parent(title_label, _route_copy)
 	_move_to_parent(instruction_label, _route_copy)
 	_move_to_parent(actions, _route_rail)
+	_move_to_parent(content, self)
 	content.visible = false
 	_route_rail.visible = true
 	_route_rail_active = true
@@ -255,13 +255,15 @@ func _set_card_rect(rect: Rect2) -> void:
 	card.offset_bottom = rect.end.y
 
 func _restore_standard_card_layout() -> void:
-	if not is_instance_valid(card):
+	if not is_instance_valid(card) or not _standard_layout_captured:
 		return
 	if _route_rail_active:
 		_move_to_parent(progress_label, content)
 		_move_to_parent(title_label, content)
 		_move_to_parent(instruction_label, content)
 		_move_to_parent(actions, content)
+		_move_to_parent(content, margins)
+		margins.move_child(content, 0)
 		content.move_child(progress_label, 0)
 		content.move_child(title_label, 1)
 		content.move_child(instruction_label, 2)
@@ -270,12 +272,27 @@ func _restore_standard_card_layout() -> void:
 		content.visible = true
 		_route_rail.visible = false
 		_route_rail_active = false
-	card.custom_minimum_size = STANDARD_CARD_MINIMUM_SIZE
-	margins.remove_theme_constant_override("margin_left")
-	margins.remove_theme_constant_override("margin_top")
-	margins.remove_theme_constant_override("margin_right")
-	margins.remove_theme_constant_override("margin_bottom")
-	title_label.remove_theme_font_size_override("font_size")
+	card.custom_minimum_size = _standard_card_minimum_size
+	for margin_name in _standard_margin_constants:
+		margins.add_theme_constant_override(
+			margin_name,
+			int(_standard_margin_constants[margin_name])
+		)
+	title_label.add_theme_font_size_override("font_size", _standard_title_font_size)
+
+func _capture_standard_card_layout() -> void:
+	_standard_card_minimum_size = card.custom_minimum_size
+	for margin_name in [
+		"margin_left",
+		"margin_top",
+		"margin_right",
+		"margin_bottom",
+	]:
+		_standard_margin_constants[margin_name] = margins.get_theme_constant(
+			margin_name
+		)
+	_standard_title_font_size = title_label.get_theme_font_size("font_size")
+	_standard_layout_captured = true
 
 func _overlap_area(candidate: Rect2, target_rects: Array[Rect2]) -> float:
 	var total := 0.0

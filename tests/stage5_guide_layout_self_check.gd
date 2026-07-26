@@ -92,6 +92,10 @@ func _assert_card(checkpoint_id: StringName, viewport_size: Vector2i) -> void:
 		overlay.is_open() and overlay.active_checkpoint_id() == checkpoint_id,
 		"%s card should open at %s" % [checkpoint_id, viewport_size]
 	)
+	_assert_standard_overlay_style(
+		overlay,
+		"%s open at %s" % [checkpoint_id, viewport_size]
+	)
 	_assert_true(
 		overlay.get_node("%GuideProgress").text.begins_with("进阶提示 "),
 		"%s old guide should retain the advanced-guide label" % checkpoint_id
@@ -154,6 +158,40 @@ func _assert_card(checkpoint_id: StringName, viewport_size: Vector2i) -> void:
 	_assert_true(
 		focus_layer.get_child_count() == 0,
 		"%s close should remove focus frames" % checkpoint_id
+	)
+	_assert_standard_overlay_style(
+		overlay,
+		"%s close at %s" % [checkpoint_id, viewport_size]
+	)
+
+func _assert_standard_overlay_style(
+	overlay: IronAbacusGuideOverlay,
+	label: String
+) -> void:
+	var margins: MarginContainer = overlay.get_node("GuideCard/Margins")
+	var title: Label = overlay.get_node("%GuideTitle")
+	for margin_name in [
+		"margin_left",
+		"margin_top",
+		"margin_right",
+		"margin_bottom",
+	]:
+		var expected := 18 if margin_name in ["margin_left", "margin_right"] else 16
+		_assert_true(
+			margins.get_theme_constant(margin_name) == expected,
+			"%s should retain %s=%d" % [label, margin_name, expected]
+		)
+		_assert_true(
+			margins.has_theme_constant_override(margin_name),
+			"%s should retain the scene override for %s" % [label, margin_name]
+		)
+	_assert_true(
+		title.get_theme_font_size("font_size") == 25,
+		"%s should retain the 25px title font" % label
+	)
+	_assert_true(
+		title.has_theme_font_size_override("font_size"),
+		"%s should retain the scene title-font override" % label
 	)
 
 func _expected_focus_rect(
