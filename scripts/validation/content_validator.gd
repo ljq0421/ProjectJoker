@@ -131,3 +131,42 @@ func validate_engravings(engravings: Array) -> Array[String]:
 			_:
 				errors.append("engraving %s has unknown operation" % engraving.id)
 	return errors
+
+func validate_rooms(rooms: Array) -> Array[String]:
+	var errors: Array[String] = []
+	var seen: Dictionary = {}
+	for room in rooms:
+		if room == null:
+			errors.append("room resource is null")
+			continue
+		if room.id == &"":
+			errors.append("room ID is empty")
+		elif seen.has(room.id):
+			errors.append("duplicate room ID: %s" % room.id)
+		else:
+			seen[room.id] = true
+		if room.display_name.strip_edges().is_empty():
+			errors.append("room %s has no display name" % room.id)
+		if room.description.strip_edges().is_empty():
+			errors.append("room %s has no description" % room.id)
+		if room.target_total <= 0:
+			errors.append("room %s target must be positive" % room.id)
+		if room.success_intel_reward < 0:
+			errors.append("room %s reward cannot be negative" % room.id)
+		if room.tags.is_empty():
+			errors.append("room %s has no display tags" % room.id)
+		if room.synergy_tags.is_empty():
+			errors.append("room %s has no synergy tags" % room.id)
+		if room.encounter == null:
+			errors.append("room %s has no encounter" % room.id)
+			continue
+		if room.encounter.rules.size() != 3:
+			errors.append("room %s must contain exactly three rules" % room.id)
+		var slot_total := 0
+		for rule in room.encounter.rules:
+			if rule != null:
+				slot_total += rule.slot_count
+		if slot_total != 6:
+			errors.append("room %s must contain exactly six slots" % room.id)
+		errors.append_array(validate(room.encounter.rules, []))
+	return errors

@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="RoomDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_definition.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="3_rule"]
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("3_rule")
+id = &"left"
+display_name = "两枚全偶"
+condition_type = 1
+slot_count = 2
+coefficient = 3
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("3_rule")
+id = &"middle"
+display_name = "精确为 8"
+slot_count = 2
+target_value = 8
+coefficient = 3
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("3_rule")
+id = &"right"
+display_name = "连续两数"
+condition_type = 2
+slot_count = 2
+coefficient = 3
+
+[sub_resource type="Resource" id="Encounter_main"]
+script = ExtResource("2_encounter")
+id = &"gold_encounter_parallel_proof"
+rules = Array[ExtResource("3_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+
+[resource]
+script = ExtResource("1_room")
+id = &"gold_room_parallel_proof"
+display_name = "并行校核"
+description = "三条等权高系数规则并列，要求在奇偶、点数与连续关系间取舍。"
+encounter = SubResource("Encounter_main")
+target_total = 135
+success_intel_reward = 3
+tags = PackedStringArray("奇偶", "关系", "进取")
+synergy_tags = PackedStringArray("骰值", "校准", "系数")
