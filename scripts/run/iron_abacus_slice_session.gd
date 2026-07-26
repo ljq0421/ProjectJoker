@@ -181,29 +181,17 @@ func install_selected_engraving(
 ) -> OperationResult:
 	if phase != Phase.ENGRAVING_INSTALL:
 		return _fail("请先从候选中选择一个刻印")
-	if selected_engraving_id not in engraving_offer_ids:
-		return _fail("待安装刻印不在本次候选中")
-	if engraving_catalog.find_engraving(selected_engraving_id) == null:
-		return _fail("待安装刻印定义不存在")
-	if not _is_die_id(die_id):
-		return _fail("刻印目标骰子不存在")
-	if face < 1 or face > 6:
-		return _fail("刻印骰面必须在 1 到 6 之间")
-	var target := _find_profile(die_profiles, die_id)
-	if target == null:
-		return _fail("刻印目标骰子配置不存在")
-	if target.engraving_id != &"":
-		return _fail("这颗骰子已经安装刻印")
-
-	var next_profiles := _clone_profiles(die_profiles)
-	var next_target := _find_profile(next_profiles, die_id)
-	next_target.engraving_id = selected_engraving_id
-	next_target.engraved_face = face
-	var profile_error := _profiles_error(next_profiles)
-	if not profile_error.is_empty():
-		return _fail(profile_error)
-
-	die_profiles = next_profiles
+	var install_result := EngravingInstallationService.new().install(
+		die_profiles,
+		engraving_offer_ids,
+		selected_engraving_id,
+		die_id,
+		face,
+		engraving_catalog
+	)
+	if not install_result.accepted:
+		return _fail(install_result.reason)
+	die_profiles = install_result.profiles
 	installed_die_id = die_id
 	installed_face = face
 	_verification_boundary = _capture_boundary()
