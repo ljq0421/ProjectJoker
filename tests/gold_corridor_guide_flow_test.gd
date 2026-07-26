@@ -24,7 +24,7 @@ func _test_order_and_complete_specs() -> void:
 		var checkpoint_id := EXPECTED_ORDER[index]
 		var spec: Dictionary = flow.card_spec(checkpoint_id)
 		assert_equal(spec.get("id"), checkpoint_id, "spec should retain ID")
-		assert_equal(spec.get("progress_label"), "鍖哄煙鎻愮ず", "label should be exact")
+		assert_equal(spec.get("progress_label"), "区域提示", "label should be exact")
 		assert_equal(spec.get("progress_index"), index + 1, "index should be stable")
 		assert_equal(spec.get("progress_total"), 4, "total should be four")
 		assert_false(String(spec.get("title", "")).is_empty(), "title is required")
@@ -33,12 +33,32 @@ func _test_order_and_complete_specs() -> void:
 
 func _test_exact_strategy_copy() -> void:
 	var flow = FlowScript.new()
-	assert_true(String(flow.card_spec(&"route").get("instruction")).contains("涓夎疆鍏卞悓瀹屾垚绱鐩爣"), "route copy should explain shared accumulation")
-	assert_true(String(flow.card_spec(&"shop").get("instruction")).contains("绗簩涓埧闂村拰閾佺畻鐩?"), "shop copy should explain inheritance")
-	assert_true(String(flow.card_spec(&"shop").get("instruction")).contains("涓嶈喘涔扮洿鎺ョ寮€"), "shop copy should allow leaving")
+	assert_true(
+		String(flow.card_spec(&"route").get("instruction")).contains(
+			"三轮共同完成累计目标"
+		),
+		"route copy should explain shared accumulation"
+	)
+	assert_true(
+		String(flow.card_spec(&"shop").get("instruction")).contains(
+			"第二个房间和铁算盘"
+		),
+		"shop copy should explain inheritance"
+	)
+	assert_true(
+		String(flow.card_spec(&"shop").get("instruction")).contains(
+			"不购买直接离开"
+		),
+		"shop copy should allow leaving"
+	)
 	assert_true(String(flow.card_spec(&"dealer").get("instruction")).contains("150"), "dealer copy should state target")
-	assert_true(String(flow.card_spec(&"dealer").get("instruction")).contains("鍑忓皯 2"), "dealer copy should state penalty")
-	assert_true(String(flow.card_spec(&"engraving").get("instruction")).contains("涓嶅啀杩涘叆鍒诲嵃楠岃瘉灞€"), "engraving copy should state direct completion")
+	assert_true(String(flow.card_spec(&"dealer").get("instruction")).contains("减少 2"), "dealer copy should state penalty")
+	assert_true(
+		String(flow.card_spec(&"engraving").get("instruction")).contains(
+			"不再进入刻印验证局"
+		),
+		"engraving copy should state direct completion"
+	)
 
 func _test_seen_and_dismissed_filtering() -> void:
 	var flow = FlowScript.new()
