@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop/shop_card_token.gd" id="1"]
+
+[node name="ShopCardToken" type="Button"]
+custom_minimum_size = Vector2(238, 132)
+toggle_mode = true
+focus_mode = 1
+text = "商店手法牌"
+autowrap_mode = 2
+script = ExtResource("1")

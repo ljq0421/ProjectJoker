@@ -1,0 +1,126 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop/shop_screen.gd" id="1"]
+
+[node name="ShopScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.025, 0.11, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = -32.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RootColumn" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/RootColumn"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="SafeArea/RootColumn/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "情报交换站"
+theme_override_font_sizes/font_size = 30
+
+[node name="TicketLabel" type="Label" parent="SafeArea/RootColumn/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "情报券：2"
+
+[node name="Body" type="HBoxContainer" parent="SafeArea/RootColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="DeckPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DeckColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel"]
+layout_mode = 2
+
+[node name="DeckTitle" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
+layout_mode = 2
+text = "当前十二张牌"
+theme_override_font_sizes/font_size = 22
+
+[node name="DeckGrid" type="GridContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+columns = 4
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="OfferPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+
+[node name="OfferStack" type="VBoxContainer" parent="SafeArea/RootColumn/Body/OfferPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OfferTitle" type="Label" parent="SafeArea/RootColumn/Body/OfferPanel/OfferStack"]
+layout_mode = 2
+text = "本次候选"
+theme_override_font_sizes/font_size = 22
+
+[node name="OfferColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/OfferPanel/OfferStack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Footer" type="VBoxContainer" parent="SafeArea/RootColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShopSelectionLabel" type="Label" parent="SafeArea/RootColumn/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "候选：未选择　替换：未选择"
+
+[node name="ShopErrorLabel" type="Label" parent="SafeArea/RootColumn/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+text = ""
+theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/RootColumn/Footer"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 10
+
+[node name="ConfirmReplacementButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "确认替换（1 情报券）"
+
+[node name="LeaveShopButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "离开商店"

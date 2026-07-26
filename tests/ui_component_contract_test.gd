@@ -53,3 +53,19 @@ func run() -> void:
 		assert_true(summary.has_signal("next_round_requested"), "summary should emit next round")
 		assert_true(summary.has_signal("shop_requested"), "summary should emit shop entry")
 		summary.free()
+
+	var shop_card_scene = load("res://scenes/components/shop_card_token.tscn")
+	assert_true(shop_card_scene != null, "shop card token scene should load")
+	if shop_card_scene != null:
+		var shop_card = shop_card_scene.instantiate()
+		assert_true(shop_card.has_method("bind_card"), "shop card should bind card content")
+		assert_true(shop_card.has_signal("card_selected"), "shop card should emit selection")
+		shop_card.free()
+
+	var shop_scene = load("res://scenes/shop/shop_screen.tscn")
+	assert_true(shop_scene != null, "shop screen scene should load")
+	if shop_scene != null:
+		var shop = shop_scene.instantiate()
+		assert_true(shop.has_method("bind_session"), "shop screen should bind domain state")
+		assert_true(shop.has_signal("leave_requested"), "shop should emit leave")
+		shop.free()
