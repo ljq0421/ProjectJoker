@@ -128,6 +128,15 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 			"cumulative_total": encounter_session.cumulative_total,
 		})
 		intel_tickets += encounter_session.intel_tickets
+	elif (
+		active_phase == Phase.DEALER
+		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
+	):
+		var shuffled := run_rng.shuffle(engraving_catalog.all_ids())
+		engraving_offer_ids.clear()
+		engraving_offer_ids.assign(shuffled.slice(0, 3))
+		selected_engraving_id = &""
+		phase = Phase.ENGRAVING_REWARD
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -200,6 +209,70 @@ func leave_shop() -> OperationResult:
 	if room_index == 1:
 		return _create_dealer(next_deck, next_tickets, next_history)
 	return _fail("普通房序号无效")
+
+func select_engraving(engraving_id: StringName) -> OperationResult:
+	if phase != Phase.ENGRAVING_REWARD and phase != Phase.ENGRAVING_INSTALL:
+		return _fail("当前不能选择刻印")
+	if engraving_id not in engraving_offer_ids:
+		return _fail("所选刻印不在本次候选中")
+	selected_engraving_id = engraving_id
+	phase = Phase.ENGRAVING_INSTALL
+	last_error = ""
+	return OperationResult.new(true)
+
+func install_selected_engraving(
+	die_id: StringName,
+	face: int
+) -> OperationResult:
+	if phase != Phase.ENGRAVING_INSTALL:
+		return _fail("请先从候选中选择一个刻印")
+	var result := EngravingInstallationService.new().install(
+		die_profiles,
+		engraving_offer_ids,
+		selected_engraving_id,
+		die_id,
+		face,
+		engraving_catalog
+	)
+	if not result.accepted:
+		return _fail(result.reason)
+	die_profiles = result.profiles
+	installed_die_id = die_id
+	installed_face = face
+	phase = Phase.COMPLETE
+	last_error = ""
+	return OperationResult.new(true)
+
+func completion_snapshot() -> Dictionary:
+	if phase != Phase.COMPLETE:
+		return {}
+	var purchases: Array[Dictionary] = []
+	for record in shop_purchase_history:
+		purchases.append({
+			"offer_id": record.offer_id,
+			"replaced_id": record.replaced_id,
+			"price": record.price,
+		})
+	return {
+		"rooms": completed_rooms.duplicate(true),
+		"dealer": {
+			"id": dealer_catalog.iron_abacus().id,
+			"target_total": encounter_session.target_total,
+			"cumulative_total": encounter_session.cumulative_total,
+		},
+		"purchases": purchases,
+		"deck_ids": deck_ids.duplicate(),
+		"intel_tickets": intel_tickets,
+		"engraving_id": selected_engraving_id,
+		"die_id": installed_die_id,
+		"face": installed_face,
+	}
+
+func restart() -> OperationResult:
+	if phase == Phase.NOT_STARTED:
+		return _fail("金线回廊尚未开始")
+	_reset_owned_state()
+	return start()
 
 func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	var rng_before := run_rng.snapshot_state()
@@ -307,6 +380,26 @@ func _clone_purchase_history(
 	for record in history:
 		copies.append(record.clone())
 	return copies
+
+func _reset_owned_state() -> void:
+	phase = Phase.NOT_STARTED
+	run_rng = null
+	room_index = 0
+	route_ids.clear()
+	selected_room_ids.clear()
+	completed_rooms.clear()
+	deck_ids.clear()
+	intel_tickets = 0
+	die_profiles.clear()
+	encounter_session = null
+	shop_session = null
+	shop_purchase_history.clear()
+	engraving_offer_ids.clear()
+	selected_engraving_id = &""
+	installed_die_id = &""
+	installed_face = 0
+	failure_origin = Phase.NOT_STARTED
+	last_error = ""
 
 func _fail(reason: String) -> OperationResult:
 	last_error = reason

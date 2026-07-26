@@ -3,6 +3,10 @@ extends "res://tests/test_case.gd"
 func run() -> void:
 	_test_two_room_shop_loop()
 	_test_same_seed_replays_route_shop_and_dealer_start()
+	_test_all_route_combinations_complete()
+	_test_failures_end_the_area()
+	_test_restart_replays_from_seed()
+	_test_same_seed_replays_full_completion()
 
 func _test_two_room_shop_loop() -> void:
 	var area := AreaRunSession.new(20260726)
@@ -120,6 +124,177 @@ func _test_same_seed_replays_route_shop_and_dealer_start() -> void:
 		"shared RNG state should replay"
 	)
 
+func _test_all_route_combinations_complete() -> void:
+	var combinations: Array[Array] = [
+		[&"gold_room_precise_steps", &"gold_room_narrow_ledger"],
+		[&"gold_room_precise_steps", &"gold_room_parallel_proof"],
+		[&"gold_room_even_split", &"gold_room_narrow_ledger"],
+		[&"gold_room_even_split", &"gold_room_parallel_proof"],
+	]
+	for combination in combinations:
+		var area := _drive_route_combination_to_dealer(
+			20260901,
+			combination[0],
+			combination[1],
+			true
+		)
+		_complete_current_encounter(area)
+		assert_equal(
+			area.phase,
+			AreaRunSession.Phase.ENGRAVING_REWARD,
+			"%s should reach engraving reward" % [combination]
+		)
+		assert_equal(area.engraving_offer_ids.size(), 3, "dealer should offer three engravings")
+
+		var before_invalid := _snapshot(area)
+		assert_false(
+			area.select_engraving(&"missing_engraving").accepted,
+			"unknown engraving offer should reject"
+		)
+		assert_equal(_snapshot(area), before_invalid, "invalid engraving selection is atomic")
+
+		var engraving_id: StringName = area.engraving_offer_ids[0]
+		assert_true(area.select_engraving(engraving_id).accepted, "offered engraving selects")
+		var before_install := _snapshot(area)
+		assert_false(
+			area.install_selected_engraving(&"missing_die", 2).accepted,
+			"unknown engraving die should reject"
+		)
+		assert_equal(_snapshot(area), before_install, "failed engraving install is atomic")
+		assert_true(
+			area.install_selected_engraving(&"d1", 2).accepted,
+			"valid engraving installation should complete area"
+		)
+		assert_equal(area.phase, AreaRunSession.Phase.COMPLETE, "installation completes area")
+		var summary: Dictionary = area.completion_snapshot()
+		assert_equal(summary.rooms.size(), 2, "summary should contain two rooms")
+		assert_equal(summary.purchases.size(), 2, "summary should contain two purchases")
+		assert_equal(summary.deck_ids.size(), 12, "summary should contain final deck")
+		assert_equal(summary.dealer.id, &"dealer_iron_abacus", "summary should contain dealer")
+		assert_equal(summary.engraving_id, engraving_id, "summary should contain engraving")
+		assert_equal(summary.die_id, &"d1", "summary should contain engraved die")
+		assert_equal(summary.face, 2, "summary should contain engraved face")
+		summary.deck_ids.clear()
+		assert_equal(area.deck_ids.size(), 12, "summary data should be defensive")
+
+func _test_failures_end_the_area() -> void:
+	var first_room_failure := AreaRunSession.new(20261001)
+	assert_true(first_room_failure.start().accepted, "first-failure fixture starts")
+	assert_true(
+		first_room_failure.select_route(first_room_failure.current_route_ids()[0]).accepted,
+		"first-failure route selects"
+	)
+	_complete_current_encounter(first_room_failure, false)
+	_assert_failed_without_boundary_retry(
+		first_room_failure,
+		AreaRunSession.Phase.NORMAL_ROOM,
+		"first room failure"
+	)
+
+	var second_room_failure := AreaRunSession.new(20261002)
+	assert_true(second_room_failure.start().accepted, "second-failure fixture starts")
+	assert_true(
+		second_room_failure.select_route(second_room_failure.current_route_ids()[0]).accepted,
+		"first route selects"
+	)
+	_complete_current_encounter(second_room_failure)
+	assert_true(second_room_failure.open_shop().accepted, "first shop opens")
+	assert_true(second_room_failure.leave_shop().accepted, "first shop leaves")
+	assert_true(
+		second_room_failure.select_route(second_room_failure.current_route_ids()[0]).accepted,
+		"second route selects"
+	)
+	_complete_current_encounter(second_room_failure, false)
+	_assert_failed_without_boundary_retry(
+		second_room_failure,
+		AreaRunSession.Phase.NORMAL_ROOM,
+		"second room failure"
+	)
+
+	var dealer_failure := _drive_route_combination_to_dealer(
+		20261003,
+		&"gold_room_precise_steps",
+		&"gold_room_narrow_ledger",
+		false
+	)
+	_complete_current_encounter(dealer_failure, false)
+	_assert_failed_without_boundary_retry(
+		dealer_failure,
+		AreaRunSession.Phase.DEALER,
+		"dealer failure"
+	)
+
+func _test_restart_replays_from_seed() -> void:
+	var seed_value := 20261101
+	var completed := _drive_route_combination_to_dealer(
+		seed_value,
+		&"gold_room_even_split",
+		&"gold_room_parallel_proof",
+		true
+	)
+	_complete_current_encounter(completed)
+	assert_true(
+		completed.select_engraving(completed.engraving_offer_ids[0]).accepted,
+		"restart fixture engraving selects"
+	)
+	assert_true(
+		completed.install_selected_engraving(&"d3", 5).accepted,
+		"restart fixture completes"
+	)
+	assert_true(completed.restart().accepted, "completed area should restart")
+
+	var fresh := AreaRunSession.new(seed_value)
+	assert_true(fresh.start().accepted, "fresh comparison should start")
+	assert_equal(completed.current_route_ids(), fresh.current_route_ids(), "route order replays")
+	var replay_room_id: StringName = completed.current_route_ids()[0]
+	assert_true(completed.select_route(replay_room_id).accepted, "restarted route selects")
+	assert_true(fresh.select_route(replay_room_id).accepted, "fresh route selects")
+	assert_equal(
+		completed.encounter_session.current_hand_ids,
+		fresh.encounter_session.current_hand_ids,
+		"restarted first hand should replay"
+	)
+	assert_equal(
+		_rolled_values(completed.encounter_session),
+		_rolled_values(fresh.encounter_session),
+		"restarted first dice should replay"
+	)
+	assert_equal(completed.shop_purchase_history.size(), 0, "restart clears purchase history")
+	assert_equal(completed.selected_room_ids.size(), 1, "only replayed route remains selected")
+	assert_equal(completed.selected_engraving_id, &"", "restart clears engraving selection")
+	assert_equal(completed.installed_die_id, &"", "restart clears engraved die")
+
+func _test_same_seed_replays_full_completion() -> void:
+	var first := _complete_fixed_run(20261201)
+	var second := _complete_fixed_run(20261201)
+	assert_equal(
+		first.engraving_offer_ids,
+		second.engraving_offer_ids,
+		"same seed should replay engraving offers"
+	)
+	assert_equal(
+		first.completion_snapshot(),
+		second.completion_snapshot(),
+		"same complete operation sequence should replay summary"
+	)
+	assert_equal(
+		first.run_rng.snapshot_state(),
+		second.run_rng.snapshot_state(),
+		"same complete operation sequence should replay RNG"
+	)
+
+func _complete_fixed_run(seed_value: int) -> AreaRunSession:
+	var area := _drive_route_combination_to_dealer(
+		seed_value,
+		&"gold_room_precise_steps",
+		&"gold_room_parallel_proof",
+		true
+	)
+	_complete_current_encounter(area)
+	assert_true(area.select_engraving(area.engraving_offer_ids[0]).accepted, "offer selects")
+	assert_true(area.install_selected_engraving(&"d4", 3).accepted, "engraving installs")
+	return area
+
 func _drive_to_dealer(seed_value: int) -> AreaRunSession:
 	var area := AreaRunSession.new(seed_value)
 	assert_true(area.start().accepted, "determinism fixture should start")
@@ -136,8 +311,36 @@ func _drive_to_dealer(seed_value: int) -> AreaRunSession:
 			assert_equal(area.phase, AreaRunSession.Phase.ROUTE_CHOICE, "fixture continues")
 	return area
 
-func _complete_current_encounter(area: AreaRunSession) -> void:
-	area.encounter_session.target_total = 0
+func _drive_route_combination_to_dealer(
+	seed_value: int,
+	first_room_id: StringName,
+	second_room_id: StringName,
+	purchase_each_shop: bool
+) -> AreaRunSession:
+	var area := AreaRunSession.new(seed_value)
+	assert_true(area.start().accepted, "combination fixture should start")
+	for room_id in [first_room_id, second_room_id]:
+		assert_true(room_id in area.current_route_ids(), "chosen room should be offered")
+		assert_true(area.select_route(room_id).accepted, "chosen room should select")
+		_complete_current_encounter(area)
+		assert_true(area.open_shop().accepted, "combination shop should open")
+		if purchase_each_shop:
+			assert_true(
+				area.shop_session.purchase(
+					area.shop_session.offer_ids[0],
+					area.shop_session.deck_ids[0]
+				).accepted,
+				"combination shop should purchase"
+			)
+		assert_true(area.leave_shop().accepted, "combination shop should settle")
+	return area
+
+func _complete_current_encounter(
+	area: AreaRunSession,
+	force_success: bool = true
+) -> void:
+	if force_success:
+		area.encounter_session.target_total = 0
 	for round_index in range(ThreeRoundEncounterSession.ROUND_COUNT):
 		var report := area.encounter_session.current_session.commit()
 		assert_true(area.accept_encounter_report(report).accepted, "formal report should be accepted")
@@ -156,7 +359,28 @@ func _snapshot(area: AreaRunSession) -> Dictionary:
 		"tickets": area.intel_tickets,
 		"profiles": _profile_signature(area.die_profiles),
 		"history": _history_signature(area.shop_purchase_history),
+		"engraving_offers": area.engraving_offer_ids.duplicate(),
+		"selected_engraving": area.selected_engraving_id,
+		"installed_die": area.installed_die_id,
+		"installed_face": area.installed_face,
+		"failure_origin": area.failure_origin,
 	}
+
+func _assert_failed_without_boundary_retry(
+	area: AreaRunSession,
+	expected_origin: AreaRunSession.Phase,
+	message: String
+) -> void:
+	assert_equal(area.phase, AreaRunSession.Phase.FAILED, "%s should end area" % message)
+	assert_equal(area.failure_origin, expected_origin, "%s should record origin" % message)
+	assert_false(area.has_method("retry_dealer"), "%s should not expose dealer retry" % message)
+	assert_false(
+		area.has_method("retry_verification"),
+		"%s should not expose verification retry" % message
+	)
+	var before := _snapshot(area)
+	assert_false(area.open_shop().accepted, "%s cannot open shop afterward" % message)
+	assert_equal(_snapshot(area), before, "%s rejected continuation should be atomic" % message)
 
 func _history_signature(history: Array[ShopPurchaseRecord]) -> Array:
 	var signature: Array = []
