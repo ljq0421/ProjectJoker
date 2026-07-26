@@ -6,6 +6,10 @@ func run() -> void:
 	var lane = load("res://scenes/components/rule_lane.tscn").instantiate()
 	var panel = load("res://scenes/components/resolution_panel.tscn").instantiate()
 	assert_true(die.has_signal("die_activated"), "die token should emit activation")
+	assert_true(
+		die.has_method("bind_die_with_engravings"),
+		"die token should expose engraving binding"
+	)
 	assert_true(card.has_signal("card_activated"), "card token should emit activation")
 	assert_true(lane.has_signal("lane_activated"), "lane should emit click activation")
 	assert_true(lane.has_signal("die_drop_requested"), "lane should emit die drops")
@@ -35,6 +39,7 @@ func run() -> void:
 			screen.has_method("set_run_status"),
 			"screen should expose run header binding"
 		)
+		assert_true(screen.has_method("bind_dealer"), "screen should expose dealer binding")
 		screen.free()
 
 	var tutorial_scene = load("res://scenes/components/single_encounter_tutorial.tscn")
@@ -52,7 +57,61 @@ func run() -> void:
 		assert_true(summary.has_method("show_run_state"), "summary should bind run state")
 		assert_true(summary.has_signal("next_round_requested"), "summary should emit next round")
 		assert_true(summary.has_signal("shop_requested"), "summary should emit shop entry")
+		assert_true(summary.has_signal("dealer_requested"), "summary should emit dealer entry")
+		assert_true(
+			summary.has_signal("dealer_retry_requested"),
+			"summary should emit dealer retry"
+		)
+		assert_true(
+			summary.has_signal("verification_retry_requested"),
+			"summary should emit verification retry"
+		)
+		assert_true(
+			summary.get_node_or_null("%ChallengeDealerButton") != null,
+			"summary should expose dealer challenge button"
+		)
+		assert_true(
+			summary.get_node_or_null("%RetryDealerButton") != null,
+			"summary should expose dealer retry button"
+		)
+		assert_true(
+			summary.get_node_or_null("%RetryVerificationButton") != null,
+			"summary should expose verification retry button"
+		)
 		summary.free()
+
+	var engraving_option_scene = load("res://scenes/components/engraving_option_token.tscn")
+	assert_true(engraving_option_scene != null, "engraving option scene should load")
+	if engraving_option_scene != null:
+		var engraving_option = engraving_option_scene.instantiate()
+		assert_true(
+			engraving_option.has_signal("engraving_selected"),
+			"engraving option should emit selection"
+		)
+		assert_true(
+			engraving_option.has_method("bind_engraving"),
+			"engraving option should bind content"
+		)
+		engraving_option.free()
+
+	var reward_scene = load("res://scenes/components/engraving_reward_panel.tscn")
+	assert_true(reward_scene != null, "engraving reward panel should load")
+	if reward_scene != null:
+		var reward = reward_scene.instantiate()
+		assert_true(reward.has_method("bind_reward"), "reward panel should bind domain state")
+		assert_true(reward.has_signal("install_requested"), "reward panel should request install")
+		for node_name in [
+			"OfferRow",
+			"DieRow",
+			"FaceGrid",
+			"InstallEngravingButton",
+			"RewardErrorLabel",
+		]:
+			assert_true(
+				reward.get_node_or_null("%" + node_name) != null,
+				"reward panel should expose %s" % node_name
+			)
+		reward.free()
 
 	var shop_card_scene = load("res://scenes/components/shop_card_token.tscn")
 	assert_true(shop_card_scene != null, "shop card token scene should load")

@@ -3,7 +3,8 @@
 [ext_resource type="Script" path="res://scripts/ui/die_token.gd" id="1"]
 
 [node name="DieToken" type="Button"]
-custom_minimum_size = Vector2(58, 58)
+custom_minimum_size = Vector2(82, 82)
 toggle_mode = true
 focus_mode = 1
+autowrap_mode = 2
 script = ExtResource("1")

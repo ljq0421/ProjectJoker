@@ -73,22 +73,26 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="DealerEyebrow" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "规则监理 / MIRROR-01"
 theme_override_colors/font_color = Color(0.83, 0.48, 0.92, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="DealerName" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "镜面夫人"
 theme_override_font_sizes/font_size = 24
 
 [node name="DealerRule" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "本场规则\n从左向右逐轨解析。所有变化都会先出现在结算轨迹中。"
 autowrap_mode = 2
 
 [node name="DealerHint" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "把骰子拖入规则轨，或先选骰子再选规则轨。"

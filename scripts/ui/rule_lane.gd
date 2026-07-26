@@ -24,7 +24,8 @@ func bind_lane(
 	rule: RuleDefinition,
 	assigned_dice: Array,
 	die_scene: PackedScene,
-	selected_die_id: StringName
+	selected_die_id: StringName,
+	engraving_catalog: EngravingCatalog = null
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
@@ -34,7 +35,12 @@ func bind_lane(
 	for die in assigned_dice:
 		var token: DieToken = die_scene.instantiate()
 		slots.add_child(token)
-		token.bind_die(die, die.id == selected_die_id)
+		token.bind_die_with_engravings(
+			die,
+			die.id == selected_die_id,
+			engraving_catalog,
+			true
+		)
 		token.die_activated.connect(func(id: StringName) -> void: die_activated.emit(id))
 	for empty_index in range(rule.slot_count - assigned_dice.size()):
 		var empty := Label.new()

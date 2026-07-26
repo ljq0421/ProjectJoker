@@ -1,0 +1,108 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/engraving_reward_panel.gd" id="1"]
+
+[node name="EngravingRewardPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.01, 0.008, 0.04, 0.86)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(960, 650)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="RewardTitle" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择一枚基础刻印"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
+
+[node name="RewardRule" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "从三个确定候选中选择一个，再指定一颗实际骰子和 1–6 的实际骰面。"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="OfferRow" type="HBoxContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="DieTitle" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+text = "选择骰子"
+horizontal_alignment = 1
+
+[node name="DieRow" type="HBoxContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="FaceTitle" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+text = "选择刻印面"
+horizontal_alignment = 1
+
+[node name="FaceGrid" type="GridContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 10
+columns = 6
+
+[node name="RewardSelectionLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "刻印：未选择　骰子：未选择　骰面：未选择"
+horizontal_alignment = 1
+
+[node name="RewardErrorLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
+
+[node name="InstallEngravingButton" type="Button" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "安装刻印并进入验证"
+disabled = true

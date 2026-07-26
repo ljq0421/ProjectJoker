@@ -26,6 +26,7 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var run_trial_button: Button = %RunTrialButton
 
 var session: SingleEncounterSession
+var dealer_definition: DealerDefinition
 
 func _ready() -> void:
 	session = SingleEncounterSession.new(
@@ -71,6 +72,18 @@ func set_run_status(area_copy: String, goal_copy: String) -> void:
 	area_label.text = area_copy
 	goal_label.text = goal_copy
 
+func bind_dealer(dealer: DealerDefinition) -> void:
+	dealer_definition = dealer
+	if dealer == null:
+		%DealerEyebrow.text = "规则监理 / MIRROR-01"
+		%DealerName.text = "镜面夫人"
+		%DealerRule.text = "本场规则\n从左向右逐轨解析。所有变化都会先出现在结算轨迹中。"
+		%DealerHint.text = "把骰子拖入规则轨，或先选骰子再选规则轨。"
+		return
+	%DealerEyebrow.text = "庄家挑战 / %s" % String(dealer.id).to_upper()
+	%DealerName.text = dealer.display_name
+	%DealerRule.text = dealer.rule_text
+
 func show_external_error(message: String) -> void:
 	session.last_error = message
 	error_label.text = message
@@ -78,6 +91,7 @@ func show_external_error(message: String) -> void:
 func refresh_from_session() -> void:
 	var state := session.controller.state
 	var selected_target_type := _selected_card_target_type()
+	var engraving_catalog := session.controller.resolution_context.engraving_catalog
 	for lane_index in range(lanes.size()):
 		var rule := session.controller.encounter.rules[lane_index]
 		var assigned: Array = []
@@ -87,7 +101,8 @@ func refresh_from_session() -> void:
 			rule,
 			assigned,
 			DIE_SCENE,
-			session.selection.die_id
+			session.selection.die_id,
+			engraving_catalog
 		)
 		lanes[lane_index].set_legal_target(
 			selected_target_type == CardDefinition.TargetType.TABLE
@@ -102,7 +117,12 @@ func refresh_from_session() -> void:
 		if not _is_assigned(die.id):
 			var token: DieToken = DIE_SCENE.instantiate()
 			dice_tray.add_child(token)
-			token.bind_die(die, session.selection.die_id == die.id)
+			token.bind_die_with_engravings(
+				die,
+				session.selection.die_id == die.id,
+				engraving_catalog,
+				false
+			)
 			token.set_legal_target(selected_target_type == CardDefinition.TargetType.DIE)
 			token.die_activated.connect(_on_die_activated)
 
@@ -122,7 +142,14 @@ func refresh_from_session() -> void:
 	var gap_is_target := selected_target_type == CardDefinition.TargetType.GAP
 	%LeftGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
 	%RightGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
-	resolution_panel.bind_report(session.preview())
+	var preview := session.preview()
+	resolution_panel.bind_report(preview)
+	if dealer_definition != null:
+		%DealerHint.text = "已分配：%d / 6\n当前固定奖励：%d / %d" % [
+			preview.assigned_dice,
+			preview.dealer_reward,
+			dealer_definition.fixed_reward,
+		]
 	error_label.text = session.last_error
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed
