@@ -9,10 +9,11 @@ var events: Array[ResolutionEvent] = []
 func event_signature() -> Array[String]:
 	var signature: Array[String] = []
 	for event in events:
-		signature.append("%s|%s|%d|%d" % [
+		signature.append("%s|%s|%d|%d|%s" % [
 			event.source_id,
 			event.label,
 			event.delta,
 			event.running_total,
+			str(event.effect_applied),
 		])
 	return signature
