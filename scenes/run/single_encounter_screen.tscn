@@ -65,6 +65,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 18
 
 [node name="DealerPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(230, 0)
 layout_mode = 2
 
