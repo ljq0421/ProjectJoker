@@ -16,6 +16,7 @@ extends Control
 var slice_session: IronAbacusSliceSession
 var guide_store: IronAbacusGuideProgressStore
 var guide_flow := IronAbacusGuideFlow.new()
+var _guide_request_generation: int = 0
 
 func _ready() -> void:
 	_apply_launch_guide_path()
@@ -242,18 +243,35 @@ func _apply_launch_guide_path() -> void:
 	root_window.remove_meta("iron_abacus_guide_config_path")
 
 func _request_guide(checkpoint_id: StringName) -> void:
-	if (
-		not guide_auto_start
-		or guide_store == null
-		or not guide_flow.should_present(checkpoint_id, guide_store.snapshot())
+	_guide_request_generation += 1
+	var request_generation := _guide_request_generation
+	var request_phase := (
+		slice_session.phase
+		if slice_session != null
+		else IronAbacusSliceSession.Phase.NOT_STARTED
+	)
+	var request_store: IronAbacusGuideProgressStore = guide_store
+	if not _guide_request_is_current(
+		checkpoint_id,
+		request_generation,
+		request_phase,
+		request_store
 	):
 		return
 	for _layout_frame in range(2):
 		await get_tree().process_frame
-	if (
-		not guide_auto_start
-		or guide_store == null
-		or not guide_flow.should_present(checkpoint_id, guide_store.snapshot())
+		if not _guide_request_is_current(
+			checkpoint_id,
+			request_generation,
+			request_phase,
+			request_store
+		):
+			return
+	if not _guide_request_is_current(
+		checkpoint_id,
+		request_generation,
+		request_phase,
+		request_store
 	):
 		return
 	guide_flow.mark_requested(checkpoint_id)
@@ -264,6 +282,58 @@ func _request_guide(checkpoint_id: StringName) -> void:
 		return
 	if not guide_overlay.open_card(card_spec, targets):
 		push_error("Advanced guide failed to open checkpoint: %s" % checkpoint_id)
+
+func _guide_request_is_current(
+	checkpoint_id: StringName,
+	request_generation: int,
+	request_phase: int,
+	request_store: IronAbacusGuideProgressStore
+) -> bool:
+	if (
+		request_generation != _guide_request_generation
+		or slice_session == null
+		or slice_session.phase != request_phase
+		or not guide_auto_start
+		or guide_store == null
+		or guide_store != request_store
+		or not guide_flow.should_present(checkpoint_id, guide_store.snapshot())
+	):
+		return false
+	return _guide_checkpoint_matches_surface(checkpoint_id, request_phase)
+
+func _guide_checkpoint_matches_surface(
+	checkpoint_id: StringName,
+	request_phase: int
+) -> bool:
+	if summary_panel.visible:
+		return false
+	match checkpoint_id:
+		&"normal":
+			return (
+				request_phase == IronAbacusSliceSession.Phase.NORMAL_ROOM
+				and encounter_screen.is_visible_in_tree()
+			)
+		&"shop":
+			return (
+				request_phase == IronAbacusSliceSession.Phase.SHOP
+				and shop_screen.is_visible_in_tree()
+			)
+		&"dealer":
+			return (
+				request_phase == IronAbacusSliceSession.Phase.DEALER
+				and encounter_screen.is_visible_in_tree()
+			)
+		&"reward":
+			return (
+				request_phase == IronAbacusSliceSession.Phase.ENGRAVING_REWARD
+				and reward_panel.is_visible_in_tree()
+			)
+		&"verification":
+			return (
+				request_phase == IronAbacusSliceSession.Phase.VERIFICATION
+				and encounter_screen.is_visible_in_tree()
+			)
+	return false
 
 func _resolve_guide_targets(target_ids: Array) -> Array[Control]:
 	var result: Array[Control] = []
@@ -323,5 +393,6 @@ func _show_guide_persistence_warning() -> void:
 		encounter_screen.show_external_error(message)
 
 func _close_guide() -> void:
+	_guide_request_generation += 1
 	if is_instance_valid(guide_overlay):
 		guide_overlay.close_card()

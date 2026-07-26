@@ -10,6 +10,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
+	await _assert_normal_guide_cancels_on_summary_transition()
+	await _assert_shop_guide_cancels_on_leave_transition()
 	guide_path = OS.get_temp_dir().path_join(
 		"project-joker-stage5-guide-input-%d.cfg" % Time.get_ticks_usec()
 	)
@@ -198,6 +200,96 @@ func _run() -> void:
 		slice_screen._request_guide(&"shop")
 		_assert_false(overlay.is_open(), "permanent dismissal should suppress later cards")
 	await _finish()
+
+func _assert_normal_guide_cancels_on_summary_transition() -> void:
+	var race_path := OS.get_temp_dir().path_join(
+		"project-joker-stage5-guide-normal-race-%d.cfg" % Time.get_ticks_usec()
+	)
+	DirAccess.remove_absolute(race_path)
+	var race_screen: IronAbacusSliceScreen = load(
+		"res://scenes/run/iron_abacus_slice_screen.tscn"
+	).instantiate()
+	race_screen.guide_auto_start = false
+	race_screen.guide_config_path = race_path
+	root.add_child(race_screen)
+	await _settle()
+
+	race_screen.guide_auto_start = true
+	race_screen._request_guide(&"normal")
+	var report := race_screen.slice_session.encounter_session.current_session.commit()
+	race_screen._on_round_committed(report)
+	await _settle()
+
+	var overlay: IronAbacusGuideOverlay = race_screen.get_node("%IronAbacusGuideOverlay")
+	_assert_true(
+		race_screen.get_node("%RoundSummaryPanel").visible,
+		"normal race fixture should show the round summary"
+	)
+	_assert_false(overlay.is_open(), "stale normal guide should not open over the summary")
+	_assert_true(
+		race_screen.guide_flow.should_present(
+			&"normal",
+			race_screen.guide_store.snapshot()
+		),
+		"cancelled normal guide should remain eligible and unrequested"
+	)
+	_assert_false(
+		IronAbacusGuideProgressStore.new(race_path).is_seen(&"normal"),
+		"cancelled normal guide should remain unseen in persistence"
+	)
+	race_screen.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(race_path)
+
+func _assert_shop_guide_cancels_on_leave_transition() -> void:
+	var race_path := OS.get_temp_dir().path_join(
+		"project-joker-stage5-guide-shop-race-%d.cfg" % Time.get_ticks_usec()
+	)
+	DirAccess.remove_absolute(race_path)
+	var race_screen: IronAbacusSliceScreen = load(
+		"res://scenes/run/iron_abacus_slice_screen.tscn"
+	).instantiate()
+	race_screen.guide_auto_start = false
+	race_screen.guide_config_path = race_path
+	race_screen.normal_target = 0
+	root.add_child(race_screen)
+	await _settle()
+
+	for round_number in range(1, 4):
+		var report := race_screen.slice_session.encounter_session.current_session.commit()
+		race_screen._on_round_committed(report)
+		if round_number < 3:
+			race_screen._on_next_round_requested()
+	race_screen._on_shop_requested()
+	_assert_true(
+		race_screen.slice_session.phase == IronAbacusSliceSession.Phase.SHOP,
+		"shop race fixture should reach the shop phase"
+	)
+	race_screen.guide_auto_start = true
+	race_screen._request_guide(&"shop")
+	race_screen._on_shop_leave_requested()
+	await _settle()
+
+	var overlay: IronAbacusGuideOverlay = race_screen.get_node("%IronAbacusGuideOverlay")
+	_assert_true(
+		race_screen.get_node("%RoundSummaryPanel").visible,
+		"shop race fixture should show the dealer-ready summary"
+	)
+	_assert_false(overlay.is_open(), "stale shop guide should not open over dealer-ready summary")
+	_assert_true(
+		race_screen.guide_flow.should_present(
+			&"shop",
+			race_screen.guide_store.snapshot()
+		),
+		"cancelled shop guide should remain eligible and unrequested"
+	)
+	_assert_false(
+		IronAbacusGuideProgressStore.new(race_path).is_seen(&"shop"),
+		"cancelled shop guide should remain unseen in persistence"
+	)
+	race_screen.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(race_path)
 
 func _assert_and_ack_checkpoint(
 	overlay: IronAbacusGuideOverlay,
