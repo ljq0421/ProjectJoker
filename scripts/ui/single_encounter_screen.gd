@@ -84,6 +84,13 @@ func bind_dealer(dealer: DealerDefinition) -> void:
 	%DealerName.text = dealer.display_name
 	%DealerRule.text = dealer.rule_text
 
+func bind_verification(engraving: EngravingDefinition) -> void:
+	dealer_definition = null
+	%DealerEyebrow.text = "刻印校验 / GUARANTEED FACE"
+	%DealerName.text = "刻印验证"
+	%DealerRule.text = engraving.rule_text
+	%DealerHint.text = "所选骰子的刻印面已公开强制朝上；把它分配到有效规则台。"
+
 func show_external_error(message: String) -> void:
 	session.last_error = message
 	error_label.text = message
@@ -319,4 +326,4 @@ func _on_confirm_pressed() -> void:
 		round_committed.emit(report)
 
 func _on_run_trial_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/run/three_round_run_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/run/iron_abacus_slice_screen.tscn")

@@ -93,7 +93,10 @@ func show_verification_result(applied: bool, reason: String) -> void:
 	_hide_actions()
 	title_label.text = "刻印验证完成" if applied else "刻印尚未触发"
 	detail_label.text = reason
-	if not applied:
+	if applied:
+		retry_button.visible = true
+		retry_button.text = "完整重试"
+	else:
 		verification_retry_button.visible = true
 		retry_button.visible = true
 		retry_button.text = "完整重试"

@@ -109,8 +109,8 @@ tooltip_text = "重置当前教学局并重新开始引导"
 [node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "三轮试局"
-tooltip_text = "开始固定种子的三轮牌组与商店试局"
+text = "进入六面诡局"
+tooltip_text = "开始普通试局、情报交换、铁算盘挑战与刻印验证"
 
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
 layout_mode = 2

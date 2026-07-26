@@ -136,3 +136,11 @@ func run() -> void:
 		assert_true(three_round.has_method("start_run"), "run screen should start a session")
 		assert_true(three_round.has_method("open_shop"), "run screen should expose shop transition")
 		three_round.free()
+
+	var slice_scene = load("res://scenes/run/iron_abacus_slice_screen.tscn")
+	assert_true(slice_scene != null, "Iron Abacus slice scene should load")
+	if slice_scene != null:
+		var slice = slice_scene.instantiate()
+		assert_true(slice.has_method("start_slice"), "slice screen should start domain flow")
+		assert_true(slice.has_method("bind_current_encounter"), "slice should bind encounter")
+		slice.free()

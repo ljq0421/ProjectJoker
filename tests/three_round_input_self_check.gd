@@ -9,21 +9,14 @@ func _initialize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
-	var teaching: SingleEncounterScreen = load(
-		"res://scenes/run/single_encounter_screen.tscn"
+	run_screen = load(
+		"res://scenes/run/three_round_run_screen.tscn"
 	).instantiate()
-	teaching.tutorial_auto_start = false
-	root.add_child(teaching)
-	current_scene = teaching
+	root.add_child(run_screen)
+	current_scene = run_screen
 	await process_frame
 	await process_frame
-
-	await _click(teaching.get_node("%RunTrialButton"))
-	await process_frame
-	await process_frame
-	await process_frame
-	run_screen = current_scene as ThreeRoundRunScreen
-	_assert_true(run_screen != null, "real entry click should open three round scene")
+	_assert_true(run_screen != null, "stage four scene should instantiate directly")
 	if run_screen == null:
 		await _finish()
 		return
