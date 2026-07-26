@@ -47,6 +47,7 @@ theme_override_constants/separation = 18
 layout_mode = 2
 
 [node name="AreaLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "梦层 01 · 无尽牌厅"
@@ -54,6 +55,7 @@ theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 26
 
 [node name="GoalLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "解析目标：0 / 100　轮次 1 / 3"
 
@@ -99,6 +101,12 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "重看引导"
 tooltip_text = "重置当前教学局并重新开始引导"
+
+[node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "三轮试局"
+tooltip_text = "开始固定种子的三轮牌组与商店试局"
 
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
 layout_mode = 2

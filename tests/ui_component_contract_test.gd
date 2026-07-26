@@ -23,6 +23,18 @@ func run() -> void:
 	if screen_scene != null:
 		var screen = screen_scene.instantiate()
 		assert_true(screen.has_method("refresh_from_session"), "screen should expose refresh binding")
+		assert_true(
+			screen.has_signal("round_committed"),
+			"screen should report a newly committed round"
+		)
+		assert_true(
+			screen.has_method("bind_external_session"),
+			"screen should accept an externally owned session"
+		)
+		assert_true(
+			screen.has_method("set_run_status"),
+			"screen should expose run header binding"
+		)
 		screen.free()
 
 	var tutorial_scene = load("res://scenes/components/single_encounter_tutorial.tscn")

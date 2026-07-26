@@ -3,6 +3,7 @@ extends Control
 
 signal view_refreshed
 signal ui_action_accepted(action: StringName, payload: Dictionary)
+signal round_committed(report: ResolutionReport)
 
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
@@ -19,6 +20,10 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var calibration_label: Label = %CalibrationLabel
 @onready var confirm_button: Button = %ConfirmButton
 @onready var tutorial: SingleEncounterTutorial = %SingleEncounterTutorial
+@onready var area_label: Label = %AreaLabel
+@onready var goal_label: Label = %GoalLabel
+@onready var replay_tutorial_button: Button = %ReplayTutorialButton
+@onready var run_trial_button: Button = %RunTrialButton
 
 var session: SingleEncounterSession
 
@@ -42,9 +47,33 @@ func _ready() -> void:
 	refresh_from_session()
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
 	tutorial.persistence_warning.connect(_on_tutorial_persistence_warning)
-	%ReplayTutorialButton.pressed.connect(start_tutorial_replay)
+	replay_tutorial_button.pressed.connect(start_tutorial_replay)
+	run_trial_button.pressed.connect(_on_run_trial_pressed)
 	if tutorial_auto_start:
 		tutorial.call_deferred("maybe_start")
+
+func bind_external_session(
+	p_session: SingleEncounterSession,
+	area_copy: String,
+	goal_copy: String
+) -> void:
+	if p_session == null:
+		return
+	tutorial.active = false
+	tutorial.visible = false
+	replay_tutorial_button.visible = false
+	run_trial_button.visible = false
+	session = p_session
+	set_run_status(area_copy, goal_copy)
+	refresh_from_session()
+
+func set_run_status(area_copy: String, goal_copy: String) -> void:
+	area_label.text = area_copy
+	goal_label.text = goal_copy
+
+func show_external_error(message: String) -> void:
+	session.last_error = message
+	error_label.text = message
 
 func refresh_from_session() -> void:
 	var state := session.controller.state
@@ -254,7 +283,13 @@ func _on_undo_pressed() -> void:
 func _on_confirm_pressed() -> void:
 	if not _tutorial_allows(&"commit", {}):
 		return
+	var was_committed := session.controller.committed
 	var report := session.commit()
-	if report.valid and session.controller.committed:
+	if report.valid and not was_committed and session.controller.committed:
 		_record_tutorial_action(&"commit", {})
 	refresh_from_session()
+	if report.valid and not was_committed and session.controller.committed:
+		round_committed.emit(report)
+
+func _on_run_trial_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/run/three_round_run_screen.tscn")
