@@ -9,9 +9,10 @@ var last_error: String = ""
 func _init(
 	state: RoundState,
 	encounter: EncounterDefinition,
-	p_hand: Array[CardDefinition]
+	p_hand: Array[CardDefinition],
+	p_context: ResolutionContext = null
 ) -> void:
-	controller = RoundController.new(state, encounter)
+	controller = RoundController.new(state, encounter, p_context)
 	hand = p_hand
 
 func activate_die(die_id: StringName) -> bool:

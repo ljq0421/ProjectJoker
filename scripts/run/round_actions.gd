@@ -1,7 +1,12 @@
 class_name RoundActions
 extends RefCounted
 
-static func adjust_die(state: RoundState, die_id: StringName, delta: int) -> ActionResult:
+static func adjust_die(
+	state: RoundState,
+	die_id: StringName,
+	delta: int,
+	context: ResolutionContext = null
+) -> ActionResult:
 	if delta != -1 and delta != 1:
 		return ActionResult.new(false, "校准只能调整 -1 或 +1", state)
 	if state.calibration_points <= 0:
@@ -9,6 +14,11 @@ static func adjust_die(state: RoundState, die_id: StringName, delta: int) -> Act
 	var current := state.find_die(die_id)
 	if current == null:
 		return ActionResult.new(false, "骰子不存在", state)
+	var block_reason := EngravingResolver.new().modification_block_reason(
+		state, die_id, context
+	)
+	if not block_reason.is_empty():
+		return ActionResult.new(false, block_reason, state)
 	var next_value := current.value + delta
 	if next_value < 1 or next_value > 6:
 		return ActionResult.new(false, "校准后点数必须在 1 到 6 之间", state)

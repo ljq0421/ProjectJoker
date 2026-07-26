@@ -3,7 +3,11 @@ extends RefCounted
 
 const MAX_CARDS_PER_ROUND := 2
 
-static func play_card(state: RoundState, played_card: PlayedCard) -> ActionResult:
+static func play_card(
+	state: RoundState,
+	played_card: PlayedCard,
+	context: ResolutionContext = null
+) -> ActionResult:
 	if played_card.definition == null:
 		return ActionResult.new(false, "手法牌定义缺失", state)
 	if state.played_cards.size() >= MAX_CARDS_PER_ROUND:
@@ -18,6 +22,13 @@ static func play_card(state: RoundState, played_card: PlayedCard) -> ActionResul
 		and played_card.secondary_target == &""
 	):
 		return ActionResult.new(false, "桌间手法牌需要两个相邻规则轨", state)
+	for effect in played_card.definition.effects:
+		if effect.operation == EffectSpec.Operation.ADJUST_DIE:
+			var reason := EngravingResolver.new().modification_block_reason(
+				state, played_card.primary_target, context
+			)
+			if not reason.is_empty():
+				return ActionResult.new(false, reason, state)
 
 	var next_state := state.clone()
 	next_state.played_cards.append(played_card.clone())
