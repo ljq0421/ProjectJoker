@@ -1,0 +1,342 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/route_choice_panel.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="LedgerStyle"]
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+bg_color = Color(0.025, 0.032, 0.105, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.705, 0.37, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="RouteStyle"]
+content_margin_left = 20.0
+content_margin_top = 18.0
+content_margin_right = 20.0
+content_margin_bottom = 18.0
+bg_color = Color(0.047, 0.058, 0.16, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.905, 0.845, 0.72)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="LaneStyle"]
+content_margin_left = 16.0
+content_margin_top = 14.0
+content_margin_right = 16.0
+content_margin_bottom = 14.0
+bg_color = Color(0.028, 0.038, 0.115, 0.94)
+border_width_left = 3
+border_color = Color(0.85, 0.705, 0.37, 0.8)
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="SpineStyle"]
+bg_color = Color(0.85, 0.705, 0.37, 0.85)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="RouteChoicePanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="RouteDimmer" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.006, 0.009, 0.035, 0.9)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 28.0
+offset_right = -32.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RouteLedger" type="PanelContainer" parent="SafeArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("LedgerStyle")
+
+[node name="LedgerColumn" type="VBoxContainer" parent="SafeArea/RouteLedger"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="LedgerHeader" type="HBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn"]
+layout_mode = 2
+
+[node name="HeaderCopy" type="VBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="RouteTitle" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader/HeaderCopy"]
+layout_mode = 2
+text = "金线回廊 · 路线账簿"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 34
+
+[node name="RouteInstruction" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader/HeaderCopy"]
+layout_mode = 2
+text = "公开比较条件、目标与现有牌组呼应；选定后进入三轮解析。"
+theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="LedgerMark" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader"]
+layout_mode = 2
+text = "AREA 01  /  OPEN LEDGER"
+theme_override_colors/font_color = Color(0.45, 0.905, 0.845, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="HeaderRule" type="ColorRect" parent="SafeArea/RouteLedger/LedgerColumn"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.85, 0.705, 0.37, 0.65)
+
+[node name="RoutePages" type="HBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="LeftRoutePage" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages"]
+custom_minimum_size = Vector2(820, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("RouteStyle")
+
+[node name="LeftColumn" type="VBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LeftRouteName" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "左侧路线"
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 29
+
+[node name="LeftRouteDescription" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.84, 0.94, 1)
+
+[node name="LeftStats" type="HBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+layout_mode = 2
+
+[node name="LeftRouteGoal" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn/LeftStats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "三轮目标：0"
+
+[node name="LeftRouteReward" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn/LeftStats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "成功奖励：0 张情报券"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+
+[node name="LeftRouteTags" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "房间特征｜"
+theme_override_font_sizes/font_size = 16
+
+[node name="LeftRouteSynergy" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+text = "牌组呼应｜"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="LeftLaneOnePanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="LeftLaneOne" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn/LeftLaneOnePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="LeftLaneTwoPanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="LeftLaneTwo" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn/LeftLaneTwoPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="LeftLaneThreePanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="LeftLaneThree" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn/LeftLaneThreePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="LeftRouteButton" type="Button" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage/LeftColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "选择左侧路线"
+
+[node name="LedgerSpine" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages"]
+custom_minimum_size = Vector2(4, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("SpineStyle")
+
+[node name="RightRoutePage" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages"]
+custom_minimum_size = Vector2(820, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("RouteStyle")
+
+[node name="RightColumn" type="VBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RightRouteName" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "右侧路线"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 29
+
+[node name="RightRouteDescription" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.84, 0.94, 1)
+
+[node name="RightStats" type="HBoxContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+layout_mode = 2
+
+[node name="RightRouteGoal" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn/RightStats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "三轮目标：0"
+
+[node name="RightRouteReward" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn/RightStats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "成功奖励：0 张情报券"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+
+[node name="RightRouteTags" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "房间特征｜"
+theme_override_font_sizes/font_size = 16
+
+[node name="RightRouteSynergy" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+text = "牌组呼应｜"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="RightLaneOnePanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="RightLaneOne" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn/RightLaneOnePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="RightLaneTwoPanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="RightLaneTwo" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn/RightLaneTwoPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="RightLaneThreePanel" type="PanelContainer" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+custom_minimum_size = Vector2(0, 132)
+layout_mode = 2
+theme_override_styles/panel = SubResource("LaneStyle")
+
+[node name="RightLaneThree" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn/RightLaneThreePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="RightRouteButton" type="Button" parent="SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage/RightColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "选择右侧路线"
+
+[node name="RouteErrorLabel" type="Label" parent="SafeArea/RouteLedger/LedgerColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.44, 0.52, 1)
+theme_override_font_sizes/font_size = 16

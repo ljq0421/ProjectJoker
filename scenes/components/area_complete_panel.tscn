@@ -1,0 +1,279 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/area_complete_panel.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="LedgerStyle"]
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
+bg_color = Color(0.025, 0.032, 0.105, 0.985)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.705, 0.37, 0.92)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="ColumnStyle"]
+content_margin_left = 22.0
+content_margin_top = 20.0
+content_margin_right = 22.0
+content_margin_bottom = 20.0
+bg_color = Color(0.047, 0.058, 0.16, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.905, 0.845, 0.62)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="InsetStyle"]
+content_margin_left = 18.0
+content_margin_top = 16.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+bg_color = Color(0.027, 0.036, 0.105, 0.92)
+border_width_left = 3
+border_color = Color(0.85, 0.705, 0.37, 0.8)
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="DividerStyle"]
+bg_color = Color(0.85, 0.705, 0.37, 0.78)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="AreaCompletePanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="CompleteDimmer" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.006, 0.009, 0.035, 0.93)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 28.0
+offset_right = -32.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CompleteLedger" type="PanelContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("LedgerStyle")
+
+[node name="LedgerColumn" type="VBoxContainer" parent="SafeArea/CompleteLedger"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn"]
+layout_mode = 2
+
+[node name="HeaderCopy" type="VBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="CompleteTitle" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Header/HeaderCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "金线回廊 · 账目封存"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 36
+
+[node name="CompleteSubtitle" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Header/HeaderCopy"]
+layout_mode = 2
+text = "两次路线、三场解析与最终构筑已经写入本次区域记录。"
+theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="SealMark" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Header"]
+layout_mode = 2
+text = "AREA 01  /  CLOSED"
+theme_override_colors/font_color = Color(0.45, 0.905, 0.845, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="HeaderRule" type="ColorRect" parent="SafeArea/CompleteLedger/LedgerColumn"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.85, 0.705, 0.37, 0.65)
+
+[node name="Columns" type="HBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="HistoryColumnPanel" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns"]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("ColumnStyle")
+
+[node name="HistoryColumn" type="VBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HistoryHeading" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+layout_mode = 2
+text = "Ⅰ · 路线与解析"
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 25
+
+[node name="RouteHistoryPanel" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("InsetStyle")
+
+[node name="RouteHistoryLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn/RouteHistoryPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 104)
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="ScoreHeading" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+layout_mode = 2
+text = "正式累计"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="ScoreHistoryLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 146)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="PurchaseHeading" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+layout_mode = 2
+text = "情报交换记录"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="PurchaseHistoryLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="BookSpine" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns"]
+custom_minimum_size = Vector2(4, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("DividerStyle")
+
+[node name="FinalColumnPanel" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns"]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("ColumnStyle")
+
+[node name="FinalColumn" type="VBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="FinalHeading" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn"]
+layout_mode = 2
+text = "Ⅱ · 最终构筑"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 25
+
+[node name="DeckHeading" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn"]
+layout_mode = 2
+text = "十二张手法牌"
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="FinalDeckPanel" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("InsetStyle")
+
+[node name="FinalDeckLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn/FinalDeckPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="FinalResourceLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "剩余情报券｜0"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="FinalEngravingPanel" type="PanelContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("InsetStyle")
+
+[node name="FinalEngravingLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/FinalColumnPanel/FinalColumn/FinalEngravingPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 23
+
+[node name="CompleteErrorLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.44, 0.52, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/CompleteLedger/LedgerColumn"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="ReturnEntryButton" type="Button" parent="SafeArea/CompleteLedger/LedgerColumn/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 54)
+layout_mode = 2
+text = "返回入口"
+
+[node name="RestartAreaButton" type="Button" parent="SafeArea/CompleteLedger/LedgerColumn/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 54)
+layout_mode = 2
+text = "重新开始金线回廊"
