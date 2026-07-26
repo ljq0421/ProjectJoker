@@ -104,9 +104,11 @@ func _rebuild_focus_frames() -> void:
 	for target in _targets:
 		if not is_instance_valid(target) or not target.is_inside_tree():
 			continue
-		var global_rect := target.get_global_rect()
-		var local_rect := Rect2(global_rect.position - global_position, global_rect.size)
-		var expanded := local_rect.grow(FOCUS_PADDING).intersection(overlay_bounds)
+		var local_rect := _target_rect_in_overlay(target)
+		var expanded := _clamp_rect_to_bounds(
+			local_rect.grow(FOCUS_PADDING),
+			overlay_bounds
+		)
 		if not expanded.has_area():
 			continue
 		target_rects.append(expanded)
@@ -124,10 +126,15 @@ func _rebuild_focus_frames() -> void:
 func _place_card(target_rects: Array[Rect2]) -> void:
 	var minimum := card.get_combined_minimum_size()
 	var card_size := Vector2(
-		min(max(card.size.x, minimum.x), max(size.x - SAFE_MARGIN * 2.0, 1.0)),
-		min(max(card.size.y, minimum.y), max(size.y - SAFE_MARGIN * 2.0, 1.0))
+		min(
+			max(card.custom_minimum_size.x, minimum.x),
+			max(size.x - SAFE_MARGIN * 2.0, 1.0)
+		),
+		min(
+			max(card.custom_minimum_size.y, minimum.y),
+			max(size.y - SAFE_MARGIN * 2.0, 1.0)
+		)
 	)
-	card.size = card_size
 	var centered_x := clampf(
 		(size.x - card_size.x) * 0.5,
 		SAFE_MARGIN,
@@ -143,7 +150,14 @@ func _place_card(target_rects: Array[Rect2]) -> void:
 	var chosen := bottom if bottom_overlap <= top_overlap else top
 	chosen.x = clampf(chosen.x, SAFE_MARGIN, max(SAFE_MARGIN, size.x - card_size.x - SAFE_MARGIN))
 	chosen.y = clampf(chosen.y, SAFE_MARGIN, max(SAFE_MARGIN, size.y - card_size.y - SAFE_MARGIN))
-	card.position = chosen
+	card.anchor_left = 0.0
+	card.anchor_top = 0.0
+	card.anchor_right = 0.0
+	card.anchor_bottom = 0.0
+	card.offset_left = chosen.x
+	card.offset_top = chosen.y
+	card.offset_right = chosen.x + card_size.x
+	card.offset_bottom = chosen.y + card_size.y
 
 func _overlap_area(candidate: Rect2, target_rects: Array[Rect2]) -> float:
 	var total := 0.0
@@ -157,6 +171,31 @@ func _clear_focus_frames() -> void:
 		return
 	for child in focus_frames.get_children():
 		child.free()
+
+func _target_rect_in_overlay(target: Control) -> Rect2:
+	var shared_parent := get_parent()
+	var target_origin := Vector2.ZERO
+	var current: Node = target
+	while current != null and current != shared_parent:
+		if current is Control:
+			target_origin += (current as Control).position
+		current = current.get_parent()
+	if current == null:
+		return Rect2()
+	return Rect2(target_origin - position, target.size)
+
+func _clamp_rect_to_bounds(candidate: Rect2, bounds: Rect2) -> Rect2:
+	if not candidate.has_area() or not bounds.has_area():
+		return Rect2()
+	var fitted_size := Vector2(
+		min(candidate.size.x, bounds.size.x),
+		min(candidate.size.y, bounds.size.y)
+	)
+	var fitted_position := Vector2(
+		clampf(candidate.position.x, bounds.position.x, bounds.end.x - fitted_size.x),
+		clampf(candidate.position.y, bounds.position.y, bounds.end.y - fitted_size.y)
+	)
+	return Rect2(fitted_position, fitted_size)
 
 func _focus_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()

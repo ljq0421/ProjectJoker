@@ -23,6 +23,7 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var area_label: Label = %AreaLabel
 @onready var goal_label: Label = %GoalLabel
 @onready var replay_tutorial_button: Button = %ReplayTutorialButton
+@onready var replay_advanced_guide_button: Button = %ReplayAdvancedGuideButton
 @onready var run_trial_button: Button = %RunTrialButton
 
 var session: SingleEncounterSession
@@ -49,6 +50,7 @@ func _ready() -> void:
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
 	tutorial.persistence_warning.connect(_on_tutorial_persistence_warning)
 	replay_tutorial_button.pressed.connect(start_tutorial_replay)
+	replay_advanced_guide_button.pressed.connect(_on_replay_advanced_guide_pressed)
 	run_trial_button.pressed.connect(_on_run_trial_pressed)
 	if tutorial_auto_start:
 		tutorial.call_deferred("maybe_start")
@@ -63,6 +65,7 @@ func bind_external_session(
 	tutorial.active = false
 	tutorial.visible = false
 	replay_tutorial_button.visible = false
+	replay_advanced_guide_button.visible = false
 	run_trial_button.visible = false
 	session = p_session
 	set_run_status(area_copy, goal_copy)
@@ -326,4 +329,18 @@ func _on_confirm_pressed() -> void:
 		round_committed.emit(report)
 
 func _on_run_trial_pressed() -> void:
+	_launch_iron_abacus_slice()
+
+func _on_replay_advanced_guide_pressed() -> void:
+	var store := IronAbacusGuideProgressStore.new(tutorial_config_path)
+	var reset_result := store.reset()
+	if reset_result != OK:
+		_on_tutorial_persistence_warning(
+			"无法重置进阶引导状态；仍可正常进入六面诡局。"
+		)
+		return
+	_launch_iron_abacus_slice()
+
+func _launch_iron_abacus_slice() -> void:
+	get_tree().root.set_meta("iron_abacus_guide_config_path", tutorial_config_path)
 	get_tree().change_scene_to_file("res://scenes/run/iron_abacus_slice_screen.tscn")

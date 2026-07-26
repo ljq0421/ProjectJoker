@@ -11,6 +11,7 @@ func _run() -> void:
 	slice_screen = load(
 		"res://scenes/run/iron_abacus_slice_screen.tscn"
 	).instantiate()
+	slice_screen.guide_auto_start = false
 	slice_screen.normal_target = 0
 	slice_screen.dealer_target = 0
 	root.add_child(slice_screen)

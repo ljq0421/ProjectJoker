@@ -3,6 +3,7 @@ extends SceneTree
 var failures: Array[String] = []
 var pointer_position := Vector2.ZERO
 var slice_screen: IronAbacusSliceScreen
+var guide_path: String
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -10,11 +11,18 @@ func _initialize() -> void:
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
 	await _verify_anchor_feedback()
+	guide_path = OS.get_temp_dir().path_join(
+		"project-joker-stage5-legacy-input-%d.cfg" % Time.get_ticks_usec()
+	)
+	DirAccess.remove_absolute(guide_path)
+	var guide_store := IronAbacusGuideProgressStore.new(guide_path)
+	_assert_true(guide_store.dismiss_all() == OK, "legacy stage5 check should dismiss guide")
 
 	var teaching: SingleEncounterScreen = load(
 		"res://scenes/run/single_encounter_screen.tscn"
 	).instantiate()
 	teaching.tutorial_auto_start = false
+	teaching.tutorial_config_path = guide_path
 	root.add_child(teaching)
 	current_scene = teaching
 	await _settle()
@@ -267,6 +275,7 @@ func _finish() -> void:
 	if slice_screen != null:
 		slice_screen.queue_free()
 	await process_frame
+	DirAccess.remove_absolute(guide_path)
 	if failures.is_empty():
 		print("PASS stage5_input_self_check")
 		quit(0)

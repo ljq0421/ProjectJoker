@@ -143,4 +143,8 @@ func run() -> void:
 		var slice = slice_scene.instantiate()
 		assert_true(slice.has_method("start_slice"), "slice screen should start domain flow")
 		assert_true(slice.has_method("bind_current_encounter"), "slice should bind encounter")
+		assert_true(
+			slice.get_node_or_null("%IronAbacusGuideOverlay") != null,
+			"slice should own the contextual guide overlay"
+		)
 		slice.free()

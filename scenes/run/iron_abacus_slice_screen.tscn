@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/iron_abacus_slice_screen.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/shop/shop_screen.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/components/round_summary_panel.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/components/engraving_reward_panel.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/components/iron_abacus_guide_overlay.tscn" id="7"]
 
 [node name="IronAbacusSliceScreen" type="Control"]
 layout_mode = 3
@@ -31,5 +32,9 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [node name="EngravingRewardPanel" parent="." instance=ExtResource("6")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="IronAbacusGuideOverlay" parent="." instance=ExtResource("7")]
 unique_name_in_owner = true
 layout_mode = 1
