@@ -69,3 +69,11 @@ func run() -> void:
 		assert_true(shop.has_method("bind_session"), "shop screen should bind domain state")
 		assert_true(shop.has_signal("leave_requested"), "shop should emit leave")
 		shop.free()
+
+	var three_round_scene = load("res://scenes/run/three_round_run_screen.tscn")
+	assert_true(three_round_scene != null, "three round run scene should load")
+	if three_round_scene != null:
+		var three_round = three_round_scene.instantiate()
+		assert_true(three_round.has_method("start_run"), "run screen should start a session")
+		assert_true(three_round.has_method("open_shop"), "run screen should expose shop transition")
+		three_round.free()
