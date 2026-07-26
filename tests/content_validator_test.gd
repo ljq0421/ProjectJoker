@@ -19,6 +19,8 @@ func run() -> void:
 	var valid_card := CardDefinitionScript.new()
 	valid_card.id = &"diamond_boost"
 	valid_card.display_name = "映射"
+	valid_card.rule_text = "令一张规则台的系数 +1。"
+	valid_card.tags = PackedStringArray(["规则台", "系数"])
 	valid_card.target_type = CardDefinitionScript.TargetType.TABLE
 	valid_card.effects = [valid_effect]
 

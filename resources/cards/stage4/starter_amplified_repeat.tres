@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_88ujl"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_taddk"]
+
+[sub_resource type="Resource" id="Resource_2tl5b"]
+script = ExtResource("1_88ujl")
+operation = 1
+amount = 1
+
+[sub_resource type="Resource" id="Resource_abpw3"]
+script = ExtResource("1_88ujl")
+operation = 2
+amount = 1
+
+[resource]
+script = ExtResource("2_taddk")
+id = &"starter_amplified_repeat"
+display_name = "增幅复写"
+rule_text = "令一张规则台的系数 +1，并额外结算 1 次。"
+tags = PackedStringArray("规则台", "联动")
+target_type = 1
+effects = Array[ExtResource("1_88ujl")]([SubResource("Resource_2tl5b"), SubResource("Resource_abpw3")])

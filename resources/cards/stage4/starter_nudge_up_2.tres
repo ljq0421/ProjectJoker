@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_w78os"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_llth8"]
+
+[sub_resource type="Resource" id="Resource_cfxwr"]
+script = ExtResource("1_w78os")
+amount = 2
+
+[resource]
+script = ExtResource("2_llth8")
+id = &"starter_nudge_up_2"
+display_name = "跃升"
+rule_text = "令一颗骰子的点数 +2，最终点数限制在 1..6。"
+tags = PackedStringArray("骰值", "强调")
+effects = Array[ExtResource("1_w78os")]([SubResource("Resource_cfxwr")])

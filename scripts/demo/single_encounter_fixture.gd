@@ -43,28 +43,36 @@ static func make_hand() -> Array[CardDefinition]:
 			"拨码",
 			CardDefinition.TargetType.DIE,
 			EffectSpec.Operation.ADJUST_DIE,
-			-1
+			-1,
+			"令一颗骰子的点数 -1，最终点数限制在 1..6。",
+			PackedStringArray(["骰值", "校准"])
 		),
 		_card(
 			&"diamond_map",
 			"映射",
 			CardDefinition.TargetType.TABLE,
 			EffectSpec.Operation.MODIFY_COEFFICIENT,
-			1
+			1,
+			"令一张规则台的系数 +1。",
+			PackedStringArray(["规则台", "系数"])
 		),
 		_card(
 			&"spade_link",
 			"桥接",
 			CardDefinition.TargetType.GAP,
 			EffectSpec.Operation.LINK_NEIGHBORS,
-			1
+			1,
+			"把左侧规则台的已解析结果传递到右侧规则台。",
+			PackedStringArray(["桌间", "传递"])
 		),
 		_card(
 			&"heart_reverse",
 			"倒序",
 			CardDefinition.TargetType.GLOBAL,
 			EffectSpec.Operation.REVERSE_RESOLUTION,
-			0
+			0,
+			"反转本轮规则台的解析顺序。",
+			PackedStringArray(["全局", "顺序"])
 		),
 	]
 
@@ -90,7 +98,9 @@ static func _card(
 	display_name: String,
 	target_type: CardDefinition.TargetType,
 	operation: EffectSpec.Operation,
-	amount: int
+	amount: int,
+	rule_text: String,
+	tags: PackedStringArray
 ) -> CardDefinition:
 	var effect := EffectSpec.new()
 	effect.operation = operation
@@ -100,4 +110,6 @@ static func _card(
 	card.display_name = display_name
 	card.target_type = target_type
 	card.effects = [effect]
+	card.rule_text = rule_text
+	card.tags = tags
 	return card

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_0x8sk"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_lyl6d"]
+
+[sub_resource type="Resource" id="Resource_f0lq5"]
+script = ExtResource("1_0x8sk")
+amount = 3
+
+[resource]
+script = ExtResource("2_lyl6d")
+id = &"shop_long_push"
+display_name = "长距推码"
+rule_text = "令一颗骰子的点数 +3，最终点数限制在 1..6。"
+tags = PackedStringArray("商店", "骰值")
+effects = Array[ExtResource("1_0x8sk")]([SubResource("Resource_f0lq5")])

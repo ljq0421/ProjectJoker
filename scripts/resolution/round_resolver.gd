@@ -74,11 +74,10 @@ func resolve(state: RoundState, encounter: EncounterDefinition) -> ResolutionRep
 				return _invalid("规则轨包含未知骰子")
 			values.append(die_values[die_id])
 
-		var result := _evaluator.evaluate(
-			rule,
-			values,
-			coefficient_modifiers.get(rule.id, 0)
-		)
+		var requested_modifier: int = coefficient_modifiers.get(rule.id, 0)
+		var minimum_modifier: int = 1 - rule.coefficient
+		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
+		var result := _evaluator.evaluate(rule, values, effective_modifier)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))
 			continue

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_ryyu6"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_o57vl"]
+
+[sub_resource type="Resource" id="Resource_jde4u"]
+script = ExtResource("1_ryyu6")
+operation = 2
+amount = 1
+
+[resource]
+script = ExtResource("2_o57vl")
+id = &"starter_repeat_1"
+display_name = "复写"
+rule_text = "令一张规则台额外结算 1 次。"
+tags = PackedStringArray("规则台", "重复")
+target_type = 1
+effects = Array[ExtResource("1_ryyu6")]([SubResource("Resource_jde4u")])

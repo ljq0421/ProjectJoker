@@ -15,12 +15,17 @@ func bind_card(
 	used: bool
 ) -> void:
 	card_index = index
-	text = "%s\n%s" % [definition.display_name, _target_copy(definition.target_type)]
-	button_pressed = selected
-	disabled = used
-	tooltip_text = "%s；目标：%s" % [
+	text = "%s\n%s\n%s" % [
 		definition.display_name,
 		_target_copy(definition.target_type),
+		definition.rule_text,
+	]
+	button_pressed = selected
+	disabled = used
+	tooltip_text = "%s；目标：%s；%s" % [
+		definition.display_name,
+		_target_copy(definition.target_type),
+		definition.rule_text,
 	]
 
 func _target_copy(target_type: CardDefinition.TargetType) -> String:

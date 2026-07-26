@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_xi7lj"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_i8r3r"]
+
+[sub_resource type="Resource" id="Resource_q2kt7"]
+script = ExtResource("1_xi7lj")
+operation = 3
+
+[resource]
+script = ExtResource("2_i8r3r")
+id = &"starter_reverse"
+display_name = "倒序"
+rule_text = "反转本轮规则台的解析顺序。"
+tags = PackedStringArray("全局", "顺序")
+target_type = 3
+effects = Array[ExtResource("1_xi7lj")]([SubResource("Resource_q2kt7")])

@@ -36,6 +36,10 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 			seen_card_ids[card.id] = true
 		if card.display_name.strip_edges().is_empty():
 			errors.append("card %s has no display name" % card.id)
+		if card.rule_text.strip_edges().is_empty():
+			errors.append("card %s has no rule text" % card.id)
+		if card.tags.is_empty():
+			errors.append("card %s has no display tags" % card.id)
 		if card.effects.is_empty():
 			errors.append("card %s has no effects" % card.id)
 		for effect in card.effects:

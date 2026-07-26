@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_ujyaq"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_w200k"]
+
+[sub_resource type="Resource" id="Resource_cxnie"]
+script = ExtResource("1_ujyaq")
+operation = 1
+amount = -1
+
+[sub_resource type="Resource" id="Resource_wi37g"]
+script = ExtResource("1_ujyaq")
+operation = 2
+amount = 1
+
+[resource]
+script = ExtResource("2_w200k")
+id = &"starter_stable_repeat"
+display_name = "稳态复写"
+rule_text = "令一张规则台的系数 -1（最低为 1），并额外结算 1 次。"
+tags = PackedStringArray("规则台", "权衡")
+target_type = 1
+effects = Array[ExtResource("1_ujyaq")]([SubResource("Resource_cxnie"), SubResource("Resource_wi37g")])

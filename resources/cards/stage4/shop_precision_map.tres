@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_h2vla"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_nhima"]
+
+[sub_resource type="Resource" id="Resource_nkgt0"]
+script = ExtResource("1_h2vla")
+operation = 1
+amount = 3
+
+[resource]
+script = ExtResource("2_nhima")
+id = &"shop_precision_map"
+display_name = "精密映射"
+rule_text = "令一张规则台的系数 +3。"
+tags = PackedStringArray("商店", "系数")
+target_type = 1
+effects = Array[ExtResource("1_h2vla")]([SubResource("Resource_nkgt0")])
