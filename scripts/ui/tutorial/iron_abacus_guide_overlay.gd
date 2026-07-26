@@ -19,6 +19,7 @@ const FOCUS_PADDING := 6.0
 
 var _active_checkpoint_id: StringName = &""
 var _targets: Array[Control] = []
+var _layout_refresh_serial := 0
 
 func _ready() -> void:
 	dismiss_button.pressed.connect(dismiss_all)
@@ -40,6 +41,8 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 
 	_active_checkpoint_id = checkpoint_id
 	_targets = valid_targets
+	_layout_refresh_serial += 1
+	var refresh_serial := _layout_refresh_serial
 	progress_label.text = "进阶提示 %d/%d" % [
 		int(card_spec.get("progress_index", 0)),
 		int(card_spec.get("progress_total", 5)),
@@ -50,10 +53,12 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_rebuild_focus_frames()
+	_refresh_after_layout(refresh_serial, checkpoint_id)
 	acknowledge_button.grab_focus()
 	return true
 
 func close_card() -> void:
+	_layout_refresh_serial += 1
 	_clear_focus_frames()
 	_active_checkpoint_id = &""
 	_targets.clear()
@@ -80,6 +85,20 @@ func show_persistence_warning(message: String) -> void:
 
 func refresh_targets() -> void:
 	if is_open():
+		_rebuild_focus_frames()
+
+func _refresh_after_layout(
+	refresh_serial: int,
+	checkpoint_id: StringName
+) -> void:
+	for frame_index in range(2):
+		await get_tree().process_frame
+		if (
+			refresh_serial != _layout_refresh_serial
+			or checkpoint_id != _active_checkpoint_id
+			or not is_open()
+		):
+			return
 		_rebuild_focus_frames()
 
 func active_checkpoint_id() -> StringName:
@@ -173,16 +192,33 @@ func _clear_focus_frames() -> void:
 		child.free()
 
 func _target_rect_in_overlay(target: Control) -> Rect2:
-	var shared_parent := get_parent()
-	var target_origin := Vector2.ZERO
-	var current: Node = target
-	while current != null and current != shared_parent:
-		if current is Control:
-			target_origin += (current as Control).position
-		current = current.get_parent()
-	if current == null:
-		return Rect2()
-	return Rect2(target_origin - position, target.size)
+	var overlay_global := get_global_rect()
+	var target_global := _target_content_rect(target)
+	return Rect2(
+		target_global.position - overlay_global.position,
+		target_global.size
+	)
+
+func _target_content_rect(target: Control) -> Rect2:
+	if target is GridContainer:
+		var child_bounds := Rect2()
+		var has_child_bounds := false
+		for child in target.get_children():
+			var child_control := child as Control
+			if (
+				child_control == null
+				or not child_control.visible
+				or not child_control.is_inside_tree()
+			):
+				continue
+			if has_child_bounds:
+				child_bounds = child_bounds.merge(child_control.get_global_rect())
+			else:
+				child_bounds = child_control.get_global_rect()
+				has_child_bounds = true
+		if has_child_bounds:
+			return child_bounds
+	return target.get_global_rect()
 
 func _clamp_rect_to_bounds(candidate: Rect2, bounds: Rect2) -> Rect2:
 	if not candidate.has_area() or not bounds.has_area():
