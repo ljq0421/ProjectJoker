@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_main"]
+script = ExtResource("1_effect")
+amount = -3
+
+[resource]
+script = ExtResource("2_card")
+id = &"shop_deep_drop"
+display_name = "深降推码"
+rule_text = "令一颗骰子的点数 -3，最终点数限制在 1..6。"
+tags = PackedStringArray("商店", "骰值")
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_main")])

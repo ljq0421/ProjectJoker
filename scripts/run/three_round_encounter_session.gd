@@ -86,7 +86,8 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 			status = Status.SUCCEEDED
 			intel_tickets = setup.success_intel_reward
 			if setup.prepare_shop_offers:
-				shop_offer_ids.assign(_run_rng.shuffle(catalog.shop_ids()))
+				var shuffled_shop_ids := _run_rng.shuffle(catalog.shop_ids())
+				shop_offer_ids.assign(shuffled_shop_ids.slice(0, 3))
 			else:
 				shop_offer_ids.clear()
 		else:

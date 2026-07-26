@@ -20,6 +20,9 @@ const SHOP_PATHS := [
 	"res://resources/cards/stage4/shop_precision_map.tres",
 	"res://resources/cards/stage4/shop_triple_repeat.tres",
 	"res://resources/cards/stage4/shop_long_push.tres",
+	"res://resources/cards/stage6/shop_deep_drop.tres",
+	"res://resources/cards/stage6/shop_amplified_chain.tres",
+	"res://resources/cards/stage6/shop_reverse_backup.tres",
 ]
 
 var _starter_cards: Array[CardDefinition] = []
@@ -62,8 +65,8 @@ func validate() -> Array[String]:
 	errors.append_array(ContentValidator.new().validate([], all_cards()))
 	if _starter_cards.size() != 12:
 		errors.append("starter deck must contain exactly twelve cards")
-	if _shop_cards.size() != 3:
-		errors.append("shop pool must contain exactly three cards")
+	if _shop_cards.size() != 6:
+		errors.append("shop pool must contain exactly six cards")
 	for card_id in starter_ids():
 		if card_id in shop_ids():
 			errors.append("starter and shop IDs overlap: %s" % card_id)

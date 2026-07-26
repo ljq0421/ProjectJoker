@@ -7,6 +7,7 @@ var catalog: CardCatalog
 var deck_ids: Array[StringName] = []
 var offer_ids: Array[StringName] = []
 var sold_offer_ids: Array[StringName] = []
+var purchase_records: Array[ShopPurchaseRecord] = []
 var intel_tickets: int
 var last_error: String = ""
 
@@ -53,6 +54,11 @@ func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
 	deck_ids = next_deck
 	intel_tickets -= CARD_PRICE
 	sold_offer_ids.append(offer_id)
+	purchase_records.append(ShopPurchaseRecord.new(
+		offer_id,
+		replaced_id,
+		CARD_PRICE
+	))
 	last_error = ""
 	return OperationResult.new(true)
 
