@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_134f6"]
+
+[resource]
+script = ExtResource("1_134f6")
+id = &"engraving_prism"
+display_name = "棱镜"
+rule_text = "刻印面投出并分配后，在奇偶条件中同时视为奇数与偶数。"
+operation = 3
+tags = PackedStringArray("条件", "奇偶")

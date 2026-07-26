@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="DealerDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/dealers/dealer_definition.gd" id="1_ly7lj"]
+
+[resource]
+script = ExtResource("1_ly7lj")
+id = &"dealer_iron_abacus"
+display_name = "铁算盘"
+rule_text = "每轮固定奖励 12；每有一颗骰子未分配，奖励减少 2，最低为 0。"
+fixed_reward = 12
+penalty_per_unassigned_die = 2
+tags = PackedStringArray("庄家", "全骰利用")

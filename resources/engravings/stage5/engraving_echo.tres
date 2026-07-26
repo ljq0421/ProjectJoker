@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_wpgph"]
+
+[resource]
+script = ExtResource("1_wpgph")
+id = &"engraving_echo"
+display_name = "回声"
+rule_text = "刻印面投出并分配后，规则台通过时获得较高相邻骰点数的一半（向下取整）。"
+amount = 2
+tags = PackedStringArray("相邻", "固定奖励")
