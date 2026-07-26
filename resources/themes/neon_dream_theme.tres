@@ -1,100 +1,82 @@
-[gd_resource type="Theme" load_steps=7 format=3]
+[gd_resource type="Theme" load_steps=13 format=3]
 
-[sub_resource type="StyleBoxFlat" id="Panel"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/panel_glass_9patch.svg" id="1_panel"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/button_glass_normal_9patch.svg" id="2_button_normal"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/button_glass_hover_9patch.svg" id="3_button_hover"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/button_glass_pressed_9patch.svg" id="4_button_pressed"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/button_glass_disabled_9patch.svg" id="5_button_disabled"]
+[ext_resource type="Texture2D" path="res://resources/ui/dream_glass/button_focus_9patch.svg" id="6_button_focus"]
+
+[sub_resource type="StyleBoxTexture" id="Panel"]
 content_margin_left = 16.0
 content_margin_top = 14.0
 content_margin_right = 16.0
 content_margin_bottom = 14.0
-bg_color = Color(0.055, 0.043, 0.15, 0.94)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.35, 0.9, 0.86, 0.72)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+texture = ExtResource("1_panel")
+texture_margin_left = 24.0
+texture_margin_top = 24.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.0
 
-[sub_resource type="StyleBoxFlat" id="ButtonNormal"]
+[sub_resource type="StyleBoxTexture" id="ButtonNormal"]
 content_margin_left = 14.0
 content_margin_top = 9.0
 content_margin_right = 14.0
 content_margin_bottom = 9.0
-bg_color = Color(0.2, 0.11, 0.36, 0.94)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.83, 0.48, 0.92, 0.9)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+texture = ExtResource("2_button_normal")
+texture_margin_left = 18.0
+texture_margin_top = 16.0
+texture_margin_right = 18.0
+texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="ButtonHover"]
+[sub_resource type="StyleBoxTexture" id="ButtonHover"]
 content_margin_left = 14.0
 content_margin_top = 9.0
 content_margin_right = 14.0
 content_margin_bottom = 9.0
-bg_color = Color(0.27, 0.16, 0.45, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.35, 0.9, 0.86, 0.95)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+texture = ExtResource("3_button_hover")
+texture_margin_left = 18.0
+texture_margin_top = 16.0
+texture_margin_right = 18.0
+texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="ButtonPressed"]
+[sub_resource type="StyleBoxTexture" id="ButtonPressed"]
 content_margin_left = 14.0
 content_margin_top = 9.0
 content_margin_right = 14.0
 content_margin_bottom = 9.0
-bg_color = Color(0.12, 0.34, 0.39, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.55, 1, 0.94, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+texture = ExtResource("4_button_pressed")
+texture_margin_left = 18.0
+texture_margin_top = 16.0
+texture_margin_right = 18.0
+texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="ButtonDisabled"]
+[sub_resource type="StyleBoxTexture" id="ButtonDisabled"]
 content_margin_left = 14.0
 content_margin_top = 9.0
 content_margin_right = 14.0
 content_margin_bottom = 9.0
-bg_color = Color(0.11, 0.08, 0.18, 0.72)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.37, 0.31, 0.48, 0.65)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+texture = ExtResource("5_button_disabled")
+texture_margin_left = 18.0
+texture_margin_top = 16.0
+texture_margin_right = 18.0
+texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="ButtonFocus"]
+[sub_resource type="StyleBoxTexture" id="ButtonFocus"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
 expand_margin_left = 2.0
 expand_margin_top = 2.0
 expand_margin_right = 2.0
 expand_margin_bottom = 2.0
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.68, 0.91, 0.95)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+texture = ExtResource("6_button_focus")
+texture_margin_left = 18.0
+texture_margin_top = 16.0
+texture_margin_right = 18.0
+texture_margin_bottom = 16.0
+draw_center = false
 
 [resource]
 default_font_size = 18

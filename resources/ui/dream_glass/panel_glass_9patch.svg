@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="256" height="256" viewBox="0 0 256 256"
+     fill="none">
+  <defs>
+    <linearGradient id="fill" x1="18" y1="4" x2="238" y2="252"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B1B55"/>
+      <stop offset="0.55" stop-color="#0E0B26"/>
+      <stop offset="1" stop-color="#123D48"/>
+    </linearGradient>
+    <linearGradient id="violetTrace" x1="16" y1="6" x2="112" y2="76"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D27BE5" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#D27BE5" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="cyanTrace" x1="144" y1="180" x2="244" y2="250"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#59E6DB" stop-opacity="0"/>
+      <stop offset="1" stop-color="#59E6DB" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="248" height="248" rx="12"
+        fill="url(#fill)" fill-opacity="0.94"
+        stroke="#59E6DB" stroke-opacity="0.72" stroke-width="2"/>
+  <path d="M18 6H64M6 18V64"
+        stroke="url(#violetTrace)" stroke-width="1" stroke-linecap="round"/>
+  <path d="M192 250H238M250 192V238"
+        stroke="url(#cyanTrace)" stroke-width="1" stroke-linecap="round"/>
+</svg>
