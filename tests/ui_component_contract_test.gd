@@ -44,3 +44,12 @@ func run() -> void:
 		assert_true(tutorial.has_method("configure"), "tutorial should accept screen and store")
 		assert_true(tutorial.has_method("allows"), "tutorial should guard gameplay actions")
 		tutorial.free()
+
+	var summary_scene = load("res://scenes/components/round_summary_panel.tscn")
+	assert_true(summary_scene != null, "round summary scene should load")
+	if summary_scene != null:
+		var summary = summary_scene.instantiate()
+		assert_true(summary.has_method("show_run_state"), "summary should bind run state")
+		assert_true(summary.has_signal("next_round_requested"), "summary should emit next round")
+		assert_true(summary.has_signal("shop_requested"), "summary should emit shop entry")
+		summary.free()
