@@ -6,10 +6,16 @@ signal dismiss_all_requested(checkpoint_id: StringName)
 
 const SAFE_MARGIN := 28.0
 const FOCUS_PADDING := 6.0
+const STANDARD_CARD_MINIMUM_SIZE := Vector2(540, 236)
+const ROUTE_RAIL_MARGIN := 8.0
+const ROUTE_RAIL_TOP := 0.0
 
 @onready var dimmer: ColorRect = %GuideDimmer
 @onready var focus_frames: Control = %GuideFocusFrames
 @onready var card: PanelContainer = %GuideCard
+@onready var margins: MarginContainer = card.get_node("Margins")
+@onready var content: VBoxContainer = margins.get_node("Content")
+@onready var actions: HBoxContainer = content.get_node("Actions")
 @onready var progress_label: Label = %GuideProgress
 @onready var title_label: Label = %GuideTitle
 @onready var instruction_label: Label = %GuideInstruction
@@ -20,6 +26,10 @@ const FOCUS_PADDING := 6.0
 var _active_checkpoint_id: StringName = &""
 var _targets: Array[Control] = []
 var _layout_refresh_serial := 0
+var _route_rail_allowed := false
+var _route_rail: HBoxContainer
+var _route_copy: VBoxContainer
+var _route_rail_active := false
 
 func _ready() -> void:
 	dismiss_button.pressed.connect(dismiss_all)
@@ -41,6 +51,10 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 
 	_active_checkpoint_id = checkpoint_id
 	_targets = valid_targets
+	_route_rail_allowed = (
+		checkpoint_id == &"route"
+		and int(card_spec.get("progress_total", 0)) == 4
+	)
 	_layout_refresh_serial += 1
 	var refresh_serial := _layout_refresh_serial
 	var progress_copy := String(card_spec.get("progress_label", "进阶提示"))
@@ -64,6 +78,8 @@ func close_card() -> void:
 	_clear_focus_frames()
 	_active_checkpoint_id = &""
 	_targets.clear()
+	_route_rail_allowed = false
+	_restore_standard_card_layout()
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if is_node_ready():
@@ -145,6 +161,7 @@ func _rebuild_focus_frames() -> void:
 	_place_card(target_rects)
 
 func _place_card(target_rects: Array[Rect2]) -> void:
+	_restore_standard_card_layout()
 	var minimum := card.get_combined_minimum_size()
 	var card_size := Vector2(
 		min(
@@ -168,17 +185,97 @@ func _place_card(target_rects: Array[Rect2]) -> void:
 	)
 	var top_overlap := _overlap_area(Rect2(top, card_size), target_rects)
 	var bottom_overlap := _overlap_area(Rect2(bottom, card_size), target_rects)
+	if _route_rail_allowed and top_overlap > 0.0 and bottom_overlap > 0.0:
+		_place_route_top_rail(target_rects)
+		return
 	var chosen := bottom if bottom_overlap <= top_overlap else top
-	chosen.x = clampf(chosen.x, SAFE_MARGIN, max(SAFE_MARGIN, size.x - card_size.x - SAFE_MARGIN))
-	chosen.y = clampf(chosen.y, SAFE_MARGIN, max(SAFE_MARGIN, size.y - card_size.y - SAFE_MARGIN))
+	_set_card_rect(Rect2(chosen, card_size))
+
+func _place_route_top_rail(target_rects: Array[Rect2]) -> void:
+	var top_clearance: float = _top_clearance(target_rects)
+	if size.x <= 0.0 or top_clearance <= 0.0:
+		return
+	_activate_route_rail()
+	margins.add_theme_constant_override("margin_left", 12)
+	margins.add_theme_constant_override("margin_top", 2)
+	margins.add_theme_constant_override("margin_right", 12)
+	margins.add_theme_constant_override("margin_bottom", 2)
+	title_label.add_theme_font_size_override("font_size", 20)
+	var rail_width: float = maxf(size.x - ROUTE_RAIL_MARGIN * 2.0, 1.0)
+	card.custom_minimum_size = Vector2(rail_width, 0.0)
+	var rail_height: float = card.get_combined_minimum_size().y
+	if rail_height > top_clearance - ROUTE_RAIL_TOP:
+		push_error(
+			"Gold Corridor route guide rail cannot fit above focus targets: "
+			+ "height=%s clearance=%s" % [rail_height, top_clearance]
+		)
+		return
+	_set_card_rect(Rect2(
+		Vector2(ROUTE_RAIL_MARGIN, ROUTE_RAIL_TOP),
+		Vector2(rail_width, rail_height)
+	))
+
+func _activate_route_rail() -> void:
+	if _route_rail == null:
+		_route_rail = HBoxContainer.new()
+		_route_rail.name = "RouteRail"
+		_route_rail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_route_rail.add_theme_constant_override("separation", 14)
+		_route_copy = VBoxContainer.new()
+		_route_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_route_copy.add_theme_constant_override("separation", 0)
+		_route_rail.add_child(_route_copy)
+		margins.add_child(_route_rail)
+	_move_to_parent(progress_label, _route_copy)
+	_move_to_parent(title_label, _route_copy)
+	_move_to_parent(instruction_label, _route_copy)
+	_move_to_parent(actions, _route_rail)
+	content.visible = false
+	_route_rail.visible = true
+	_route_rail_active = true
+
+func _move_to_parent(child: Control, new_parent: Node) -> void:
+	if child.get_parent() != new_parent:
+		child.reparent(new_parent)
+
+func _top_clearance(target_rects: Array[Rect2]) -> float:
+	var clearance := size.y
+	for target_rect in target_rects:
+		clearance = min(clearance, target_rect.position.y)
+	return clearance
+
+func _set_card_rect(rect: Rect2) -> void:
 	card.anchor_left = 0.0
 	card.anchor_top = 0.0
 	card.anchor_right = 0.0
 	card.anchor_bottom = 0.0
-	card.offset_left = chosen.x
-	card.offset_top = chosen.y
-	card.offset_right = chosen.x + card_size.x
-	card.offset_bottom = chosen.y + card_size.y
+	card.offset_left = rect.position.x
+	card.offset_top = rect.position.y
+	card.offset_right = rect.end.x
+	card.offset_bottom = rect.end.y
+
+func _restore_standard_card_layout() -> void:
+	if not is_instance_valid(card):
+		return
+	if _route_rail_active:
+		_move_to_parent(progress_label, content)
+		_move_to_parent(title_label, content)
+		_move_to_parent(instruction_label, content)
+		_move_to_parent(actions, content)
+		content.move_child(progress_label, 0)
+		content.move_child(title_label, 1)
+		content.move_child(instruction_label, 2)
+		content.move_child(warning_label, 3)
+		content.move_child(actions, 4)
+		content.visible = true
+		_route_rail.visible = false
+		_route_rail_active = false
+	card.custom_minimum_size = STANDARD_CARD_MINIMUM_SIZE
+	margins.remove_theme_constant_override("margin_left")
+	margins.remove_theme_constant_override("margin_top")
+	margins.remove_theme_constant_override("margin_right")
+	margins.remove_theme_constant_override("margin_bottom")
+	title_label.remove_theme_font_size_override("font_size")
 
 func _overlap_area(candidate: Rect2, target_rects: Array[Rect2]) -> float:
 	var total := 0.0

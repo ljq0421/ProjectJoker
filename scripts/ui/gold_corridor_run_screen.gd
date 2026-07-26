@@ -263,9 +263,13 @@ func _request_guide(checkpoint_id: StringName) -> void:
 func _resolve_guide_target(target_id: StringName) -> Control:
 	match target_id:
 		&"route_left":
-			return route_panel.get_node_or_null("%LeftRouteButton")
+			return route_panel.get_node_or_null(
+				"SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage"
+			)
 		&"route_right":
-			return route_panel.get_node_or_null("%RightRouteButton")
+			return route_panel.get_node_or_null(
+				"SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage"
+			)
 		&"shop_tickets":
 			return shop_screen.get_node_or_null("%TicketLabel")
 		&"shop_deck":

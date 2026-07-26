@@ -120,7 +120,7 @@ func _assert_checkpoint(
 	)
 
 	var card_spec := screen.guide_flow.card_spec(checkpoint_id)
-	var targets := _resolve_targets(screen, card_spec)
+	var targets := _approved_targets(screen, checkpoint_id, card_spec)
 	var focus_layer: Control = overlay.get_node("%GuideFocusFrames")
 	_assert_equal(
 		focus_layer.get_child_count(),
@@ -156,6 +156,18 @@ func _assert_checkpoint(
 		)
 
 	var card_global := card.get_global_rect()
+	for label_name in ["GuideProgress", "GuideTitle", "GuideInstruction"]:
+		var label: Label = overlay.get_node("%" + label_name)
+		_assert_true(
+			label.visible and card_global.encloses(label.get_global_rect()),
+			"%s %s %s should remain visible inside the guide card"
+				% [size_label, checkpoint_id, label_name]
+		)
+		_assert_true(
+			label.size.y >= label.get_combined_minimum_size().y,
+			"%s %s %s should have enough height for its copy"
+				% [size_label, checkpoint_id, label_name]
+		)
 	for button_name in ["GuideDismissButton", "GuideAcknowledgeButton"]:
 		var button: Button = overlay.get_node("%" + button_name)
 		_assert_true(
@@ -180,17 +192,76 @@ func _assert_checkpoint(
 	)
 	await process_frame
 
-func _resolve_targets(
+func _approved_targets(
 	screen: GoldCorridorRunScreen,
+	checkpoint_id: StringName,
 	card_spec: Dictionary
 ) -> Array[Control]:
 	var targets: Array[Control] = []
-	for target_id in card_spec.get("target_ids", []):
-		var target := screen._resolve_guide_target(target_id)
-		_assert_true(target != null, "guide target %s should resolve through the screen" % target_id)
-		if target != null:
-			targets.append(target)
+	var approved_ids := _approved_target_ids(checkpoint_id)
+	_assert_equal(
+		card_spec.get("target_ids", []),
+		approved_ids,
+		"%s guide spec should retain its approved target IDs" % checkpoint_id
+	)
+	for target_id in approved_ids:
+		var expected := _approved_target(screen, target_id)
+		var resolved := screen._resolve_guide_target(target_id)
+		_assert_true(
+			expected != null,
+			"%s approved target %s should exist" % [checkpoint_id, target_id]
+		)
+		_assert_true(
+			resolved == expected,
+			"%s target %s should resolve to the approved node; expected=%s actual=%s"
+				% [checkpoint_id, target_id, expected, resolved]
+		)
+		if expected != null:
+			targets.append(expected)
 	return targets
+
+func _approved_target_ids(checkpoint_id: StringName) -> Array[StringName]:
+	match checkpoint_id:
+		&"route":
+			return [&"route_left", &"route_right"]
+		&"shop":
+			return [&"shop_tickets", &"shop_deck", &"shop_offers"]
+		&"dealer":
+			return [&"dealer_panel", &"resolution_panel"]
+		&"engraving":
+			return [&"reward_offers", &"reward_dice", &"reward_faces"]
+	return []
+
+func _approved_target(
+	screen: GoldCorridorRunScreen,
+	target_id: StringName
+) -> Control:
+	match target_id:
+		&"route_left":
+			return screen.get_node("%RouteChoicePanel").get_node(
+				"SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage"
+			)
+		&"route_right":
+			return screen.get_node("%RouteChoicePanel").get_node(
+				"SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage"
+			)
+		&"shop_tickets":
+			return screen.get_node("%ShopScreen").get_node("%TicketLabel")
+		&"shop_deck":
+			return screen.get_node("%ShopScreen").get_node("%DeckGrid")
+		&"shop_offers":
+			return screen.get_node("%ShopScreen").get_node("%OfferColumn")
+		&"dealer_panel":
+			return screen.get_node("%EncounterScreen").get_node("%DealerPanel")
+		&"resolution_panel":
+			return screen.get_node("%EncounterScreen").get_node("%ResolutionPanel")
+		&"reward_offers":
+			return screen.get_node("%EngravingRewardPanel").get_node("%OfferRow")
+		&"reward_dice":
+			return screen.get_node("%EngravingRewardPanel").get_node("%DieRow")
+		&"reward_faces":
+			return screen.get_node("%EngravingRewardPanel").get_node("%FaceGrid")
+	return null
 
 func _expected_focus_rect(
 	overlay: IronAbacusGuideOverlay,
