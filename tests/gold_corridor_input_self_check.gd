@@ -3,16 +3,22 @@ extends SceneTree
 var failures: Array[String] = []
 var pointer_position := Vector2.ZERO
 var run_screen: GoldCorridorRunScreen
+var guide_path: String
 
 func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
+	guide_path = OS.get_temp_dir().path_join(
+		"project-joker-gold-corridor-entry-%d.cfg" % Time.get_ticks_usec()
+	)
+	DirAccess.remove_absolute(guide_path)
 	var entry: SingleEncounterScreen = load(
 		"res://scenes/run/single_encounter_screen.tscn"
 	).instantiate()
 	entry.tutorial_auto_start = false
+	entry.tutorial_config_path = guide_path
 	root.add_child(entry)
 	current_scene = entry
 	await _settle()
@@ -24,6 +30,11 @@ func _run() -> void:
 	if run_screen == null:
 		await _finish()
 		return
+	_assert_equal(
+		run_screen.guide_config_path,
+		guide_path,
+		"normal entry should propagate its configured guide path"
+	)
 	run_screen.guide_auto_start = false
 	run_screen.get_node("%GoldCorridorGuideOverlay").close_card()
 
@@ -269,6 +280,7 @@ func _finish() -> void:
 	if run_screen != null:
 		run_screen.queue_free()
 	await process_frame
+	DirAccess.remove_absolute(guide_path)
 	if failures.is_empty():
 		print("PASS gold_corridor_input_self_check")
 		quit(0)

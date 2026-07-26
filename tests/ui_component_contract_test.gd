@@ -40,6 +40,30 @@ func run() -> void:
 			"screen should expose run header binding"
 		)
 		assert_true(screen.has_method("bind_dealer"), "screen should expose dealer binding")
+		for button_name in [
+			"ReplayTutorialButton",
+			"ReplayAdvancedGuideButton",
+			"ReplayGoldCorridorGuideButton",
+			"RunTrialButton",
+		]:
+			assert_true(
+				screen.get_node_or_null("%" + button_name) != null,
+				"entry should expose %s" % button_name
+			)
+		var expected_button_texts := {
+			"ReplayTutorialButton": "重看引导",
+			"ReplayAdvancedGuideButton": "重看铁算盘原型引导",
+			"ReplayGoldCorridorGuideButton": "重看区域提示",
+			"RunTrialButton": "进入六面诡局",
+		}
+		for button_name in expected_button_texts:
+			var button := screen.get_node_or_null("%" + button_name) as Button
+			if button != null:
+				assert_equal(
+					button.text,
+					expected_button_texts[button_name],
+					"%s text should remain stable" % button_name
+				)
 		screen.free()
 
 	var tutorial_scene = load("res://scenes/components/single_encounter_tutorial.tscn")

@@ -22,6 +22,9 @@ func _run() -> void:
 	var tray: Control = screen.get_node("%DiceTray")
 	var resolution: Control = screen.get_node("%ResolutionPanel")
 	var hand: Control = screen.get_node("%Hand")
+	var replay_tutorial: Control = screen.get_node("%ReplayTutorialButton")
+	var replay_advanced: Control = screen.get_node("%ReplayAdvancedGuideButton")
+	var replay_gold_corridor: Control = screen.get_node("%ReplayGoldCorridorGuideButton")
 	var run_trial: Control = screen.get_node("%RunTrialButton")
 
 	_assert_inside(screen.get_rect(), dealer.get_global_rect(), "dealer")
@@ -33,6 +36,9 @@ func _run() -> void:
 	_assert_inside(screen.get_rect(), tray.get_global_rect(), "dice tray")
 	_assert_inside(screen.get_rect(), resolution.get_global_rect(), "resolution")
 	_assert_inside(screen.get_rect(), hand.get_global_rect(), "hand")
+	_assert_inside(screen.get_rect(), replay_tutorial.get_global_rect(), "base replay button")
+	_assert_inside(screen.get_rect(), replay_advanced.get_global_rect(), "Iron Abacus replay button")
+	_assert_inside(screen.get_rect(), replay_gold_corridor.get_global_rect(), "region guide replay button")
 	_assert_inside(screen.get_rect(), run_trial.get_global_rect(), "three round trial button")
 	_assert_true(
 		absf(left.size.x - middle.size.x) <= 2.0

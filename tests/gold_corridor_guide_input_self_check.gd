@@ -11,12 +11,92 @@ func _initialize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
+	await _verify_replay_entry_isolation()
+	await _verify_replay_entry_reset_failure()
 	await _verify_real_checkpoint_path()
 	await _verify_dismiss_all_path()
 	await _verify_corrupt_config_fails_open()
 	await _verify_write_failure_fails_open()
 	await _verify_missing_target_fails_open()
 	await _finish()
+
+func _verify_replay_entry_isolation() -> void:
+	var path := _temporary_config_path("entry-replay")
+	var config := ConfigFile.new()
+	config.set_value("onboarding", "done", true)
+	config.set_value("iron_abacus_guide_v1", "seen_shop", true)
+	config.set_value("gold_corridor_guide_v1", "dismissed", true)
+	for checkpoint_key in ["seen_route", "seen_shop", "seen_dealer", "seen_engraving"]:
+		config.set_value("gold_corridor_guide_v1", checkpoint_key, true)
+	_assert_equal(config.save(path), OK, "replay-isolation fixture should persist")
+	var entry: SingleEncounterScreen = load(
+		"res://scenes/run/single_encounter_screen.tscn"
+	).instantiate()
+	entry.tutorial_auto_start = false
+	entry.tutorial_config_path = path
+	root.add_child(entry)
+	current_scene = entry
+	await _settle()
+	var replay_button := entry.get_node_or_null("%ReplayGoldCorridorGuideButton") as Button
+	_assert_true(replay_button != null, "region replay entry should expose a button")
+	if replay_button == null:
+		entry.queue_free()
+		await process_frame
+		current_scene = null
+		return
+	await _click(replay_button)
+	await _settle()
+	run_screen = current_scene as GoldCorridorRunScreen
+	_assert_true(run_screen != null, "region replay entry should open Gold Corridor")
+	if run_screen == null:
+		return
+	_assert_equal(
+		run_screen.guide_config_path,
+		path,
+		"region replay should pass its configured guide path"
+	)
+	var overlay: IronAbacusGuideOverlay = run_screen.get_node("%GoldCorridorGuideOverlay")
+	_assert_checkpoint_open(overlay, &"route", "region replay route")
+	var reloaded := ConfigFile.new()
+	_assert_equal(reloaded.load(path), OK, "replay config should remain readable")
+	_assert_true(
+		bool(reloaded.get_value("onboarding", "done", false)),
+		"region replay should preserve base tutorial completion"
+	)
+	_assert_true(
+		bool(reloaded.get_value("iron_abacus_guide_v1", "seen_shop", false)),
+		"region replay should preserve Iron Abacus guide progress"
+	)
+	await _free_screen()
+
+func _verify_replay_entry_reset_failure() -> void:
+	var missing_parent := OS.get_temp_dir().path_join(
+		"project-joker-gold-guide-entry-missing-%d" % Time.get_ticks_usec()
+	)
+	var path := missing_parent.path_join("onboarding.cfg")
+	var entry: SingleEncounterScreen = load(
+		"res://scenes/run/single_encounter_screen.tscn"
+	).instantiate()
+	entry.tutorial_auto_start = false
+	entry.tutorial_config_path = path
+	root.add_child(entry)
+	current_scene = entry
+	await _settle()
+	var replay_button := entry.get_node_or_null("%ReplayGoldCorridorGuideButton") as Button
+	_assert_true(replay_button != null, "region replay entry should expose a button on reset failure")
+	if replay_button == null:
+		entry.queue_free()
+		await process_frame
+		current_scene = null
+		return
+	replay_button.emit_signal("pressed")
+	await _settle()
+	_assert_true(current_scene == entry, "failed region reset should keep the player on entry")
+	_assert_true(
+		"无法重置区域提示；仍可正常进入六面诡局。" in entry.get_node("%ErrorLabel").text,
+		"failed region reset should show the visible normal-entry warning"
+	)
+	await _free_screen()
 
 func _verify_real_checkpoint_path() -> void:
 	guide_path = _temporary_config_path("real")

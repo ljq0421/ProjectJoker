@@ -23,6 +23,11 @@ func _run() -> void:
 	root.add_child(teaching)
 	current_scene = teaching
 	await _settle()
+	_assert_equal(
+		teaching.get_node("%ReplayAdvancedGuideButton").text,
+		"重看铁算盘原型引导",
+		"old guide replay entry should use the explicit prototype label"
+	)
 	await _click(teaching.get_node("%ReplayAdvancedGuideButton"))
 	await _settle()
 
