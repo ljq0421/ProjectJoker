@@ -329,7 +329,9 @@ func _on_confirm_pressed() -> void:
 		round_committed.emit(report)
 
 func _on_run_trial_pressed() -> void:
-	_launch_iron_abacus_slice()
+	get_tree().change_scene_to_file(
+		"res://scenes/run/gold_corridor_run_screen.tscn"
+	)
 
 func _on_replay_advanced_guide_pressed() -> void:
 	var store := IronAbacusGuideProgressStore.new(tutorial_config_path)

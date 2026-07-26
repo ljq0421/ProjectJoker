@@ -88,6 +88,27 @@ func show_dealer_failure(run_session: ThreeRoundEncounterSession) -> void:
 	retry_button.text = "完整重试"
 	return_button.visible = true
 
+func show_area_failure(
+	run_session: ThreeRoundEncounterSession,
+	dealer_failure: bool
+) -> void:
+	visible = true
+	_hide_actions()
+	title_label.text = (
+		"铁算盘挑战未达标"
+		if dealer_failure
+		else "金线回廊解析未达标"
+	)
+	detail_label.text = "累计解析：%d / %d\n目标差值：%d" % [
+		run_session.cumulative_total,
+		run_session.target_total,
+		maxi(run_session.target_total - run_session.cumulative_total, 0),
+	]
+	retry_button.visible = true
+	retry_button.text = "重新开始金线回廊"
+	return_button.visible = true
+	return_button.text = "返回入口"
+
 func show_verification_result(applied: bool, reason: String) -> void:
 	visible = true
 	_hide_actions()

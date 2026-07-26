@@ -23,7 +23,7 @@ func _run() -> void:
 	root.add_child(teaching)
 	current_scene = teaching
 	await _settle()
-	await _click(teaching.get_node("%RunTrialButton"))
+	await _click(teaching.get_node("%ReplayAdvancedGuideButton"))
 	await _settle()
 
 	slice_screen = current_scene as IronAbacusSliceScreen

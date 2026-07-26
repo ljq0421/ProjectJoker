@@ -18,18 +18,15 @@ func _run() -> void:
 	var guide_store := IronAbacusGuideProgressStore.new(guide_path)
 	_assert_true(guide_store.dismiss_all() == OK, "legacy stage5 check should dismiss guide")
 
-	var teaching: SingleEncounterScreen = load(
-		"res://scenes/run/single_encounter_screen.tscn"
+	slice_screen = load(
+		"res://scenes/run/iron_abacus_slice_screen.tscn"
 	).instantiate()
-	teaching.tutorial_auto_start = false
-	teaching.tutorial_config_path = guide_path
-	root.add_child(teaching)
-	current_scene = teaching
+	slice_screen.guide_auto_start = false
+	slice_screen.guide_config_path = guide_path
+	root.add_child(slice_screen)
+	current_scene = slice_screen
 	await _settle()
-	await _click(teaching.get_node("%RunTrialButton"))
-	await _settle()
-	slice_screen = current_scene as IronAbacusSliceScreen
-	_assert_true(slice_screen != null, "real teaching entry should open Iron Abacus slice")
+	_assert_true(slice_screen != null, "legacy Iron Abacus slice should instantiate directly")
 	if slice_screen == null:
 		await _finish()
 		return

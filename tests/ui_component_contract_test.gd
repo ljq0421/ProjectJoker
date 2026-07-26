@@ -148,3 +148,26 @@ func run() -> void:
 			"slice should own the contextual guide overlay"
 		)
 		slice.free()
+
+	var gold_scene = load("res://scenes/run/gold_corridor_run_screen.tscn")
+	assert_true(gold_scene != null, "Gold Corridor run scene should load")
+	if gold_scene != null:
+		var gold = gold_scene.instantiate()
+		assert_true(gold.has_method("start_run"), "Gold Corridor should start an area run")
+		assert_true(
+			gold.has_method("bind_current_encounter"),
+			"Gold Corridor should bind the active encounter"
+		)
+		for node_name in [
+			"EncounterScreen",
+			"ShopScreen",
+			"RoundSummaryPanel",
+			"RouteChoicePanel",
+			"EngravingRewardPanel",
+			"AreaCompletePanel",
+		]:
+			assert_true(
+				gold.get_node_or_null("%" + node_name) != null,
+				"Gold Corridor should own %s" % node_name
+			)
+		gold.free()

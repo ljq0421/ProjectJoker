@@ -117,7 +117,7 @@ tooltip_text = "重置五个进阶提示并从新的六面诡局流程开始"
 unique_name_in_owner = true
 layout_mode = 2
 text = "进入六面诡局"
-tooltip_text = "开始普通试局、情报交换、铁算盘挑战与刻印验证"
+tooltip_text = "完成两次路线选择、两个普通房、两次情报交换、铁算盘与区域刻印奖励"
 
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
 layout_mode = 2
