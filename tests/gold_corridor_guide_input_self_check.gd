@@ -11,14 +11,94 @@ func _initialize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
+	await _verify_launch_metadata_is_one_time()
+	await _verify_normal_entry_preserves_progress()
 	await _verify_replay_entry_isolation()
 	await _verify_replay_entry_reset_failure()
 	await _verify_real_checkpoint_path()
 	await _verify_dismiss_all_path()
 	await _verify_corrupt_config_fails_open()
 	await _verify_write_failure_fails_open()
+	await _verify_dealer_write_failure_preserves_session()
 	await _verify_missing_target_fails_open()
+	await _verify_failure_retry_and_restart_suppression()
 	await _finish()
+
+func _verify_launch_metadata_is_one_time() -> void:
+	var first_path := _temporary_config_path("metadata-first")
+	var second_path := _temporary_config_path("metadata-second")
+	root.set_meta("gold_corridor_guide_config_path", first_path)
+	var first_screen: GoldCorridorRunScreen = load(
+		"res://scenes/run/gold_corridor_run_screen.tscn"
+	).instantiate()
+	first_screen.guide_auto_start = false
+	root.add_child(first_screen)
+	current_scene = first_screen
+	await _settle()
+	_assert_equal(
+		first_screen.guide_config_path,
+		first_path,
+		"first run screen should consume one-time launch metadata"
+	)
+	_assert_false(
+		root.has_meta("gold_corridor_guide_config_path"),
+		"run screen should remove consumed launch metadata"
+	)
+	first_screen.queue_free()
+	await process_frame
+	current_scene = null
+
+	var second_screen: GoldCorridorRunScreen = load(
+		"res://scenes/run/gold_corridor_run_screen.tscn"
+	).instantiate()
+	second_screen.guide_auto_start = false
+	second_screen.guide_config_path = second_path
+	root.add_child(second_screen)
+	current_scene = second_screen
+	await _settle()
+	_assert_equal(
+		second_screen.guide_config_path,
+		second_path,
+		"consumed launch metadata must not affect a second run screen"
+	)
+	second_screen.queue_free()
+	await process_frame
+	current_scene = null
+
+func _verify_normal_entry_preserves_progress() -> void:
+	var path := _temporary_config_path("entry-normal")
+	var store := GoldCorridorGuideProgressStore.new(path)
+	_assert_equal(store.mark_seen(&"route"), OK, "normal-entry route seed should persist")
+	_assert_equal(store.mark_seen(&"dealer"), OK, "normal-entry dealer seed should persist")
+	var entry: SingleEncounterScreen = load(
+		"res://scenes/run/single_encounter_screen.tscn"
+	).instantiate()
+	entry.tutorial_auto_start = false
+	entry.tutorial_config_path = path
+	root.add_child(entry)
+	current_scene = entry
+	await _settle()
+	await _click(entry.get_node("%RunTrialButton"))
+	await _settle()
+	run_screen = current_scene as GoldCorridorRunScreen
+	_assert_true(run_screen != null, "normal entry should open Gold Corridor")
+	if run_screen == null:
+		await _free_screen()
+		return
+	_assert_false(
+		run_screen.get_node("%GoldCorridorGuideOverlay").is_open(),
+		"normal entry should respect the seeded seen-route flag"
+	)
+	var reloaded := GoldCorridorGuideProgressStore.new(path)
+	_assert_false(reloaded.is_dismissed(), "normal entry should not dismiss the guide")
+	_assert_true(reloaded.is_seen(&"route"), "normal entry should preserve seen route")
+	_assert_true(reloaded.is_seen(&"dealer"), "normal entry should preserve seen dealer")
+	_assert_false(reloaded.is_seen(&"shop"), "normal entry should not forge seen shop")
+	_assert_false(
+		reloaded.is_seen(&"engraving"),
+		"normal entry should not forge seen engraving"
+	)
+	await _free_screen()
 
 func _verify_replay_entry_isolation() -> void:
 	var path := _temporary_config_path("entry-replay")
@@ -82,6 +162,9 @@ func _verify_replay_entry_reset_failure() -> void:
 	root.add_child(entry)
 	current_scene = entry
 	await _settle()
+	entry.session.last_error = "entry-session-sentinel"
+	entry.refresh_from_session()
+	var session_before := _single_encounter_session_snapshot(entry.session)
 	var replay_button := entry.get_node_or_null("%ReplayGoldCorridorGuideButton") as Button
 	_assert_true(replay_button != null, "region replay entry should expose a button on reset failure")
 	if replay_button == null:
@@ -92,6 +175,16 @@ func _verify_replay_entry_reset_failure() -> void:
 	replay_button.emit_signal("pressed")
 	await _settle()
 	_assert_true(current_scene == entry, "failed region reset should keep the player on entry")
+	_assert_equal(
+		_single_encounter_session_snapshot(entry.session),
+		session_before,
+		"failed region reset warning should preserve the entry encounter session"
+	)
+	_assert_equal(
+		entry.session.last_error,
+		"entry-session-sentinel",
+		"failed region reset warning should preserve encounter last_error"
+	)
 	_assert_true(
 		"无法重置区域提示；仍可正常进入六面诡局。" in entry.get_node("%ErrorLabel").text,
 		"failed region reset should show the visible normal-entry warning"
@@ -259,6 +352,70 @@ func _verify_write_failure_fails_open() -> void:
 	)
 	await _free_screen()
 
+func _verify_dealer_write_failure_preserves_session() -> void:
+	var missing_parent := OS.get_temp_dir().path_join(
+		"project-joker-gold-guide-dealer-missing-%d" % Time.get_ticks_usec()
+	)
+	var path := missing_parent.path_join("onboarding.cfg")
+	await _open_fresh_screen(path)
+	var overlay: IronAbacusGuideOverlay = (
+		run_screen.get_node("%GoldCorridorGuideOverlay")
+	)
+	_assert_checkpoint_open(overlay, &"route", "dealer-write fixture route")
+	overlay.acknowledge_current()
+	var route_panel: RouteChoicePanel = run_screen.get_node("%RouteChoicePanel")
+	run_screen._on_route_selected(
+		route_panel.get_node("%LeftRouteButton").get_meta("room_id")
+	)
+	await _settle()
+	await _complete_three_rounds_direct()
+	run_screen._on_shop_requested()
+	await _settle()
+	_assert_checkpoint_open(overlay, &"shop", "dealer-write fixture shop")
+	overlay.acknowledge_current()
+	run_screen._on_shop_leave_requested()
+	await _settle()
+	route_panel = run_screen.get_node("%RouteChoicePanel")
+	run_screen._on_route_selected(
+		route_panel.get_node("%RightRouteButton").get_meta("room_id")
+	)
+	await _settle()
+	await _complete_three_rounds_direct()
+	run_screen._on_shop_requested()
+	await _settle()
+	run_screen._on_shop_leave_requested()
+	await _settle()
+	_assert_checkpoint_open(overlay, &"dealer", "dealer write failure")
+	var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
+	run_screen.area_session.last_error = "area-session-sentinel"
+	encounter.session.last_error = "encounter-session-sentinel"
+	encounter.refresh_from_session()
+	var before := _area_snapshot()
+	overlay.acknowledge_current()
+	_assert_false(overlay.is_open(), "dealer write failure should close the overlay")
+	_assert_equal(
+		_area_snapshot(),
+		before,
+		"dealer persistence warning should preserve all area and encounter fields"
+	)
+	_assert_equal(
+		run_screen.area_session.last_error,
+		"area-session-sentinel",
+		"dealer persistence warning should preserve area last_error"
+	)
+	_assert_equal(
+		encounter.session.last_error,
+		"encounter-session-sentinel",
+		"dealer persistence warning should preserve encounter last_error"
+	)
+	_assert_true(
+		not encounter.get_node("%ErrorLabel").text.is_empty()
+			and encounter.get_node("%ErrorLabel").text
+				!= "encounter-session-sentinel",
+		"dealer persistence warning should still update the visible error label"
+	)
+	await _free_screen()
+
 func _verify_missing_target_fails_open() -> void:
 	var path := _temporary_config_path("missing-target")
 	var screen: GoldCorridorRunScreen = load(
@@ -286,6 +443,49 @@ func _verify_missing_target_fails_open() -> void:
 		run_screen.area_session.phase == AreaRunSession.Phase.ROUTE_CHOICE,
 		"missing target should preserve route choice"
 	)
+	var persisted := GoldCorridorGuideProgressStore.new(path)
+	for checkpoint_id in [&"route", &"shop", &"dealer", &"engraving"]:
+		_assert_false(
+			persisted.is_seen(checkpoint_id),
+			"missing target should not persist seen_%s" % checkpoint_id
+		)
+	await _free_screen()
+
+func _verify_failure_retry_and_restart_suppression() -> void:
+	var path := _temporary_config_path("failure-retry")
+	await _open_fresh_screen(path)
+	var overlay: IronAbacusGuideOverlay = (
+		run_screen.get_node("%GoldCorridorGuideOverlay")
+	)
+	_assert_checkpoint_open(overlay, &"route", "failure-retry route")
+	overlay.close_card()
+	var route_panel: RouteChoicePanel = run_screen.get_node("%RouteChoicePanel")
+	run_screen._on_route_selected(
+		route_panel.get_node("%LeftRouteButton").get_meta("room_id")
+	)
+	await _settle()
+	await _fail_three_rounds_direct()
+	_assert_true(
+		run_screen.area_session.phase == AreaRunSession.Phase.FAILED,
+		"failure-retry fixture should reach the failure page"
+	)
+	_assert_false(overlay.is_open(), "failure page should not add a guide prompt")
+	run_screen._on_restart_requested()
+	await _settle()
+	_assert_true(
+		run_screen.area_session.phase == AreaRunSession.Phase.ROUTE_CHOICE,
+		"failure retry should restart the area"
+	)
+	_assert_false(
+		overlay.is_open(),
+		"same-instance area restart should suppress the already requested route prompt"
+	)
+	var persisted := GoldCorridorGuideProgressStore.new(path)
+	for checkpoint_id in [&"route", &"shop", &"dealer", &"engraving"]:
+		_assert_false(
+			persisted.is_seen(checkpoint_id),
+			"failure retry should not forge seen_%s" % checkpoint_id
+		)
 	await _free_screen()
 
 func _open_fresh_screen(path: String) -> void:
@@ -322,9 +522,22 @@ func _complete_three_rounds_direct() -> void:
 			run_screen._on_next_round_requested()
 			await _settle()
 
+func _fail_three_rounds_direct() -> void:
+	run_screen.area_session.encounter_session.target_total = 999999
+	for round_number in range(1, 4):
+		var report := (
+			run_screen.area_session.encounter_session.current_session.commit()
+		)
+		run_screen._on_round_committed(report)
+		await _settle()
+		if round_number < 3:
+			run_screen._on_next_round_requested()
+			await _settle()
+
 func _area_snapshot() -> Dictionary:
 	return {
 		"phase": run_screen.area_session.phase,
+		"last_error": run_screen.area_session.last_error,
 		"route_ids": run_screen.area_session.route_ids.duplicate(),
 		"selected_room_ids": run_screen.area_session.selected_room_ids.duplicate(),
 		"completed_rooms": run_screen.area_session.completed_rooms.duplicate(true),
@@ -389,6 +602,46 @@ func _encounter_snapshot() -> Dictionary:
 		"assignments": round_state.assignments.duplicate(true),
 		"calibration_points": round_state.calibration_points,
 		"played_card_count": round_state.played_cards.size(),
+		"session_instance_id": (
+			encounter.current_session.get_instance_id()
+			if encounter.current_session != null
+			else 0
+		),
+		"session_last_error": (
+			encounter.current_session.last_error
+			if encounter.current_session != null
+			else ""
+		),
+	}
+
+func _single_encounter_session_snapshot(
+	encounter: SingleEncounterSession
+) -> Dictionary:
+	var state := encounter.controller.state
+	var dice: Array[String] = []
+	for die in state.dice:
+		dice.append("%s|%d|%d|%s|%d" % [
+			die.id,
+			die.rolled_value,
+			die.value,
+			die.engraving_id,
+			die.engraved_face,
+		])
+	var hand_ids: Array[StringName] = []
+	for card in encounter.hand:
+		hand_ids.append(card.id)
+	return {
+		"instance_id": encounter.get_instance_id(),
+		"last_error": encounter.last_error,
+		"committed": encounter.controller.committed,
+		"selection_kind": encounter.selection.kind,
+		"selection_die_id": encounter.selection.die_id,
+		"selection_card_index": encounter.selection.card_index,
+		"hand_ids": hand_ids,
+		"dice": dice,
+		"assignments": state.assignments.duplicate(true),
+		"calibration_points": state.calibration_points,
+		"played_card_count": state.played_cards.size(),
 	}
 
 func _shop_snapshot() -> Dictionary:
@@ -514,7 +767,10 @@ func _temporary_config_path(label: String) -> String:
 	return path
 
 func _free_screen() -> void:
-	if run_screen != null:
+	var screen_to_free := current_scene
+	if is_instance_valid(screen_to_free):
+		screen_to_free.queue_free()
+	elif is_instance_valid(run_screen):
 		run_screen.queue_free()
 	await process_frame
 	run_screen = null

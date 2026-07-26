@@ -101,6 +101,9 @@ func show_external_error(message: String) -> void:
 	session.last_error = message
 	error_label.text = message
 
+func show_transient_warning(message: String) -> void:
+	error_label.text = message
+
 func refresh_from_session() -> void:
 	var state := session.controller.state
 	var selected_target_type := _selected_card_target_type()
@@ -217,8 +220,7 @@ func _record_tutorial_action(action: StringName, payload: Dictionary) -> void:
 	ui_action_accepted.emit(action, payload)
 
 func _on_tutorial_persistence_warning(message: String) -> void:
-	session.last_error = message
-	error_label.text = message
+	show_transient_warning(message)
 
 func _selected_card_target_type() -> int:
 	if session.selection.kind != InteractionState.Kind.CARD:

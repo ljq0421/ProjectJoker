@@ -309,7 +309,7 @@ func _show_guide_persistence_warning() -> void:
 	elif reward_panel.visible:
 		reward_panel.show_error(message)
 	else:
-		encounter_screen.show_external_error(message)
+		encounter_screen.show_transient_warning(message)
 
 func _close_guide() -> void:
 	if is_instance_valid(guide_overlay):

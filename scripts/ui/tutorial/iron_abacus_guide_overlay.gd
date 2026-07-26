@@ -46,16 +46,17 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 	var checkpoint_id: StringName = card_spec.get("id", &"")
 	if checkpoint_id == &"":
 		return false
-	var valid_targets: Array[Control] = []
+	var required_targets: Array[Control] = []
 	for candidate in targets:
 		var target := candidate as Control
-		if target != null and is_instance_valid(target) and target.is_inside_tree():
-			valid_targets.append(target)
-	if valid_targets.is_empty():
+		if target == null:
+			return false
+		required_targets.append(target)
+	if required_targets.is_empty():
 		return false
 
 	_active_checkpoint_id = checkpoint_id
-	_targets = valid_targets
+	_targets = required_targets
 	_route_rail_allowed = (
 		checkpoint_id == &"route"
 		and int(card_spec.get("progress_total", 0)) == 4
@@ -73,7 +74,9 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 	warning_label.text = ""
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_rebuild_focus_frames()
+	if not _rebuild_focus_frames():
+		close_card()
+		return false
 	_refresh_after_layout(refresh_serial, checkpoint_id)
 	acknowledge_button.grab_focus()
 	return true
@@ -107,8 +110,8 @@ func show_persistence_warning(message: String) -> void:
 	warning_label.text = message
 
 func refresh_targets() -> void:
-	if is_open():
-		_rebuild_focus_frames()
+	if is_open() and not _rebuild_focus_frames():
+		close_card()
 
 func _refresh_after_layout(
 	refresh_serial: int,
@@ -122,7 +125,9 @@ func _refresh_after_layout(
 			or not is_open()
 		):
 			return
-		_rebuild_focus_frames()
+		if not _rebuild_focus_frames():
+			close_card()
+			return
 
 func active_checkpoint_id() -> StringName:
 	return _active_checkpoint_id
@@ -137,23 +142,35 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		acknowledge_current()
 		get_viewport().set_input_as_handled()
 
-func _rebuild_focus_frames() -> void:
+func _rebuild_focus_frames() -> bool:
 	_clear_focus_frames()
 	if not is_open() or not is_inside_tree():
-		return
+		return false
 	var target_rects: Array[Rect2] = []
 	var overlay_bounds := Rect2(Vector2.ZERO, size)
+	if not overlay_bounds.has_area():
+		return false
 	for target in _targets:
-		if not is_instance_valid(target) or not target.is_inside_tree():
-			continue
+		if (
+			not is_instance_valid(target)
+			or target.is_queued_for_deletion()
+			or not target.is_inside_tree()
+			or not target.is_visible_in_tree()
+		):
+			return false
 		var local_rect := _target_rect_in_overlay(target)
-		var expanded := _clamp_rect_to_bounds(
-			local_rect.grow(FOCUS_PADDING),
+		if (
+			not local_rect.has_area()
+			or not local_rect.intersection(overlay_bounds).has_area()
+		):
+			return false
+		var expanded := local_rect.grow(FOCUS_PADDING).intersection(
 			overlay_bounds
 		)
 		if not expanded.has_area():
-			continue
+			return false
 		target_rects.append(expanded)
+	for expanded in target_rects:
 		var frame := Panel.new()
 		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		frame.position = expanded.position
@@ -161,9 +178,9 @@ func _rebuild_focus_frames() -> void:
 		frame.add_theme_stylebox_override("panel", _focus_style())
 		focus_frames.add_child(frame)
 	if target_rects.is_empty():
-		close_card()
-		return
+		return false
 	_place_card(target_rects)
+	return true
 
 func _place_card(target_rects: Array[Rect2]) -> void:
 	_restore_standard_card_layout()
@@ -323,8 +340,10 @@ func _target_content_rect(target: Control) -> Rect2:
 			var child_control := child as Control
 			if (
 				child_control == null
-				or not child_control.visible
+				or child_control.is_queued_for_deletion()
 				or not child_control.is_inside_tree()
+				or not child_control.is_visible_in_tree()
+				or not child_control.get_global_rect().has_area()
 			):
 				continue
 			if has_child_bounds:
@@ -335,19 +354,6 @@ func _target_content_rect(target: Control) -> Rect2:
 		if has_child_bounds:
 			return child_bounds
 	return target.get_global_rect()
-
-func _clamp_rect_to_bounds(candidate: Rect2, bounds: Rect2) -> Rect2:
-	if not candidate.has_area() or not bounds.has_area():
-		return Rect2()
-	var fitted_size := Vector2(
-		min(candidate.size.x, bounds.size.x),
-		min(candidate.size.y, bounds.size.y)
-	)
-	var fitted_position := Vector2(
-		clampf(candidate.position.x, bounds.position.x, bounds.end.x - fitted_size.x),
-		clampf(candidate.position.y, bounds.position.y, bounds.end.y - fitted_size.y)
-	)
-	return Rect2(fitted_position, fitted_size)
 
 func _focus_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()

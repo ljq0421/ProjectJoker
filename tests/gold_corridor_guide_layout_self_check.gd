@@ -16,6 +16,7 @@ func _run() -> void:
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
 	await _verify_shared_overlay_defaults()
+	await _verify_invalid_focus_targets_fail_open()
 	for rendered_size in RENDERED_SIZES:
 		await _verify_size(rendered_size)
 	if failures.is_empty():
@@ -36,6 +37,86 @@ func _verify_shared_overlay_defaults() -> void:
 	_assert_standard_card_style(overlay, "fresh closed shared overlay")
 	overlay.queue_free()
 	await process_frame
+
+func _verify_invalid_focus_targets_fail_open() -> void:
+	root.size = LOGICAL_SIZE
+	var overlay: IronAbacusGuideOverlay = load(
+		"res://scenes/components/iron_abacus_guide_overlay.tscn"
+	).instantiate()
+	root.add_child(overlay)
+	var valid_target := _make_focus_target(
+		Vector2(120, 120),
+		Vector2(180, 96)
+	)
+	var hidden_target := _make_focus_target(
+		Vector2(360, 120),
+		Vector2(180, 96)
+	)
+	hidden_target.visible = false
+	var zero_area_target := _make_focus_target(
+		Vector2(120, 300),
+		Vector2.ZERO
+	)
+	var offscreen_target := _make_focus_target(
+		Vector2(LOGICAL_SIZE.x + 80, 300),
+		Vector2(180, 96)
+	)
+	await _settle()
+	var spec := {
+		"id": &"invalid_target_regression",
+		"progress_label": "Regression",
+		"progress_index": 1,
+		"progress_total": 1,
+		"title": "Invalid focus target",
+		"instruction": "The overlay must fail open.",
+	}
+	_assert_false(
+		overlay.open_card(spec, [valid_target, hidden_target]),
+		"a partially invalid target set should fail open"
+	)
+	_assert_overlay_closed_without_frames(
+		overlay,
+		"partially invalid target set"
+	)
+	_assert_false(
+		overlay.open_card(spec, [zero_area_target]),
+		"a zero-area target should fail open"
+	)
+	_assert_overlay_closed_without_frames(overlay, "zero-area target")
+	_assert_false(
+		overlay.open_card(spec, [offscreen_target]),
+		"an offscreen target should fail open"
+	)
+	_assert_overlay_closed_without_frames(overlay, "offscreen target")
+	overlay.queue_free()
+	valid_target.queue_free()
+	hidden_target.queue_free()
+	zero_area_target.queue_free()
+	offscreen_target.queue_free()
+	await process_frame
+
+func _make_focus_target(position: Vector2, target_size: Vector2) -> Control:
+	var target := Control.new()
+	root.add_child(target)
+	target.position = position
+	target.size = target_size
+	return target
+
+func _assert_overlay_closed_without_frames(
+	overlay: IronAbacusGuideOverlay,
+	label: String
+) -> void:
+	_assert_false(overlay.is_open(), "%s should not leave a blocking card" % label)
+	_assert_equal(
+		overlay.get_node("%GuideFocusFrames").get_child_count(),
+		0,
+		"%s should not leave partial focus frames" % label
+	)
+	_assert_equal(
+		overlay.mouse_filter,
+		Control.MOUSE_FILTER_IGNORE,
+		"%s should leave background input enabled" % label
+	)
 
 func _verify_size(rendered_size: Vector2i) -> void:
 	root.size = rendered_size
@@ -322,23 +403,7 @@ func _expected_focus_rect(
 		target_global.position - overlay_global.position,
 		target_global.size
 	).grow(IronAbacusGuideOverlay.FOCUS_PADDING)
-	var fitted_size := Vector2(
-		min(candidate.size.x, overlay_bounds.size.x),
-		min(candidate.size.y, overlay_bounds.size.y)
-	)
-	var fitted_position := Vector2(
-		clampf(
-			candidate.position.x,
-			overlay_bounds.position.x,
-			overlay_bounds.end.x - fitted_size.x
-		),
-		clampf(
-			candidate.position.y,
-			overlay_bounds.position.y,
-			overlay_bounds.end.y - fitted_size.y
-		)
-	)
-	return Rect2(fitted_position, fitted_size)
+	return candidate.intersection(overlay_bounds)
 
 func _target_content_rect(target: Control) -> Rect2:
 	if target is GridContainer:
@@ -378,3 +443,6 @@ func _assert_equal(actual: Variant, expected: Variant, message: String) -> void:
 func _assert_true(value: bool, message: String) -> void:
 	if not value:
 		failures.append(message)
+
+func _assert_false(value: bool, message: String) -> void:
+	_assert_true(not value, message)

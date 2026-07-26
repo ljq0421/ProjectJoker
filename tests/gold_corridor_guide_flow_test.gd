@@ -13,8 +13,10 @@ const EXPECTED_ORDER: Array[StringName] = [
 func run() -> void:
 	_test_order_and_complete_specs()
 	_test_exact_strategy_copy()
+	_test_card_specs_are_defensive_copies()
 	_test_seen_and_dismissed_filtering()
 	_test_run_request_deduplication()
+	_test_request_deduplication_is_instance_local()
 	_test_unknown_checkpoint_is_rejected()
 
 func _test_order_and_complete_specs() -> void:
@@ -69,12 +71,39 @@ func _test_seen_and_dismissed_filtering() -> void:
 	snapshot["dismissed"] = true
 	assert_false(flow.should_present(&"dealer", snapshot), "dismissed guide should hide cards")
 
+func _test_card_specs_are_defensive_copies() -> void:
+	var flow = FlowScript.new()
+	var mutated_spec: Dictionary = flow.card_spec(&"route")
+	var mutated_targets: Array = mutated_spec.get("target_ids", [])
+	mutated_targets[0] = &"mutated_target"
+	mutated_targets.append(&"extra_target")
+	var fresh_spec: Dictionary = flow.card_spec(&"route")
+	assert_equal(
+		fresh_spec.get("target_ids"),
+		[&"route_left", &"route_right"],
+		"nested target IDs should be copied defensively"
+	)
+
 func _test_run_request_deduplication() -> void:
 	var flow = FlowScript.new()
 	var snapshot := _progress_fixture()
 	assert_true(flow.mark_requested(&"route"), "known checkpoint should request")
 	assert_false(flow.should_present(&"route", snapshot), "requested route should be hidden")
 	assert_true(flow.should_present(&"shop", snapshot), "shop remains presentable")
+
+func _test_request_deduplication_is_instance_local() -> void:
+	var first_flow = FlowScript.new()
+	var second_flow = FlowScript.new()
+	var snapshot := _progress_fixture()
+	assert_true(first_flow.mark_requested(&"route"), "first flow should record route")
+	assert_false(
+		first_flow.should_present(&"route", snapshot),
+		"first flow should suppress its requested route"
+	)
+	assert_true(
+		second_flow.should_present(&"route", snapshot),
+		"a second flow instance should still present route"
+	)
 
 func _test_unknown_checkpoint_is_rejected() -> void:
 	var flow = FlowScript.new()

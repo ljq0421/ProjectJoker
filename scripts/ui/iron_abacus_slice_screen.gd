@@ -248,6 +248,14 @@ func _request_guide(checkpoint_id: StringName) -> void:
 		or not guide_flow.should_present(checkpoint_id, guide_store.snapshot())
 	):
 		return
+	for _layout_frame in range(2):
+		await get_tree().process_frame
+	if (
+		not guide_auto_start
+		or guide_store == null
+		or not guide_flow.should_present(checkpoint_id, guide_store.snapshot())
+	):
+		return
 	guide_flow.mark_requested(checkpoint_id)
 	var card_spec := guide_flow.card_spec(checkpoint_id)
 	var targets := _resolve_guide_targets(card_spec.get("target_ids", []))
