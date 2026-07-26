@@ -43,7 +43,9 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 	_targets = valid_targets
 	_layout_refresh_serial += 1
 	var refresh_serial := _layout_refresh_serial
-	progress_label.text = "进阶提示 %d/%d" % [
+	var progress_copy := String(card_spec.get("progress_label", "进阶提示"))
+	progress_label.text = "%s %d/%d" % [
+		progress_copy,
 		int(card_spec.get("progress_index", 0)),
 		int(card_spec.get("progress_total", 5)),
 	]

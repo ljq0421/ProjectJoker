@@ -48,6 +48,7 @@ func run() -> void:
 
 	var spec := {
 		"id": &"dealer",
+		"progress_label": "区域提示",
 		"progress_index": 3,
 		"progress_total": 5,
 		"title": "分配完整度影响固定奖励",
@@ -55,6 +56,11 @@ func run() -> void:
 	}
 	assert_true(overlay.open_card(spec, [target]), "valid card should open")
 	assert_true(overlay.is_open(), "open_card should expose active state")
+	assert_equal(
+		overlay.get_node("%GuideProgress").text,
+		"区域提示 3/5",
+		"overlay should render a custom progress label"
+	)
 	assert_equal(
 		overlay.mouse_filter,
 		Control.MOUSE_FILTER_STOP,
@@ -76,6 +82,18 @@ func run() -> void:
 		0,
 		"close_card should remove focus frames"
 	)
+	var legacy_spec: Dictionary = spec.duplicate(true)
+	legacy_spec.erase("progress_label")
+	assert_true(
+		overlay.open_card(legacy_spec, [target]),
+		"legacy guide card should still open"
+	)
+	assert_equal(
+		overlay.get_node("%GuideProgress").text,
+		"进阶提示 3/5",
+		"legacy guide should keep its original label"
+	)
+	overlay.close_card()
 	assert_false(overlay.open_card({}, [target]), "invalid spec should fail open")
 	assert_false(overlay.is_open(), "invalid spec should not leave a blocker")
 	assert_false(overlay.open_card(spec, []), "missing targets should fail open")

@@ -92,6 +92,10 @@ func _assert_card(checkpoint_id: StringName, viewport_size: Vector2i) -> void:
 		overlay.is_open() and overlay.active_checkpoint_id() == checkpoint_id,
 		"%s card should open at %s" % [checkpoint_id, viewport_size]
 	)
+	_assert_true(
+		overlay.get_node("%GuideProgress").text.begins_with("进阶提示 "),
+		"%s old guide should retain the advanced-guide label" % checkpoint_id
+	)
 	var overlay_bounds := Rect2(Vector2.ZERO, overlay.size)
 	var card: Control = overlay.get_node("%GuideCard")
 	_assert_true(
