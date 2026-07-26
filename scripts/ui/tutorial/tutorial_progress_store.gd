@@ -23,5 +23,8 @@ func reset() -> Error:
 
 func _save(value: bool) -> Error:
 	var config := ConfigFile.new()
+	var load_result := config.load(config_path)
+	if load_result != OK and load_result != ERR_FILE_NOT_FOUND:
+		return load_result
 	config.set_value(SECTION, DONE_KEY, value)
 	return config.save(config_path)
