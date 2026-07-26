@@ -5,6 +5,10 @@ var valid: bool = true
 var reason: String = ""
 var total: int = 0
 var events: Array[ResolutionEvent] = []
+var assigned_dice: int = 0
+var unassigned_dice: int = 0
+var dealer_reward: int = 0
+var dealer_reward_lost: int = 0
 
 func event_signature() -> Array[String]:
 	var signature: Array[String] = []

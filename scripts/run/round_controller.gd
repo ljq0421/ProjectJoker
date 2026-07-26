@@ -52,12 +52,12 @@ func undo() -> bool:
 func preview() -> ResolutionReport:
 	if committed:
 		return _committed_report
-	return _resolver.resolve(state, encounter)
+	return _resolver.resolve(state, encounter, resolution_context)
 
 func commit() -> ResolutionReport:
 	if committed:
 		return _committed_report
-	var report := _resolver.resolve(state, encounter)
+	var report := _resolver.resolve(state, encounter, resolution_context)
 	if report.valid:
 		committed = true
 		_committed_report = report

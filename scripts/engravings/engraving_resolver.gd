@@ -29,3 +29,108 @@ func modification_block_reason(
 	):
 		return "锚定刻印已激活，这颗骰子本轮不能修改点数"
 	return ""
+
+func parity_overrides(
+	state: RoundState,
+	assigned_ids: Array,
+	context: ResolutionContext
+) -> Array[bool]:
+	var flags: Array[bool] = []
+	for die_id in assigned_ids:
+		var definition := active_definition(state.find_die(die_id), context)
+		flags.append(
+			definition != null
+			and definition.operation == EngravingDefinition.Operation.PRISM_PARITY
+		)
+	return flags
+
+func table_outcomes(
+	state: RoundState,
+	assigned_ids: Array,
+	source_valid: bool,
+	ordered_rule_ids: Array[StringName],
+	rule_index: int,
+	die_values: Dictionary,
+	context: ResolutionContext
+) -> Array[EngravingOutcome]:
+	var outcomes: Array[EngravingOutcome] = []
+	for slot_index in range(assigned_ids.size()):
+		var die_id: StringName = assigned_ids[slot_index]
+		var die := state.find_die(die_id)
+		var definition := active_definition(die, context)
+		if definition == null:
+			continue
+		if not source_valid:
+			outcomes.append(EngravingOutcome.new(
+				definition.id,
+				"%s：来源规则台未通过" % definition.display_name,
+				0,
+				&"",
+				false
+			))
+			continue
+
+		match definition.operation:
+			EngravingDefinition.Operation.ECHO_ADJACENT:
+				var neighbor_values: Array[int] = []
+				if slot_index > 0:
+					neighbor_values.append(
+						int(die_values.get(assigned_ids[slot_index - 1], 0))
+					)
+				if slot_index + 1 < assigned_ids.size():
+					neighbor_values.append(
+						int(die_values.get(assigned_ids[slot_index + 1], 0))
+					)
+				if neighbor_values.is_empty():
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：没有相邻骰" % definition.display_name,
+						0,
+						&"",
+						false
+					))
+				else:
+					var higher_neighbor: int = int(neighbor_values.max())
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：相邻骰 %d ÷ %d" % [
+							definition.display_name,
+							higher_neighbor,
+							definition.amount,
+						],
+						floori(float(higher_neighbor) / float(definition.amount))
+					))
+			EngravingDefinition.Operation.ANCHOR_DIE:
+				outcomes.append(EngravingOutcome.new(
+					definition.id,
+					"%s：固定奖励 +%d" % [definition.display_name, definition.amount],
+					definition.amount
+				))
+			EngravingDefinition.Operation.BRIDGE_FORWARD:
+				if rule_index + 1 >= ordered_rule_ids.size():
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：当前方向没有下一张规则台" % definition.display_name,
+						0,
+						&"",
+						false
+					))
+				else:
+					var target_table_id: StringName = ordered_rule_ids[rule_index + 1]
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：%s → %s" % [
+							definition.display_name,
+							ordered_rule_ids[rule_index],
+							target_table_id,
+						],
+						int(die_values.get(die_id, die.value)),
+						target_table_id
+					))
+			EngravingDefinition.Operation.PRISM_PARITY:
+				outcomes.append(EngravingOutcome.new(
+					definition.id,
+					"%s：同时视为奇数与偶数" % definition.display_name,
+					0
+				))
+	return outcomes
