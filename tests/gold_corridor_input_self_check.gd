@@ -24,6 +24,8 @@ func _run() -> void:
 	if run_screen == null:
 		await _finish()
 		return
+	run_screen.guide_auto_start = false
+	run_screen.get_node("%GoldCorridorGuideOverlay").close_card()
 
 	var route_panel: RouteChoicePanel = run_screen.get_node("%RouteChoicePanel")
 	var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")

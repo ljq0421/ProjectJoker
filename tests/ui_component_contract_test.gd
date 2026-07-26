@@ -170,4 +170,12 @@ func run() -> void:
 				gold.get_node_or_null("%" + node_name) != null,
 				"Gold Corridor should own %s" % node_name
 			)
+		assert_true(
+			gold.get_node_or_null("%GoldCorridorGuideOverlay") != null,
+			"Gold Corridor should own the contextual guide overlay"
+		)
+		assert_true(
+			gold.has_method("_request_guide"),
+			"Gold Corridor should request guide checkpoints"
+		)
 		gold.free()

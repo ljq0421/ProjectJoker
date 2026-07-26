@@ -32,6 +32,7 @@ func _verify_complete_layout(rendered_size: Vector2i) -> void:
 	var screen: GoldCorridorRunScreen = load(
 		"res://scenes/run/gold_corridor_run_screen.tscn"
 	).instantiate()
+	screen.guide_auto_start = false
 	root.add_child(screen)
 	await _settle()
 	var size_label := "%dx%d" % [rendered_size.x, rendered_size.y]

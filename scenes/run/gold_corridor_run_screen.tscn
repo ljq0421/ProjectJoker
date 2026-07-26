@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/gold_corridor_run_screen.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/components/route_choice_panel.tscn" id="6_route"]
 [ext_resource type="PackedScene" path="res://scenes/components/engraving_reward_panel.tscn" id="7_reward"]
 [ext_resource type="PackedScene" path="res://scenes/components/area_complete_panel.tscn" id="8_complete"]
+[ext_resource type="PackedScene" path="res://scenes/components/iron_abacus_guide_overlay.tscn" id="guide_overlay"]
 
 [node name="GoldCorridorRunScreen" type="Control"]
 layout_mode = 3
@@ -47,3 +48,8 @@ z_index = 30
 unique_name_in_owner = true
 layout_mode = 1
 z_index = 40
+
+[node name="GoldCorridorGuideOverlay" parent="." instance=ExtResource("guide_overlay")]
+unique_name_in_owner = true
+layout_mode = 1
+z_index = 50
