@@ -14,3 +14,4 @@ enum TargetType {
 @export var tags: PackedStringArray = []
 @export var target_type: TargetType = TargetType.DIE
 @export var effects: Array[EffectSpec] = []
+@export var mirror_effects: Array[EffectSpec] = []
