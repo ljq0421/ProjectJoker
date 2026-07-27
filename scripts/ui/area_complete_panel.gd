@@ -5,6 +5,8 @@ signal restart_requested
 signal return_requested
 
 const REQUIRED_KEYS := [
+	"area_id",
+	"rng_state",
 	"rooms",
 	"dealer",
 	"purchases",
@@ -13,6 +15,7 @@ const REQUIRED_KEYS := [
 	"engraving_id",
 	"die_id",
 	"face",
+	"die_profiles",
 ]
 
 func _ready() -> void:
@@ -22,16 +25,28 @@ func _ready() -> void:
 
 func bind_summary(
 	summary: Dictionary,
-	room_catalog: GoldCorridorCatalog,
+	area_definition: AreaDefinition,
 	card_catalog: CardCatalog,
+	dealer_catalog: DealerCatalog,
 	engraving_catalog: EngravingCatalog
 ) -> bool:
-	if room_catalog == null or card_catalog == null or engraving_catalog == null:
+	if (
+		area_definition == null
+		or card_catalog == null
+		or dealer_catalog == null
+		or engraving_catalog == null
+	):
 		return _fail_closed("区域摘要目录不可用")
 	for key in REQUIRED_KEYS:
 		if not summary.has(key):
 			return _fail_closed("区域摘要缺少字段：%s" % key)
-	var error := _summary_error(summary, room_catalog, card_catalog, engraving_catalog)
+	var error := _summary_error(
+		summary,
+		area_definition,
+		card_catalog,
+		dealer_catalog,
+		engraving_catalog
+	)
 	if not error.is_empty():
 		return _fail_closed(error)
 
@@ -40,7 +55,7 @@ func bind_summary(
 	var rooms: Array = summary["rooms"]
 	for index in range(rooms.size()):
 		var entry: Dictionary = rooms[index]
-		var room := room_catalog.find_room(entry["room_id"])
+		var room := area_definition.find_room(entry["room_id"])
 		room_lines.append("路线 %d｜%s" % [index + 1, room.display_name])
 		score_lines.append("%s　%d / %d" % [
 			room.display_name,
@@ -48,7 +63,9 @@ func bind_summary(
 			entry["target_total"],
 		])
 	var dealer: Dictionary = summary["dealer"]
-	score_lines.append("铁算盘　%d / %d" % [
+	var dealer_definition := dealer_catalog.find_dealer(dealer["id"])
+	score_lines.append("%s　%d / %d" % [
+		dealer_definition.display_name,
 		dealer["cumulative_total"],
 		dealer["target_total"],
 	])
@@ -79,10 +96,15 @@ func close() -> void:
 
 func _summary_error(
 	summary: Dictionary,
-	room_catalog: GoldCorridorCatalog,
+	area_definition: AreaDefinition,
 	card_catalog: CardCatalog,
+	dealer_catalog: DealerCatalog,
 	engraving_catalog: EngravingCatalog
 ) -> String:
+	if summary["area_id"] != area_definition.id:
+		return "区域摘要与地区定义不匹配"
+	if not summary["rng_state"] is int:
+		return "区域摘要随机状态无效"
 	if not summary["rooms"] is Array or summary["rooms"].size() != 2:
 		return "区域摘要必须包含两个普通房"
 	for entry in summary["rooms"]:
@@ -91,7 +113,7 @@ func _summary_error(
 		for key in ["room_id", "target_total", "cumulative_total"]:
 			if not entry.has(key):
 				return "普通房摘要缺少字段：%s" % key
-		if room_catalog.find_room(entry["room_id"]) == null:
+		if area_definition.find_room(entry["room_id"]) == null:
 			return "区域摘要包含未知房间：%s" % entry["room_id"]
 		if not entry["target_total"] is int or not entry["cumulative_total"] is int:
 			return "普通房摘要分数无效"
@@ -101,7 +123,10 @@ func _summary_error(
 	for key in ["id", "target_total", "cumulative_total"]:
 		if not dealer.has(key):
 			return "庄家摘要缺少字段：%s" % key
-	if dealer["id"] != &"dealer_iron_abacus":
+	if (
+		dealer["id"] != area_definition.dealer_id
+		or dealer_catalog.find_dealer(dealer["id"]) == null
+	):
 		return "区域摘要包含未知庄家"
 	if not dealer["target_total"] is int or not dealer["cumulative_total"] is int:
 		return "庄家摘要分数无效"
@@ -137,6 +162,8 @@ func _summary_error(
 		return "区域摘要包含未知刻印骰子"
 	if not summary["face"] is int or summary["face"] < 1 or summary["face"] > 6:
 		return "区域摘要包含非法刻印面"
+	if not summary["die_profiles"] is Array or summary["die_profiles"].size() != 6:
+		return "区域摘要骰子档案无效"
 	return ""
 
 func _purchase_text(purchases: Array, card_catalog: CardCatalog) -> String:

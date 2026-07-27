@@ -14,11 +14,10 @@ enum Phase {
 }
 
 const DEFAULT_SEED := 20260726
-const DEALER_TARGET := 150
 
 var phase: Phase = Phase.NOT_STARTED
 var seed_value: int
-var room_catalog: GoldCorridorCatalog
+var area_definition: AreaDefinition
 var card_catalog: CardCatalog
 var dealer_catalog: DealerCatalog
 var engraving_catalog: EngravingCatalog
@@ -42,13 +41,17 @@ var last_error := ""
 
 func _init(
 	p_seed_value: int = DEFAULT_SEED,
-	p_room_catalog: GoldCorridorCatalog = null,
+	p_area_definition: AreaDefinition = null,
 	p_card_catalog: CardCatalog = null,
 	p_dealer_catalog: DealerCatalog = null,
 	p_engraving_catalog: EngravingCatalog = null
 ) -> void:
 	seed_value = p_seed_value
-	room_catalog = p_room_catalog if p_room_catalog != null else GoldCorridorCatalog.new()
+	area_definition = (
+		p_area_definition
+		if p_area_definition != null
+		else AreaCatalog.new().gold_corridor()
+	)
 	card_catalog = p_card_catalog if p_card_catalog != null else CardCatalog.new()
 	dealer_catalog = p_dealer_catalog if p_dealer_catalog != null else DealerCatalog.new()
 	engraving_catalog = (
@@ -59,20 +62,29 @@ func _init(
 
 func start() -> OperationResult:
 	if phase != Phase.NOT_STARTED:
-		return _fail("金线回廊已经开始")
+		return _fail("%s已经开始" % area_definition.display_name)
 	var content_errors: Array[String] = []
-	content_errors.append_array(room_catalog.validate())
 	content_errors.append_array(card_catalog.validate())
 	content_errors.append_array(dealer_catalog.validate())
 	content_errors.append_array(engraving_catalog.validate())
+	if area_definition == null:
+		content_errors.append("区域定义不存在")
+	else:
+		content_errors.append_array(
+			area_definition.validate(
+				card_catalog,
+				dealer_catalog,
+				engraving_catalog
+			)
+		)
 	if not content_errors.is_empty():
 		return _fail("区域内容无效：%s" % "；".join(content_errors))
 
-	var first_ids := room_catalog.first_route_ids()
+	var first_ids := area_definition.first_route_ids
 	var route_error := _route_error(first_ids)
 	if not route_error.is_empty():
 		return _fail(route_error)
-	var next_deck := card_catalog.starter_ids()
+	var next_deck := area_definition.starting_deck_ids.duplicate()
 	var deck_error := _deck_error(next_deck)
 	if not deck_error.is_empty():
 		return _fail(deck_error)
@@ -84,7 +96,7 @@ func start() -> OperationResult:
 	run_rng = next_rng
 	route_ids.assign(next_routes)
 	deck_ids.assign(next_deck)
-	intel_tickets = 0
+	intel_tickets = area_definition.starting_intel_tickets
 	die_profiles = next_profiles
 	room_index = 0
 	phase = Phase.ROUTE_CHOICE
@@ -101,7 +113,7 @@ func select_route(room_id: StringName) -> OperationResult:
 		return _fail("所选房间不在当前路线候选中")
 	if room_id in selected_room_ids:
 		return _fail("这个房间已经完成")
-	var room := room_catalog.find_room(room_id)
+	var room := area_definition.find_room(room_id)
 	if room == null:
 		return _fail("所选房间定义不存在")
 	return _create_normal_room(room)
@@ -132,7 +144,7 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 		active_phase == Phase.DEALER
 		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	):
-		var shuffled := run_rng.shuffle(engraving_catalog.all_ids())
+		var shuffled := run_rng.shuffle(area_definition.engraving_offer_ids)
 		engraving_offer_ids.clear()
 		engraving_offer_ids.assign(shuffled.slice(0, 3))
 		selected_engraving_id = &""
@@ -159,7 +171,7 @@ func open_shop() -> OperationResult:
 	):
 		return _fail("只有成功完成普通房后才能进入商店")
 	var available: Array[StringName] = []
-	for card_id in card_catalog.shop_ids():
+	for card_id in area_definition.shop_offer_ids:
 		if card_id not in deck_ids:
 			available.append(card_id)
 	if available.size() < 3:
@@ -191,7 +203,7 @@ func leave_shop() -> OperationResult:
 	next_history.append_array(_clone_purchase_history(shop_session.purchase_records))
 
 	if room_index == 0:
-		var second_ids := room_catalog.second_route_ids()
+		var second_ids := area_definition.second_route_ids
 		var route_error := _route_error(second_ids)
 		if not route_error.is_empty():
 			return _fail(route_error)
@@ -254,9 +266,11 @@ func completion_snapshot() -> Dictionary:
 			"price": record.price,
 		})
 	return {
+		"area_id": area_definition.id,
+		"rng_state": run_rng.snapshot_state(),
 		"rooms": completed_rooms.duplicate(true),
 		"dealer": {
-			"id": dealer_catalog.iron_abacus().id,
+			"id": area_definition.dealer_id,
 			"target_total": encounter_session.target_total,
 			"cumulative_total": encounter_session.cumulative_total,
 		},
@@ -266,11 +280,12 @@ func completion_snapshot() -> Dictionary:
 		"engraving_id": selected_engraving_id,
 		"die_id": installed_die_id,
 		"face": installed_face,
+		"die_profiles": _profile_snapshots(),
 	}
 
 func restart() -> OperationResult:
 	if phase == Phase.NOT_STARTED:
-		return _fail("金线回廊尚未开始")
+		return _fail("%s尚未开始" % area_definition.display_name)
 	_reset_owned_state()
 	return start()
 
@@ -310,9 +325,9 @@ func _create_dealer(
 	var setup := EncounterRunSetup.new()
 	setup.run_rng = run_rng
 	setup.deck_ids = next_deck.duplicate()
-	setup.encounter = SingleEncounterFixture.make_encounter()
+	setup.encounter = area_definition.dealer_encounter
 	setup.resolution_context = ResolutionContext.new(
-		dealer_catalog.iron_abacus(),
+		dealer_catalog.find_dealer(area_definition.dealer_id),
 		engraving_catalog
 	)
 	setup.success_intel_reward = 0
@@ -321,7 +336,7 @@ func _create_dealer(
 	var next := ThreeRoundEncounterSession.new(
 		card_catalog,
 		seed_value,
-		DEALER_TARGET,
+		area_definition.dealer_target,
 		setup
 	)
 	var result := next.start()
@@ -342,7 +357,7 @@ func _route_error(ids: Array[StringName]) -> String:
 		return "路线候选必须恰好包含两个房间"
 	var seen: Dictionary = {}
 	for room_id in ids:
-		if room_catalog.find_room(room_id) == null:
+		if area_definition.find_room(room_id) == null:
 			return "路线候选包含未知房间：%s" % room_id
 		if seen.has(room_id):
 			return "路线候选包含重复房间：%s" % room_id
@@ -364,8 +379,34 @@ func _deck_error(ids: Array[StringName]) -> String:
 func _blank_profiles() -> Array[DieState]:
 	var profiles: Array[DieState] = []
 	for die_index in range(1, 7):
-		profiles.append(DieState.new(StringName("d%d" % die_index), 1))
+		var die_id := StringName("d%d" % die_index)
+		profiles.append(DieState.new(
+			die_id,
+			1,
+			(
+				area_definition.initial_engraving_id
+				if die_id == area_definition.initial_engraving_die_id
+				else &""
+			),
+			(
+				area_definition.initial_engraving_face
+				if die_id == area_definition.initial_engraving_die_id
+				else 0
+			)
+		))
 	return profiles
+
+func _profile_snapshots() -> Array[Dictionary]:
+	var snapshots: Array[Dictionary] = []
+	for profile in die_profiles:
+		snapshots.append({
+			"id": profile.id,
+			"rolled_value": profile.rolled_value,
+			"value": profile.value,
+			"engraving_id": profile.engraving_id,
+			"engraved_face": profile.engraved_face,
+		})
+	return snapshots
 
 func _clone_profiles(profiles: Array[DieState]) -> Array[DieState]:
 	var copies: Array[DieState] = []

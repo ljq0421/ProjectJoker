@@ -75,9 +75,9 @@ func _test_route_panel_contract() -> void:
 	)
 	assert_true(
 		panel.bind_routes(
-			GoldCorridorCatalog.new().first_route_ids(),
-			GoldCorridorCatalog.new(),
-			CardCatalog.new().starter_ids(),
+			AreaCatalog.new().gold_corridor().first_route_ids,
+			AreaCatalog.new().gold_corridor(),
+			AreaCatalog.new().gold_corridor().starting_deck_ids,
 			CardCatalog.new()
 		),
 		"valid routes should bind"
@@ -102,7 +102,7 @@ func _test_route_panel_contract() -> void:
 	assert_false(
 		panel.bind_routes(
 			invalid_route_ids,
-			GoldCorridorCatalog.new(),
+			AreaCatalog.new().gold_corridor(),
 			CardCatalog.new().starter_ids(),
 			CardCatalog.new()
 		),
@@ -142,6 +142,8 @@ func _test_complete_panel_contract() -> void:
 	tree.root.add_child(panel)
 	assert_false(panel.visible, "completion should begin hidden")
 	var summary := {
+		"area_id": &"gold_corridor",
+		"rng_state": 12345,
 		"rooms": [
 			{
 				"room_id": &"gold_room_precise_steps",
@@ -169,12 +171,14 @@ func _test_complete_panel_contract() -> void:
 		"engraving_id": &"engraving_anchor",
 		"die_id": &"d1",
 		"face": 4,
+		"die_profiles": [{}, {}, {}, {}, {}, {}],
 	}
 	assert_true(
 		panel.bind_summary(
 			summary,
-			GoldCorridorCatalog.new(),
+			AreaCatalog.new().gold_corridor(),
 			CardCatalog.new(),
+			DealerCatalog.new(),
 			EngravingCatalog.new()
 		),
 		"valid summary should bind"
@@ -207,8 +211,9 @@ func _test_complete_panel_contract() -> void:
 	assert_false(
 		panel.bind_summary(
 			invalid,
-			GoldCorridorCatalog.new(),
+			AreaCatalog.new().gold_corridor(),
 			CardCatalog.new(),
+			DealerCatalog.new(),
 			EngravingCatalog.new()
 		),
 		"invalid deck summary should fail closed"

@@ -16,6 +16,12 @@ func _init() -> void:
 func iron_abacus() -> DealerDefinition:
 	return _iron_abacus
 
+func find_dealer(dealer_id: StringName) -> DealerDefinition:
+	for dealer in all_dealers():
+		if dealer.id == dealer_id:
+			return dealer
+	return null
+
 func all_dealers() -> Array[DealerDefinition]:
 	var dealers: Array[DealerDefinition] = []
 	if _iron_abacus != null:

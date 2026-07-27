@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AreaDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/areas/area_definition.gd" id="1_area"]
+[ext_resource type="Resource" path="res://resources/rooms/gold_corridor/precise_steps.tres" id="2_room_a"]
+[ext_resource type="Resource" path="res://resources/rooms/gold_corridor/even_split.tres" id="3_room_b"]
+[ext_resource type="Resource" path="res://resources/rooms/gold_corridor/narrow_ledger.tres" id="4_room_c"]
+[ext_resource type="Resource" path="res://resources/rooms/gold_corridor/parallel_proof.tres" id="5_room_d"]
+[ext_resource type="Resource" path="res://resources/encounters/gold_corridor/iron_abacus.tres" id="6_dealer_encounter"]
+
+[resource]
+script = ExtResource("1_area")
+id = &"gold_corridor"
+display_name = "金线回廊"
+first_route_ids = Array[StringName]([&"gold_room_precise_steps", &"gold_room_even_split"])
+second_route_ids = Array[StringName]([&"gold_room_narrow_ledger", &"gold_room_parallel_proof"])
+rooms = Array[ExtResource("2_room_a")]([ExtResource("2_room_a"), ExtResource("3_room_b"), ExtResource("4_room_c"), ExtResource("5_room_d")])
+starting_deck_ids = Array[StringName]([&"starter_nudge_down_1", &"starter_nudge_up_1", &"starter_nudge_down_2", &"starter_nudge_up_2", &"starter_map_1", &"starter_map_2", &"starter_repeat_1", &"starter_repeat_2", &"starter_stable_repeat", &"starter_amplified_repeat", &"starter_reverse", &"starter_link"])
+starting_intel_tickets = 0
+dealer_id = &"dealer_iron_abacus"
+dealer_encounter = ExtResource("6_dealer_encounter")
+dealer_target = 150
+shop_offer_ids = Array[StringName]([&"shop_precision_map", &"shop_triple_repeat", &"shop_long_push", &"shop_deep_drop", &"shop_amplified_chain", &"shop_reverse_backup"])
+engraving_offer_ids = Array[StringName]([&"engraving_echo", &"engraving_anchor", &"engraving_bridge", &"engraving_prism"])

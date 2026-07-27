@@ -14,10 +14,14 @@ func _test_two_room_shop_loop() -> void:
 	assert_equal(area.phase, AreaRunSession.Phase.ROUTE_CHOICE, "start opens first route")
 	assert_equal(
 		_sorted_ids(area.current_route_ids()),
-		_sorted_ids(area.room_catalog.first_route_ids()),
+		_sorted_ids(area.area_definition.first_route_ids),
 		"first route should contain the fixed first group"
 	)
-	assert_equal(area.deck_ids, area.card_catalog.starter_ids(), "start owns starter deck")
+	assert_equal(
+		area.deck_ids,
+		area.area_definition.starting_deck_ids,
+		"start owns configured deck"
+	)
 	assert_equal(area.intel_tickets, 0, "start has no tickets")
 	assert_equal(area.die_profiles.size(), 6, "start creates six die profiles")
 
@@ -27,7 +31,7 @@ func _test_two_room_shop_loop() -> void:
 	assert_false(area.open_shop().accepted, "shop cannot open before a room succeeds")
 
 	var first_room_id: StringName = area.current_route_ids()[0]
-	var first_room := area.room_catalog.find_room(first_room_id)
+	var first_room := area.area_definition.find_room(first_room_id)
 	assert_true(area.select_route(first_room_id).accepted, "first route should select")
 	assert_equal(area.phase, AreaRunSession.Phase.NORMAL_ROOM, "selection opens normal room")
 	assert_equal(area.encounter_session.setup.encounter, first_room.encounter, "room rules should bind")
@@ -53,7 +57,7 @@ func _test_two_room_shop_loop() -> void:
 	assert_equal(area.phase, AreaRunSession.Phase.ROUTE_CHOICE, "first shop opens second route")
 	assert_equal(
 		_sorted_ids(area.current_route_ids()),
-		_sorted_ids(area.room_catalog.second_route_ids()),
+		_sorted_ids(area.area_definition.second_route_ids),
 		"second route should contain the fixed second group"
 	)
 	assert_equal(area.shop_purchase_history.size(), 1, "first purchase should enter history")
@@ -61,7 +65,7 @@ func _test_two_room_shop_loop() -> void:
 	assert_false(first_replaced in area.deck_ids, "settled outgoing card should leave area deck")
 
 	var second_room_id: StringName = area.current_route_ids()[0]
-	var second_room := area.room_catalog.find_room(second_room_id)
+	var second_room := area.area_definition.find_room(second_room_id)
 	assert_true(area.select_route(second_room_id).accepted, "second route should select")
 	_complete_current_encounter(area)
 	assert_equal(
@@ -167,6 +171,12 @@ func _test_all_route_combinations_complete() -> void:
 		)
 		assert_equal(area.phase, AreaRunSession.Phase.COMPLETE, "installation completes area")
 		var summary: Dictionary = area.completion_snapshot()
+		assert_equal(summary.area_id, &"gold_corridor", "summary should identify the area")
+		assert_equal(
+			summary.rng_state,
+			area.run_rng.snapshot_state(),
+			"summary should preserve replay RNG state"
+		)
 		assert_equal(summary.rooms.size(), 2, "summary should contain two rooms")
 		assert_equal(summary.purchases.size(), 2, "summary should contain two purchases")
 		assert_equal(summary.deck_ids.size(), 12, "summary should contain final deck")
@@ -174,6 +184,7 @@ func _test_all_route_combinations_complete() -> void:
 		assert_equal(summary.engraving_id, engraving_id, "summary should contain engraving")
 		assert_equal(summary.die_id, &"d1", "summary should contain engraved die")
 		assert_equal(summary.face, 2, "summary should contain engraved face")
+		assert_equal(summary.die_profiles.size(), 6, "summary should preserve all die profiles")
 		summary.deck_ids.clear()
 		assert_equal(area.deck_ids.size(), 12, "summary data should be defensive")
 

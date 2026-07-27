@@ -10,7 +10,7 @@ func _ready() -> void:
 
 func bind_routes(
 	p_route_ids: Array[StringName],
-	room_catalog: GoldCorridorCatalog,
+	room_catalog,
 	deck_ids: Array[StringName],
 	card_catalog: CardCatalog
 ) -> bool:
@@ -21,8 +21,8 @@ func bind_routes(
 	for card_id in deck_ids:
 		if card_catalog.find_card(card_id) == null:
 			return _fail_closed("当前牌组包含未知手法牌：%s" % card_id)
-	var left := room_catalog.find_room(p_route_ids[0])
-	var right := room_catalog.find_room(p_route_ids[1])
+	var left: RoomDefinition = room_catalog.find_room(p_route_ids[0])
+	var right: RoomDefinition = room_catalog.find_room(p_route_ids[1])
 	if left == null or right == null:
 		return _fail_closed("路线选择包含未知房间")
 

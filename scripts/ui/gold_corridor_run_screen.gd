@@ -64,7 +64,7 @@ func _show_route_choice() -> void:
 	summary_panel.close()
 	var bound := route_panel.bind_routes(
 		area_session.current_route_ids(),
-		area_session.room_catalog,
+		area_session.area_definition,
 		area_session.deck_ids,
 		area_session.card_catalog
 	)
@@ -120,7 +120,7 @@ func bind_current_encounter() -> void:
 func _area_copy() -> String:
 	if area_session.phase == AreaRunSession.Phase.DEALER:
 		return "金线回廊 · 铁算盘"
-	var room := area_session.room_catalog.find_room(area_session.selected_room_ids[-1])
+	var room := area_session.area_definition.find_room(area_session.selected_room_ids[-1])
 	return "金线回廊 · %s" % room.display_name
 
 func _encounter_goal_copy() -> String:
@@ -216,8 +216,9 @@ func _on_install_requested(
 	reward_panel.close()
 	var bound := complete_panel.bind_summary(
 		area_session.completion_snapshot(),
-		area_session.room_catalog,
+		area_session.area_definition,
 		area_session.card_catalog,
+		area_session.dealer_catalog,
 		area_session.engraving_catalog
 	)
 	if not bound:
