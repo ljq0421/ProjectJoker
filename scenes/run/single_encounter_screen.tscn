@@ -58,6 +58,16 @@ text = "梦层 01 · 无尽牌厅"
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 26
 
+[node name="DirectionBadge" type="Label" parent="SafeArea/RootColumn/TopBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+text = "→ 从左向右结算"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 18
+tooltip_text = "当前遭遇的公开结算方向"
+
 [node name="GoalLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -144,24 +154,62 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="LeftGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(48, 0)
+[node name="LeftGapColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/Center/Lanes"]
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LeftGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_vertical = 3
 text = "◇"
 tooltip_text = "左侧桌间槽"
+
+[node name="LeftMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(72, 40)
+layout_mode = 2
+mouse_filter = 2
+text = "┄ 镜像 ┄"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+tooltip_text = "由另一侧真实牌生成的虚拟镜像副本"
 
 [node name="MiddleLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="RightGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(48, 0)
+[node name="RightGapColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/Center/Lanes"]
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RightGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_vertical = 3
 text = "◇"
 tooltip_text = "右侧桌间槽"
+
+[node name="RightMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(72, 40)
+layout_mode = 2
+mouse_filter = 2
+text = "┄ 镜像 ┄"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+tooltip_text = "由另一侧真实牌生成的虚拟镜像副本"
 
 [node name="RightLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
 unique_name_in_owner = true

@@ -82,7 +82,11 @@ func resolve(
 					})
 		var card_label: String = played_card.definition.display_name
 		if played_card.is_mirror_copy:
-			card_label = "镜像副本：%s" % card_label
+			card_label = "镜像副本：%s｜%s｜%s" % [
+				card_label,
+				_target_arrow(played_card),
+				_effect_copy(played_card.effective_effects()),
+			]
 		report.events.append(ResolutionEvent.new(
 			played_card.definition.id,
 			card_label,
@@ -280,3 +284,23 @@ func _gap_id(played_card: PlayedCard) -> StringName:
 	if targets.has(&"middle") and targets.has(&"right"):
 		return &"right_gap"
 	return &""
+
+func _target_arrow(played_card: PlayedCard) -> String:
+	return "%s → %s" % [
+		played_card.primary_target,
+		played_card.secondary_target,
+	]
+
+func _effect_copy(effects: Array[EffectSpec]) -> String:
+	var parts: Array[String] = []
+	for effect in effects:
+		match effect.operation:
+			EffectSpec.Operation.MODIFY_COEFFICIENT:
+				parts.append("系数 %+d" % effect.amount)
+			EffectSpec.Operation.REPEAT_TABLE:
+				parts.append("额外结算 %d 次" % effect.amount)
+			EffectSpec.Operation.LINK_NEIGHBORS:
+				parts.append("连接两端")
+			_:
+				parts.append("派生效果")
+	return "、".join(parts)

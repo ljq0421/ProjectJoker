@@ -111,10 +111,17 @@ func _test_mirror_event_exposes_source_metadata() -> void:
 	assert_equal(report.events.size() >= 2, true, "card events should exist")
 	var event := report.events[1]
 	assert_true(event.is_mirror_copy, "derived event should be marked")
-	assert_equal(
-		event.label,
-		"镜像副本：折光样例",
+	assert_true(
+		event.label.begins_with("镜像副本：折光样例"),
 		"derived event should have an explicit label"
+	)
+	assert_true(
+		event.label.contains("right → middle"),
+		"derived event should expose mirrored endpoints"
+	)
+	assert_true(
+		event.label.contains("系数 +1"),
+		"derived event should expose weakened effects"
 	)
 	assert_equal(
 		event.source_card_id,

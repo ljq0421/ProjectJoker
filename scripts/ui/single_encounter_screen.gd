@@ -4,6 +4,7 @@ extends Control
 signal view_refreshed
 signal ui_action_accepted(action: StringName, payload: Dictionary)
 signal round_committed(report: ResolutionReport)
+signal card_selected(card_index: int, card: CardDefinition, token: Control)
 
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
@@ -163,6 +164,8 @@ func refresh_from_session() -> void:
 	%LeftGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
 	%RightGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
 	var preview := session.preview()
+	_refresh_direction(preview)
+	_refresh_mirror_layers(state)
 	resolution_panel.bind_report(preview)
 	if dealer_definition != null:
 		%DealerHint.text = "已分配：%d / 6\n当前固定奖励：%d / %d" % [
@@ -176,6 +179,33 @@ func refresh_from_session() -> void:
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	view_refreshed.emit()
+
+func _refresh_direction(report: ResolutionReport) -> void:
+	%DirectionBadge.text = (
+		"← 从右向左结算"
+		if report.resolution_direction
+			== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
+		else "→ 从左向右结算"
+	)
+
+func _refresh_mirror_layers(state: RoundState) -> void:
+	%LeftMirrorLayer.visible = false
+	%RightMirrorLayer.visible = false
+	for played_card in state.played_cards:
+		if not played_card.is_mirror_copy:
+			continue
+		var targets := {
+			played_card.primary_target: true,
+			played_card.secondary_target: true,
+		}
+		var layer: Label
+		if targets.has(&"left") and targets.has(&"middle"):
+			layer = %LeftMirrorLayer
+		elif targets.has(&"middle") and targets.has(&"right"):
+			layer = %RightMirrorLayer
+		if layer != null:
+			layer.text = "┄ 镜像 ┄\n%s" % played_card.definition.display_name
+			layer.visible = true
 
 func reset_teaching_encounter() -> void:
 	session = SingleEncounterSession.new(
@@ -256,6 +286,7 @@ func _on_die_activated(die_id: StringName) -> void:
 
 func _on_card_activated(card_index: int) -> void:
 	var card := session.hand[card_index]
+	var token: Control = hand_container.get_child(card_index)
 	var action := (
 		&"card_global"
 		if card.target_type == CardDefinition.TargetType.GLOBAL
@@ -267,6 +298,8 @@ func _on_card_activated(card_index: int) -> void:
 	var accepted := session.activate_card(card_index)
 	if accepted:
 		_record_tutorial_action(action, payload)
+		if action == &"select_card":
+			card_selected.emit(card_index, card, token)
 		SfxAccess.play(
 			self,
 			&"card_play" if action == &"card_global" else &"card_select"

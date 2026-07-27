@@ -17,16 +17,25 @@ func bind_card(
 	card_index = index
 	text = "%s\n%s\n%s" % [
 		definition.display_name,
-		_target_copy(definition.target_type),
+		_target_copy_for(definition),
 		definition.rule_text,
 	]
 	button_pressed = selected
 	disabled = used
 	tooltip_text = "%s；目标：%s；%s" % [
 		definition.display_name,
-		_target_copy(definition.target_type),
+		_target_copy_for(definition),
 		definition.rule_text,
 	]
+
+func _target_copy_for(definition: CardDefinition) -> String:
+	var copy := _target_copy(definition.target_type)
+	if (
+		definition.target_type == CardDefinition.TargetType.GAP
+		and not definition.mirror_effects.is_empty()
+	):
+		copy += " · 可镜像"
+	return copy
 
 func _target_copy(target_type: CardDefinition.TargetType) -> String:
 	match target_type:
