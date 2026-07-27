@@ -4,7 +4,7 @@ const SETTINGS_SCENE_PATH := "res://scenes/components/settings_layer.tscn"
 const HOST_SCENES := [
 	"res://scenes/run/single_encounter_screen.tscn",
 	"res://scenes/run/three_round_run_screen.tscn",
-	"res://scenes/run/gold_corridor_run_screen.tscn",
+	"res://scenes/run/area_run_screen.tscn",
 	"res://scenes/run/iron_abacus_slice_screen.tscn",
 	"res://scenes/shop/shop_screen.tscn",
 ]
