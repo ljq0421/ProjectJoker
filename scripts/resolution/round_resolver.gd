@@ -123,7 +123,7 @@ func resolve(
 		var minimum_modifier: int = 1 - rule.coefficient
 		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
 		var parity_overrides := _engraving_resolver.parity_overrides(
-			state, assigned_ids, normalized_context
+			state, assigned_ids, rule.id, normalized_context
 		)
 		var result := _evaluator.evaluate(
 			rule, values, effective_modifier, parity_overrides
@@ -182,6 +182,19 @@ func resolve(
 		):
 			if outcome.target_table_id == &"":
 				_append_outcome(report, outcome)
+			elif resolved_table_totals.has(outcome.target_table_id):
+				_append_outcome(report, outcome)
+			elif ordered_rule_ids.find(outcome.target_table_id) < rule_index:
+				_append_outcome(report, EngravingOutcome.new(
+					outcome.source_id,
+					"%s：目标规则台 %s 未通过" % [
+						outcome.label,
+						outcome.target_table_id,
+					],
+					0,
+					&"",
+					false
+				))
 			else:
 				if not pending_bridges.has(outcome.target_table_id):
 					pending_bridges[outcome.target_table_id] = []

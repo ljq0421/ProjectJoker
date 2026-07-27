@@ -33,6 +33,7 @@ func modification_block_reason(
 func parity_overrides(
 	state: RoundState,
 	assigned_ids: Array,
+	rule_id: StringName,
 	context: ResolutionContext
 ) -> Array[bool]:
 	var flags: Array[bool] = []
@@ -40,7 +41,14 @@ func parity_overrides(
 		var definition := active_definition(state.find_die(die_id), context)
 		flags.append(
 			definition != null
-			and definition.operation == EngravingDefinition.Operation.PRISM_PARITY
+			and (
+				definition.operation == EngravingDefinition.Operation.PRISM_PARITY
+				or (
+					definition.operation
+						== EngravingDefinition.Operation.MIRROR_PRISM
+					and _has_adjacent_mirror_copy(state, rule_id)
+				)
+			)
 		)
 	return flags
 
@@ -127,10 +135,63 @@ func table_outcomes(
 						int(die_values.get(die_id, die.value)),
 						target_table_id
 					))
+			EngravingDefinition.Operation.BRIDGE_BACKWARD:
+				if rule_index <= 0:
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：当前方向没有上一张规则台" % definition.display_name,
+						0,
+						&"",
+						false
+					))
+				else:
+					var target_table_id: StringName = ordered_rule_ids[rule_index - 1]
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：%s → %s" % [
+							definition.display_name,
+							ordered_rule_ids[rule_index],
+							target_table_id,
+						],
+						int(die_values.get(die_id, die.value)),
+						target_table_id
+					))
 			EngravingDefinition.Operation.PRISM_PARITY:
 				outcomes.append(EngravingOutcome.new(
 					definition.id,
 					"%s：同时视为奇数与偶数" % definition.display_name,
 					0
 				))
+			EngravingDefinition.Operation.MIRROR_PRISM:
+				var current_rule_id: StringName = ordered_rule_ids[rule_index]
+				var is_adjacent := _has_adjacent_mirror_copy(
+					state,
+					current_rule_id
+				)
+				outcomes.append(EngravingOutcome.new(
+					definition.id,
+					(
+						"%s：邻接镜像副本，同时视为奇数与偶数"
+						if is_adjacent
+						else "%s：没有邻接镜像副本"
+					) % definition.display_name,
+					0,
+					&"",
+					is_adjacent
+				))
 	return outcomes
+
+func _has_adjacent_mirror_copy(
+	state: RoundState,
+	rule_id: StringName
+) -> bool:
+	for played_card in state.played_cards:
+		if (
+			played_card.is_mirror_copy
+			and (
+				played_card.primary_target == rule_id
+				or played_card.secondary_target == rule_id
+			)
+		):
+			return true
+	return false

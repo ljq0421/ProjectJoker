@@ -6,6 +6,8 @@ enum Operation {
 	ANCHOR_DIE,
 	BRIDGE_FORWARD,
 	PRISM_PARITY,
+	BRIDGE_BACKWARD,
+	MIRROR_PRISM,
 }
 
 @export var id: StringName
