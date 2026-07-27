@@ -13,4 +13,7 @@ id = &"starter_nudge_down_2"
 display_name = "深降"
 rule_text = "令一颗骰子的点数 -2，最终点数限制在 1..6。"
 tags = PackedStringArray("骰值", "强调")
+suit = 0
+rank_label = "3"
+rarity = 1
 effects = Array[ExtResource("1_h0tjy")]([SubResource("Resource_pp0vv")])

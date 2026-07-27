@@ -40,6 +40,21 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 			errors.append("card %s has no rule text" % card.id)
 		if card.tags.is_empty():
 			errors.append("card %s has no display tags" % card.id)
+		if card.suit not in [
+			CardDefinition.Suit.CLUBS,
+			CardDefinition.Suit.HEARTS,
+			CardDefinition.Suit.DIAMONDS,
+			CardDefinition.Suit.SPADES,
+		]:
+			errors.append("card %s has an unknown suit" % card.id)
+		if card.rank_label.strip_edges().is_empty():
+			errors.append("card %s has no rank label" % card.id)
+		if card.rarity not in [
+			CardDefinition.Rarity.COMMON,
+			CardDefinition.Rarity.UNCOMMON,
+			CardDefinition.Rarity.RARE,
+		]:
+			errors.append("card %s has an unknown rarity" % card.id)
 		if card.effects.is_empty():
 			errors.append("card %s has no effects" % card.id)
 		for effect in card.effects:

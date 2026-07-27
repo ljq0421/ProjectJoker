@@ -112,4 +112,18 @@ static func _card(
 	card.effects = [effect]
 	card.rule_text = rule_text
 	card.tags = tags
+	card.suit = _suit_for(id)
+	card.rank_label = "1"
+	card.rarity = CardDefinition.Rarity.COMMON
 	return card
+
+static func _suit_for(card_id: StringName) -> CardDefinition.Suit:
+	var prefix := String(card_id).get_slice("_", 0)
+	match prefix:
+		"heart":
+			return CardDefinition.Suit.HEARTS
+		"diamond":
+			return CardDefinition.Suit.DIAMONDS
+		"spade":
+			return CardDefinition.Suit.SPADES
+	return CardDefinition.Suit.CLUBS

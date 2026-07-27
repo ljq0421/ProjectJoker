@@ -205,6 +205,9 @@ func _valid_gap_card(card_id: StringName) -> CardDefinition:
 	card.rule_text = "作用于箭头所指规则台。"
 	card.tags = PackedStringArray(["桌间", "镜像"])
 	card.target_type = CardDefinition.TargetType.GAP
+	card.suit = CardDefinition.Suit.HEARTS
+	card.rank_label = "1"
+	card.rarity = CardDefinition.Rarity.COMMON
 	var link := EffectSpec.new()
 	link.operation = EffectSpec.Operation.LINK_NEIGHBORS
 	link.amount = 1

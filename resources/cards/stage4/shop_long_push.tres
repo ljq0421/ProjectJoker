@@ -13,4 +13,7 @@ id = &"shop_long_push"
 display_name = "长距推码"
 rule_text = "令一颗骰子的点数 +3，最终点数限制在 1..6。"
 tags = PackedStringArray("商店", "骰值")
+suit = 0
+rank_label = "5"
+rarity = 2
 effects = Array[ExtResource("1_0x8sk")]([SubResource("Resource_f0lq5")])

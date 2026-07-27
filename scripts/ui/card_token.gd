@@ -15,20 +15,25 @@ func bind_card(
 	used: bool
 ) -> void:
 	card_index = index
-	text = "%s\n%s\n%s" % [
+	text = "%s · %s\n%s · %s\n%s" % [
+		definition.suit_copy(),
+		definition.rank_label,
 		definition.display_name,
-		_target_copy_for(definition),
+		target_copy_for(definition),
 		definition.rule_text,
 	]
 	button_pressed = selected
 	disabled = used
-	tooltip_text = "%s；目标：%s；%s" % [
+	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
+		definition.suit_copy(),
+		definition.rank_label,
+		definition.rarity_copy(),
 		definition.display_name,
-		_target_copy_for(definition),
+		target_copy_for(definition),
 		definition.rule_text,
 	]
 
-func _target_copy_for(definition: CardDefinition) -> String:
+func target_copy_for(definition: CardDefinition) -> String:
 	var copy := _target_copy(definition.target_type)
 	if (
 		definition.target_type == CardDefinition.TargetType.GAP

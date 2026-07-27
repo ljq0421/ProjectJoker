@@ -25,6 +25,9 @@ func run() -> void:
 	valid_card.rule_text = "令一张规则台的系数 +1。"
 	valid_card.tags = PackedStringArray(["规则台", "系数"])
 	valid_card.target_type = CardDefinitionScript.TargetType.TABLE
+	valid_card.suit = CardDefinitionScript.Suit.DIAMONDS
+	valid_card.rank_label = "1"
+	valid_card.rarity = CardDefinitionScript.Rarity.COMMON
 	valid_card.effects = [valid_effect]
 
 	var validator := ContentValidatorScript.new()
@@ -46,6 +49,12 @@ func run() -> void:
 	assert_true(
 		empty_errors.any(func(error: String) -> bool: return "card ID is empty" in error),
 		"empty card IDs should be reported"
+	)
+	assert_true(
+		empty_errors.any(
+			func(error: String) -> bool: return "has no rank label" in error
+		),
+		"empty card rank labels should be reported"
 	)
 
 	var restriction = FinalRestrictionDefinitionScript.new()

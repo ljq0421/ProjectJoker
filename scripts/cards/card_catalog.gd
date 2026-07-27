@@ -72,6 +72,13 @@ func shop_ids() -> Array[StringName]:
 func mirror_hall_card_ids() -> Array[StringName]:
 	return _ids(_mirror_hall_cards)
 
+func cards_for_suit(suit: CardDefinition.Suit) -> Array[CardDefinition]:
+	var cards: Array[CardDefinition] = []
+	for card in all_cards():
+		if card.suit == suit:
+			cards.append(card)
+	return cards
+
 func find_card(card_id: StringName) -> CardDefinition:
 	return _cards_by_id.get(card_id) as CardDefinition
 

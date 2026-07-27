@@ -13,4 +13,7 @@ id = &"starter_nudge_up_1"
 display_name = "推码"
 rule_text = "令一颗骰子的点数 +1，最终点数限制在 1..6。"
 tags = PackedStringArray("骰值", "微调")
+suit = 0
+rank_label = "2"
+rarity = 0
 effects = Array[ExtResource("1_clilq")]([SubResource("Resource_omddo")])
