@@ -142,6 +142,18 @@ func validate_dealers(dealers: Array) -> Array[String]:
 			errors.append("dealer %s has no display tags" % dealer.id)
 	return errors
 
+func validate_restriction(
+	restriction: FinalRestrictionDefinition
+) -> Array[String]:
+	if restriction == null:
+		return ["restriction resource is null"]
+	return restriction.validate()
+
+func validate_round_schedule(schedule: DealerRoundSchedule) -> Array[String]:
+	if schedule == null:
+		return ["dealer round schedule resource is null"]
+	return schedule.validate()
+
 func validate_engravings(engravings: Array) -> Array[String]:
 	var errors: Array[String] = []
 	var seen: Dictionary = {}
@@ -203,6 +215,8 @@ func validate_rooms(rooms: Array) -> Array[String]:
 			errors.append("room %s has no display tags" % room.id)
 		if room.synergy_tags.is_empty():
 			errors.append("room %s has no synergy tags" % room.id)
+		if room.restriction != null:
+			errors.append_array(validate_restriction(room.restriction))
 		if room.encounter == null:
 			errors.append("room %s has no encounter" % room.id)
 			continue

@@ -4,6 +4,9 @@ const ContentValidatorScript = preload("res://scripts/validation/content_validat
 const RuleDefinitionScript = preload("res://scripts/rules/rule_definition.gd")
 const CardDefinitionScript = preload("res://scripts/cards/card_definition.gd")
 const EffectSpecScript = preload("res://scripts/cards/effect_spec.gd")
+const FinalRestrictionDefinitionScript = preload(
+	"res://scripts/run/final_restriction_definition.gd"
+)
 
 func run() -> void:
 	var valid_rule := RuleDefinitionScript.new()
@@ -43,4 +46,16 @@ func run() -> void:
 	assert_true(
 		empty_errors.any(func(error: String) -> bool: return "card ID is empty" in error),
 		"empty card IDs should be reported"
+	)
+
+	var restriction = FinalRestrictionDefinitionScript.new()
+	restriction.id = &"invalid_limit"
+	restriction.display_name = "无效上限"
+	restriction.rule_text = "最多使用零张牌。"
+	restriction.amount = 0
+	assert_true(
+		validator.validate_restriction(restriction).any(
+			func(error: String) -> bool: return "positive card limit" in error
+		),
+		"restriction validation should delegate to the resource contract"
 	)

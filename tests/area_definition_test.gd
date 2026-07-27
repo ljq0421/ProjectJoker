@@ -15,6 +15,10 @@ func run() -> void:
 	assert_equal(area.dealer_target, 150, "dealer target stays 150")
 	assert_equal(area.starting_intel_tickets, 0, "gold area starts with no tickets")
 	assert_equal(area.initial_engraving_id, &"", "gold area starts without engraving")
+	assert_true(
+		area.dealer_round_schedule == null,
+		"legacy gold area should keep its single dealer encounter"
+	)
 	assert_equal(
 		area.validate(CardCatalog.new(), DealerCatalog.new(), EngravingCatalog.new()),
 		[],

@@ -26,6 +26,7 @@ var _second_route_ids: Array[StringName] = []
 @export_range(0, 6, 1) var initial_engraving_face := 0
 @export var dealer_id: StringName
 @export var dealer_encounter: EncounterDefinition
+@export var dealer_round_schedule: DealerRoundSchedule
 @export var dealer_target := 0
 @export var shop_offer_ids: Array[StringName] = []
 @export var engraving_offer_ids: Array[StringName] = []
@@ -114,8 +115,14 @@ func _validate_dealer(
 ) -> void:
 	if dealer_catalog.find_dealer(dealer_id) == null:
 		errors.append("area %s dealer is unknown: %s" % [id, dealer_id])
-	if dealer_encounter == null:
-		errors.append("area %s has no dealer encounter" % id)
+	if dealer_round_schedule != null:
+		errors.append_array(
+			ContentValidator.new().validate_round_schedule(
+				dealer_round_schedule
+			)
+		)
+	elif dealer_encounter == null:
+		errors.append("area %s has no dealer encounter or round schedule" % id)
 	else:
 		errors.append_array(
 			ContentValidator.new().validate(dealer_encounter.rules, [])
