@@ -51,6 +51,14 @@ func bind_die_with_engravings(
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
 
+func set_target_state(active: bool, legal: bool) -> void:
+	if not active:
+		self_modulate = Color.WHITE
+	elif legal:
+		self_modulate = Color(0.68, 1.0, 0.96, 1.0)
+	else:
+		self_modulate = Color(0.48, 0.48, 0.58, 0.58)
+
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var preview := Label.new()
 	preview.text = text

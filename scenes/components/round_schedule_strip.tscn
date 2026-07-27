@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/round_schedule_strip.gd" id="1_script"]
+
+[node name="RoundScheduleStrip" type="PanelContainer"]
+custom_minimum_size = Vector2(1120, 112)
+layout_mode = 2
+script = ExtResource("1_script")
+
+[node name="Rounds" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="RoundOneCard" type="PanelContainer" parent="Rounds"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(350, 98)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="VBoxContainer" parent="Rounds/RoundOneCard"]
+layout_mode = 2
+
+[node name="RoundOneTitle" type="Label" parent="Rounds/RoundOneCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1 · 正面"
+theme_override_font_sizes/font_size = 18
+
+[node name="RoundOneDetail" type="Label" parent="Rounds/RoundOneCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "从左向右结算；不生成镜像副本。"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="RoundTwoCard" type="PanelContainer" parent="Rounds"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(350, 98)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="VBoxContainer" parent="Rounds/RoundTwoCard"]
+layout_mode = 2
+
+[node name="RoundTwoTitle" type="Label" parent="Rounds/RoundTwoCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "2 · 反面"
+theme_override_font_sizes/font_size = 18
+
+[node name="RoundTwoDetail" type="Label" parent="Rounds/RoundTwoCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "从右向左结算；结算后选择第三轮限制。"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="RoundThreeCard" type="PanelContainer" parent="Rounds"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(350, 98)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="VBoxContainer" parent="Rounds/RoundThreeCard"]
+layout_mode = 2
+
+[node name="RoundThreeTitle" type="Label" parent="Rounds/RoundThreeCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "3 · 无面"
+theme_override_font_sizes/font_size = 18
+
+[node name="RoundThreeDetail" type="Label" parent="Rounds/RoundThreeCard/Copy"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "第一张合格桌间牌生成镜像；应用已选限制。"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14

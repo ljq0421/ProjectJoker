@@ -12,7 +12,8 @@ func bind_card(
 	index: int,
 	definition: CardDefinition,
 	selected: bool,
-	used: bool
+	used: bool,
+	selection_step: String = ""
 ) -> void:
 	card_index = index
 	text = "%s · %s\n%s · %s\n%s" % [
@@ -24,6 +25,8 @@ func bind_card(
 	]
 	button_pressed = selected
 	disabled = used
+	if selected and not selection_step.is_empty():
+		text += "\n▶ %s" % selection_step
 	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
 		definition.suit_copy(),
 		definition.rank_label,

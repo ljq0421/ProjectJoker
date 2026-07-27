@@ -6,6 +6,7 @@ func run() -> void:
 	for path in [
 		"res://scenes/run/gold_corridor_run_screen.tscn",
 		"res://scenes/run/mirror_hall_run_screen.tscn",
+		"res://scenes/run/faceless_hub_run_screen.tscn",
 	]:
 		var packed := load(path)
 		assert_true(packed != null, "%s should load" % path)
@@ -17,6 +18,18 @@ func run() -> void:
 		assert_true(screen.has_method("_after_encounter_bound"), "%s exposes encounter hook" % path)
 		assert_true(screen.has_method("_after_card_selected"), "%s exposes card hook" % path)
 		assert_true(screen.has_method("_after_dealer_bound"), "%s exposes dealer hook" % path)
+		assert_true(
+			screen.has_method("_after_round_report_accepted"),
+			"%s exposes post-report hook" % path
+		)
+		assert_true(
+			screen.has_method("_show_restriction_choice_if_needed"),
+			"%s exposes restriction-choice hook" % path
+		)
+		assert_true(
+			screen.has_method("_after_restriction_confirmed"),
+			"%s exposes restriction-confirmed hook" % path
+		)
 		for node_name in [
 			"EncounterScreen",
 			"RouteChoicePanel",

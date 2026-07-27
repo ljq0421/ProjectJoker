@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/run/area_run_screen.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/ui/faceless_hub_run_screen.gd" id="2_script"]
+[ext_resource type="PackedScene" path="res://scenes/components/round_schedule_strip.tscn" id="3_schedule"]
+[ext_resource type="PackedScene" path="res://scenes/components/final_restriction_panel.tscn" id="4_restriction"]
+
+[node name="FacelessHubRunScreen" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="RoundScheduleStrip" parent="." instance=ExtResource("3_schedule")]
+unique_name_in_owner = true
+visible = false
+
+[node name="FinalRestrictionPanel" parent="." instance=ExtResource("4_restriction")]
+unique_name_in_owner = true
+layout_mode = 1
+z_index = 35

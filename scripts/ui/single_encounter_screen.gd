@@ -20,6 +20,8 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var error_label: Label = %ErrorLabel
 @onready var calibration_label: Label = %CalibrationLabel
 @onready var confirm_button: Button = %ConfirmButton
+@onready var selection_hint_label: Label = %SelectionHintLabel
+@onready var active_restriction_badge: Label = %ActiveRestrictionBadge
 @onready var tutorial: SingleEncounterTutorial = %SingleEncounterTutorial
 @onready var area_label: Label = %AreaLabel
 @onready var goal_label: Label = %GoalLabel
@@ -131,11 +133,20 @@ func refresh_from_session() -> void:
 			session.controller.effective_slot_count(rule.id),
 			session.controller.condition_summary(rule.id)
 		)
-		lanes[lane_index].set_legal_target(
+		var table_target_active := (
 			selected_target_type == CardDefinition.TargetType.TABLE
 		)
-		lanes[lane_index].set_die_target_highlight(
-			selected_target_type == CardDefinition.TargetType.DIE
+		lanes[lane_index].set_target_state(
+			table_target_active,
+			session.is_legal_table_card_target(rule.id)
+		)
+		var die_card_target_active := selected_target_type in [
+			CardDefinition.TargetType.DIE,
+			CardDefinition.TargetType.DICE_PAIR,
+		]
+		lanes[lane_index].set_die_card_target_state(
+			die_card_target_active,
+			session.is_legal_die_card_target
 		)
 
 	for child in dice_tray.get_children():
@@ -150,7 +161,14 @@ func refresh_from_session() -> void:
 				engraving_catalog,
 				false
 			)
-			token.set_legal_target(selected_target_type == CardDefinition.TargetType.DIE)
+			var die_target_active := selected_target_type in [
+				CardDefinition.TargetType.DIE,
+				CardDefinition.TargetType.DICE_PAIR,
+			]
+			token.set_target_state(
+				die_target_active,
+				session.is_legal_die_card_target(die.id)
+			)
 			token.die_activated.connect(_on_die_activated)
 
 	for child in hand_container.get_children():
@@ -162,13 +180,26 @@ func refresh_from_session() -> void:
 			index,
 			session.hand[index],
 			session.selection.card_index == index,
-			session.is_card_used(index)
+			session.is_card_used(index),
+			(
+				session.selected_card_target_hint()
+				if session.selection.card_index == index
+				else ""
+			)
 		)
 		card_token.card_activated.connect(_on_card_activated)
 
 	var gap_is_target := selected_target_type == CardDefinition.TargetType.GAP
-	%LeftGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
-	%RightGap.self_modulate = TARGET_TINT if gap_is_target else Color.WHITE
+	%LeftGap.self_modulate = (
+		TARGET_TINT
+		if gap_is_target and session.is_legal_gap_card_target(&"left", &"middle")
+		else (Color(0.48, 0.48, 0.58, 0.58) if gap_is_target else Color.WHITE)
+	)
+	%RightGap.self_modulate = (
+		TARGET_TINT
+		if gap_is_target and session.is_legal_gap_card_target(&"middle", &"right")
+		else (Color(0.48, 0.48, 0.58, 0.58) if gap_is_target else Color.WHITE)
+	)
 	var preview := session.preview()
 	_refresh_direction(preview)
 	_refresh_mirror_layers(state)
@@ -180,11 +211,36 @@ func refresh_from_session() -> void:
 			dealer_definition.fixed_reward,
 		]
 	error_label.text = session.last_error
+	selection_hint_label.text = session.selected_card_target_hint()
+	selection_hint_label.visible = not selection_hint_label.text.is_empty()
+	_refresh_active_restriction(state)
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	view_refreshed.emit()
+
+func _refresh_active_restriction(state: RoundState) -> void:
+	var restriction := session.controller.active_restriction
+	active_restriction_badge.visible = restriction != null
+	if restriction == null:
+		active_restriction_badge.text = ""
+		active_restriction_badge.tooltip_text = ""
+		return
+	var progress_copy := ""
+	if (
+		restriction.operation
+		== FinalRestrictionDefinition.Operation.REQUIRE_ALL_TABLES_OCCUPIED
+	):
+		progress_copy = " · %s" % RoundRestrictionEvaluator.new().coverage_copy(
+			state,
+			session.controller.encounter
+		)
+	active_restriction_badge.text = "公开限制 · %s%s" % [
+		restriction.display_name,
+		progress_copy,
+	]
+	active_restriction_badge.tooltip_text = restriction.rule_text
 
 func _refresh_direction(report: ResolutionReport) -> void:
 	%DirectionBadge.text = (
@@ -292,6 +348,14 @@ func _on_die_activated(die_id: StringName) -> void:
 
 func _on_card_activated(card_index: int) -> void:
 	var card := session.hand[card_index]
+	if (
+		session.selection.kind == InteractionState.Kind.CARD
+		and session.selection.card_index == card_index
+	):
+		session.cancel_selection()
+		SfxAccess.play(self, &"ui_back")
+		refresh_from_session()
+		return
 	var report_selection := false
 	var action := (
 		&"card_global"
@@ -317,6 +381,17 @@ func _on_card_activated(card_index: int) -> void:
 		var token := _find_hand_card_token(card_index)
 		if token != null:
 			card_selected.emit(card_index, card, token)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event.is_pressed() or event.is_echo():
+		return
+	var key_event := event as InputEventKey
+	if key_event == null or key_event.keycode != KEY_ESCAPE:
+		return
+	if session.cancel_selection():
+		SfxAccess.play(self, &"ui_back")
+		refresh_from_session()
+		get_viewport().set_input_as_handled()
 
 func _find_hand_card_token(card_index: int) -> CardToken:
 	for child in hand_container.get_children():

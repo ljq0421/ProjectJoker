@@ -149,6 +149,7 @@ func _on_round_committed(report: ResolutionReport) -> void:
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
 		return
+	_after_round_report_accepted()
 	if area_session.phase == AreaRunSession.Phase.FAILED:
 		var dealer := area_session.dealer_catalog.find_dealer(
 			area_session.area_definition.dealer_id
@@ -169,6 +170,8 @@ func _on_round_committed(report: ResolutionReport) -> void:
 			area_session.engraving_catalog
 		)
 		call_deferred("_request_context_hint", &"engraving")
+		return
+	if _show_restriction_choice_if_needed():
 		return
 	encounter_screen.set_run_status(_area_copy(), _encounter_goal_copy())
 	summary_panel.show_run_state(area_session.encounter_session)
@@ -264,6 +267,16 @@ func _show_start_error(message: String) -> void:
 	encounter_screen.visible = true
 	encounter_screen.show_external_error(message)
 
+func confirm_dealer_restriction(restriction_id: StringName) -> bool:
+	var result := area_session.choose_dealer_restriction(restriction_id)
+	if not result.accepted:
+		encounter_screen.show_external_error(result.reason)
+		return false
+	SfxAccess.play(self, &"ui_confirm")
+	bind_current_encounter()
+	_after_restriction_confirmed()
+	return true
+
 func _after_encounter_bound() -> void:
 	pass
 
@@ -275,6 +288,15 @@ func _after_card_selected(
 	pass
 
 func _after_dealer_bound() -> void:
+	pass
+
+func _after_round_report_accepted() -> void:
+	pass
+
+func _show_restriction_choice_if_needed() -> bool:
+	return false
+
+func _after_restriction_confirmed() -> void:
 	pass
 
 func _request_context_hint(_checkpoint_id: StringName) -> void:

@@ -68,10 +68,25 @@ theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 18
 tooltip_text = "当前遭遇的公开结算方向"
 
+[node name="ActiveRestrictionBadge" type="Label" parent="SafeArea/RootColumn/TopBar"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "公开限制"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+theme_override_font_sizes/font_size = 16
+
 [node name="GoalLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "解析目标：0 / 100　轮次 1 / 3"
+
+[node name="RunStatusSlot" type="CenterContainer" parent="SafeArea/RootColumn"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
 
 [node name="Body" type="HBoxContainer" parent="SafeArea/RootColumn"]
 layout_mode = 2
@@ -275,6 +290,16 @@ layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 10
 script = ExtResource("5")
+
+[node name="SelectionHintLabel" type="Label" parent="SafeArea/RootColumn/Body/Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "选择来源骰子"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="Hand" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true

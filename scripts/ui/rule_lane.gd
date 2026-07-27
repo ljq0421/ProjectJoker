@@ -66,10 +66,29 @@ func bind_lane(
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
 
+func set_target_state(active: bool, legal: bool) -> void:
+	if not active:
+		self_modulate = Color.WHITE
+	elif legal:
+		self_modulate = Color(0.68, 1.0, 0.96, 1.0)
+	else:
+		self_modulate = Color(0.48, 0.48, 0.58, 0.58)
+
 func set_die_target_highlight(value: bool) -> void:
 	for child in slots.get_children():
 		if child is DieToken:
 			child.set_legal_target(value)
+
+func set_die_card_target_state(
+	active: bool,
+	legal_target: Callable
+) -> void:
+	for child in slots.get_children():
+		if child is DieToken:
+			child.set_target_state(
+				active,
+				legal_target.call(child.die_id) if active else false
+			)
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	return data is Dictionary and data.get("kind") == "die"

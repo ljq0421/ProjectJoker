@@ -1,0 +1,101 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/final_restriction_panel.gd" id="1_script"]
+
+[node name="FinalRestrictionPanel" type="Control" groups=["settings_entry_blocker"]]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.01, 0.008, 0.04, 0.82)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(940, 520)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+text = "无面主人 · 最终议程"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+
+[node name="Title" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+text = "为第三轮选择一项公开限制"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
+
+[node name="Explanation" type="Label" parent="Center/Panel/Content"]
+layout_mode = 2
+text = "两项限制都从现在起公开，但只影响第三轮。选择不是下注：它决定你接下来采用哪种解题路线。"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Options" type="HBoxContainer" parent="Center/Panel/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="OperationRestrictionButton" type="Button" parent="Center/Panel/Content/Options"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(430, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "独手裁决"
+autowrap_mode = 2
+
+[node name="DistributionRestrictionButton" type="Button" parent="Center/Panel/Content/Options"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(430, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "三席到场"
+autowrap_mode = 2
+
+[node name="RestrictionErrorLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
+
+[node name="Actions" type="HBoxContainer" parent="Center/Panel/Content"]
+layout_mode = 2
+alignment = 2
+
+[node name="RestrictionConfirmButton" type="Button" parent="Center/Panel/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 54)
+layout_mode = 2
+disabled = true
+text = "确认并进入第三轮"

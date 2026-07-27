@@ -40,20 +40,32 @@ func unassign_die(die_id: StringName) -> ActionResult:
 	return _accept(RoundActions.unassign_die(state, die_id))
 
 func play_card(played_card: PlayedCard) -> ActionResult:
+	var validation := validate_card_play(played_card)
+	if not validation.accepted:
+		return validation
+	return _accept(validation)
+
+func validate_card_start() -> OperationResult:
 	if committed:
-		return ActionResult.new(false, "本轮已经结算", state)
+		return OperationResult.new(false, "本轮已经结算")
 	var restriction_result := _restriction_evaluator.validate_card_play(
 		state,
 		active_restriction
 	)
 	if not restriction_result.accepted:
-		return ActionResult.new(false, restriction_result.reason, state)
-	return _accept(CardRules.play_card(
+		return restriction_result
+	return OperationResult.new(true)
+
+func validate_card_play(played_card: PlayedCard) -> ActionResult:
+	var start_result := validate_card_start()
+	if not start_result.accepted:
+		return ActionResult.new(false, start_result.reason, state)
+	return CardRules.play_card(
 		state,
 		played_card,
 		resolution_context,
 		encounter
-	))
+	)
 
 func effective_slot_count(table_id: StringName) -> int:
 	return CardRules.effective_slot_count(state, encounter, table_id)
