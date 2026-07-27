@@ -15,6 +15,10 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 
+	_assert_true(
+		screen.get_node("%EntryGroups").visible,
+		"standalone encounter should expose grouped practice and area entries"
+	)
 	var d1 := _find_die(&"d1")
 	var left: Control = screen.get_node("%LeftLane")
 	await _drag(d1, left)
@@ -105,6 +109,11 @@ func _run() -> void:
 	_assert_true(
 		screen.session.commit().event_signature() == preview_signature,
 		"commit should preserve the preview event signature"
+	)
+	screen.bind_external_session(screen.session, "区域测试", "目标测试")
+	_assert_true(
+		not screen.get_node("%EntryGroups").visible,
+		"externally owned encounters should hide the complete entry container"
 	)
 
 	screen.queue_free()

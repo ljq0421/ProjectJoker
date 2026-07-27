@@ -45,6 +45,8 @@ func run() -> void:
 			"ReplayAdvancedGuideButton",
 			"ReplayGoldCorridorGuideButton",
 			"RunTrialButton",
+			"MirrorHallRunButton",
+			"ReplayMirrorHallGuideButton",
 		]:
 			assert_true(
 				screen.get_node_or_null("%" + button_name) != null,
@@ -53,8 +55,10 @@ func run() -> void:
 		var expected_button_texts := {
 			"ReplayTutorialButton": "重看引导",
 			"ReplayAdvancedGuideButton": "重看铁算盘原型引导",
-			"ReplayGoldCorridorGuideButton": "重看区域提示",
-			"RunTrialButton": "进入六面诡局",
+			"ReplayGoldCorridorGuideButton": "重看金线回廊提示",
+			"RunTrialButton": "进入金线回廊",
+			"MirrorHallRunButton": "进入反照牌厅",
+			"ReplayMirrorHallGuideButton": "重看反照牌厅提示",
 		}
 		for button_name in expected_button_texts:
 			var button := screen.get_node_or_null("%" + button_name) as Button

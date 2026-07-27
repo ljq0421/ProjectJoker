@@ -115,29 +115,78 @@ vertical_alignment = 2
 autowrap_mode = 2
 theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
 
-[node name="ReplayTutorialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="EntryGroups" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PracticeEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PracticeEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
+layout_mode = 2
+text = "练习"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="ReplayTutorialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看引导"
 tooltip_text = "重置当前教学局并重新开始引导"
 
-[node name="ReplayAdvancedGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="ReplayAdvancedGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看铁算盘原型引导"
 tooltip_text = "重置旧五点提示并进入包含刻印验证的铁算盘原型"
 
-[node name="ReplayGoldCorridorGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="AreaTrialEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "重看区域提示"
+theme_override_constants/separation = 6
+
+[node name="AreaTrialEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+layout_mode = 2
+text = "地区试玩"
+theme_override_colors/font_color = Color(0.83, 0.48, 0.92, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="GoldCorridorEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+layout_mode = 2
+text = "金线回廊"
+theme_override_colors/font_color = Color(0.88, 0.78, 0.4, 1)
+
+[node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "进入金线回廊"
+tooltip_text = "完成两次路线选择、两个普通房、两次情报交换、铁算盘与区域刻印奖励"
+
+[node name="ReplayGoldCorridorGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "重看金线回廊提示"
 tooltip_text = "重置四个正式区域提示并从金线回廊第一组路线开始"
 
-[node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="MirrorHallEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+layout_mode = 2
+text = "反照牌厅"
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+
+[node name="MirrorHallRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "进入六面诡局"
-tooltip_text = "完成两次路线选择、两个普通房、两次情报交换、铁算盘与区域刻印奖励"
+text = "进入反照牌厅"
+tooltip_text = "体验公开反向结算、牌面镜像与镜面夫人挑战"
+
+[node name="ReplayMirrorHallGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "重看反照牌厅提示"
+tooltip_text = "只重置反照牌厅的方向、镜像与庄家提示"
 
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
 layout_mode = 2

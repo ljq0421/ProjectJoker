@@ -27,6 +27,9 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var replay_advanced_guide_button: Button = %ReplayAdvancedGuideButton
 @onready var replay_gold_corridor_guide_button: Button = %ReplayGoldCorridorGuideButton
 @onready var run_trial_button: Button = %RunTrialButton
+@onready var mirror_hall_run_button: Button = %MirrorHallRunButton
+@onready var replay_mirror_hall_guide_button: Button = %ReplayMirrorHallGuideButton
+@onready var entry_groups: VBoxContainer = %EntryGroups
 
 var session: SingleEncounterSession
 var dealer_definition: DealerDefinition
@@ -56,6 +59,10 @@ func _ready() -> void:
 	replay_advanced_guide_button.pressed.connect(_on_replay_advanced_guide_pressed)
 	replay_gold_corridor_guide_button.pressed.connect(_on_replay_gold_corridor_guide_pressed)
 	run_trial_button.pressed.connect(_on_run_trial_pressed)
+	mirror_hall_run_button.pressed.connect(_on_mirror_hall_run_pressed)
+	replay_mirror_hall_guide_button.pressed.connect(
+		_on_replay_mirror_hall_guide_pressed
+	)
 	if tutorial_auto_start:
 		tutorial.call_deferred("maybe_start")
 
@@ -68,10 +75,7 @@ func bind_external_session(
 		return
 	tutorial.active = false
 	tutorial.visible = false
-	replay_tutorial_button.visible = false
-	replay_advanced_guide_button.visible = false
-	replay_gold_corridor_guide_button.visible = false
-	run_trial_button.visible = false
+	entry_groups.visible = false
 	session = p_session
 	owns_session = false
 	set_run_status(area_copy, goal_copy)
@@ -440,6 +444,24 @@ func _launch_gold_corridor() -> void:
 	get_tree().root.set_meta("gold_corridor_guide_config_path", tutorial_config_path)
 	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/gold_corridor_run_screen.tscn")
+
+func _on_mirror_hall_run_pressed() -> void:
+	_launch_mirror_hall()
+
+func _on_replay_mirror_hall_guide_pressed() -> void:
+	var store := MirrorHallGuideProgressStore.new(tutorial_config_path)
+	var result := store.reset()
+	if result != OK:
+		_on_tutorial_persistence_warning(
+			"无法重置反照牌厅提示；仍可正常进入反照牌厅。"
+		)
+		return
+	_launch_mirror_hall()
+
+func _launch_mirror_hall() -> void:
+	get_tree().root.set_meta("mirror_hall_guide_config_path", tutorial_config_path)
+	SfxAccess.play(self, &"page_transition")
+	get_tree().change_scene_to_file("res://scenes/run/mirror_hall_run_screen.tscn")
 
 func _on_replay_advanced_guide_pressed() -> void:
 	var store := IronAbacusGuideProgressStore.new(tutorial_config_path)
