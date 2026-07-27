@@ -3,6 +3,8 @@ extends RefCounted
 
 var valid: bool = true
 var reason: String = ""
+var restriction_satisfied: bool = true
+var restriction_reason: String = ""
 var total: int = 0
 var events: Array[ResolutionEvent] = []
 var assigned_dice: int = 0

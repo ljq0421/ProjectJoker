@@ -213,7 +213,13 @@ func _begin_round() -> OperationResult:
 		if setup.resolution_context != null
 		else ResolutionContext.empty()
 	)
-	var next_session := SingleEncounterSession.new(state, encounter, hand, context)
+	var next_session := SingleEncounterSession.new(
+		state,
+		encounter,
+		hand,
+		context,
+		active_restriction()
+	)
 	current_hand_ids.assign(next_hand_ids)
 	current_session = next_session
 	return OperationResult.new(true)
