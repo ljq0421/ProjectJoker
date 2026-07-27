@@ -52,4 +52,6 @@ func _target_copy(target_type: CardDefinition.TargetType) -> String:
 			return "桌间"
 		CardDefinition.TargetType.GLOBAL:
 			return "全局"
+		CardDefinition.TargetType.DICE_PAIR:
+			return "双骰"
 	return "未知"

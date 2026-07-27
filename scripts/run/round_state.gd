@@ -6,6 +6,16 @@ var assignments: Dictionary = {}
 var played_cards: Array = []
 var calibration_points: int = 2
 
+func locked_die_ids() -> Array[StringName]:
+	var die_ids: Array[StringName] = []
+	for played_card in played_cards:
+		if played_card is not PlayedCard:
+			continue
+		for die_id in played_card.locked_die_ids():
+			if die_id not in die_ids:
+				die_ids.append(die_id)
+	return die_ids
+
 func find_die(die_id: StringName) -> DieState:
 	for die in dice:
 		if die.id == die_id:

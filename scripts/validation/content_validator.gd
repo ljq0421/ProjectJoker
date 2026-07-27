@@ -64,6 +64,44 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append("card %s adjust-die effect requires a die target" % card.id)
 					if effect.amount == 0:
 						errors.append("card %s adjust-die amount cannot be zero" % card.id)
+				EffectSpec.Operation.SWAP_DICE, EffectSpec.Operation.COPY_DIE:
+					if card.target_type != CardDefinition.TargetType.DICE_PAIR:
+						errors.append(
+							"card %s pair-die effect requires a dice-pair target"
+							% card.id
+						)
+					if effect.amount != 0:
+						errors.append(
+							"card %s pair-die amount must equal zero" % card.id
+						)
+				EffectSpec.Operation.FLIP_DIE:
+					if card.target_type != CardDefinition.TargetType.DIE:
+						errors.append(
+							"card %s flip-die effect requires a die target" % card.id
+						)
+					if effect.amount != 0:
+						errors.append(
+							"card %s flip-die amount must equal zero" % card.id
+						)
+				EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+					if card.target_type != CardDefinition.TargetType.DIE:
+						errors.append(
+							"card %s lock-die effect requires a die target" % card.id
+						)
+					if effect.amount < 1:
+						errors.append(
+							"card %s lock bonus must be positive" % card.id
+						)
+				EffectSpec.Operation.REFUND_CALIBRATION:
+					if card.target_type != CardDefinition.TargetType.GLOBAL:
+						errors.append(
+							"card %s calibration refund requires a global target"
+							% card.id
+						)
+					if effect.amount != 1:
+						errors.append(
+							"card %s calibration refund must equal one" % card.id
+						)
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
 					if card.target_type not in [
 						CardDefinition.TargetType.TABLE,

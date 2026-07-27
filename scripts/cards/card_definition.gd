@@ -6,6 +6,7 @@ enum TargetType {
 	TABLE,
 	GAP,
 	GLOBAL,
+	DICE_PAIR,
 }
 
 enum Suit {

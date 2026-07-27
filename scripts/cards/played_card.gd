@@ -25,6 +25,26 @@ func effective_effects() -> Array[EffectSpec]:
 		return runtime_effects
 	return definition.effects if definition != null else []
 
+func modified_die_ids() -> Array[StringName]:
+	var die_ids: Array[StringName] = []
+	for effect in effective_effects():
+		match effect.operation:
+			EffectSpec.Operation.ADJUST_DIE, EffectSpec.Operation.FLIP_DIE:
+				_append_unique(die_ids, primary_target)
+			EffectSpec.Operation.SWAP_DICE:
+				_append_unique(die_ids, primary_target)
+				_append_unique(die_ids, secondary_target)
+			EffectSpec.Operation.COPY_DIE:
+				_append_unique(die_ids, secondary_target)
+	return die_ids
+
+func locked_die_ids() -> Array[StringName]:
+	var die_ids: Array[StringName] = []
+	for effect in effective_effects():
+		if effect.operation == EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+			_append_unique(die_ids, primary_target)
+	return die_ids
+
 func clone() -> PlayedCard:
 	var copy := PlayedCard.new(definition, primary_target, secondary_target)
 	copy.play_id = play_id
@@ -41,3 +61,7 @@ func _clone_effect(effect: EffectSpec) -> EffectSpec:
 	copy.operation = effect.operation
 	copy.amount = effect.amount
 	return copy
+
+func _append_unique(values: Array[StringName], value: StringName) -> void:
+	if value != &"" and value not in values:
+		values.append(value)

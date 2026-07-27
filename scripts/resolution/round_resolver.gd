@@ -47,6 +47,37 @@ func resolve(
 						1,
 						6
 					)
+				EffectSpec.Operation.SWAP_DICE:
+					if (
+						not die_values.has(played_card.primary_target)
+						or not die_values.has(played_card.secondary_target)
+					):
+						return _invalid("换位手法牌指向了未知骰子")
+					var first_value: int = die_values[played_card.primary_target]
+					die_values[played_card.primary_target] = (
+						die_values[played_card.secondary_target]
+					)
+					die_values[played_card.secondary_target] = first_value
+				EffectSpec.Operation.COPY_DIE:
+					if (
+						not die_values.has(played_card.primary_target)
+						or not die_values.has(played_card.secondary_target)
+					):
+						return _invalid("复刻手法牌指向了未知骰子")
+					die_values[played_card.secondary_target] = (
+						die_values[played_card.primary_target]
+					)
+				EffectSpec.Operation.FLIP_DIE:
+					if not die_values.has(played_card.primary_target):
+						return _invalid("翻面手法牌指向了未知骰子")
+					die_values[played_card.primary_target] = (
+						7 - die_values[played_card.primary_target]
+					)
+				EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+					if not die_values.has(played_card.primary_target):
+						return _invalid("定格手法牌指向了未知骰子")
+				EffectSpec.Operation.REFUND_CALIBRATION:
+					pass
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
 					if not table_ids.has(single_table_target):
 						return _invalid("手法牌指向了未知规则轨")
@@ -143,6 +174,12 @@ func resolve(
 					false
 				))
 			pending_bridges.erase(rule.id)
+			_append_lock_rewards(
+				report,
+				state,
+				assigned_ids,
+				false
+			)
 			for outcome in _engraving_resolver.table_outcomes(
 				state,
 				assigned_ids,
@@ -170,6 +207,12 @@ func resolve(
 				report.total
 			))
 		resolved_table_totals[rule.id] = result.total * resolution_count
+		_append_lock_rewards(
+			report,
+			state,
+			assigned_ids,
+			true
+		)
 
 		for pending in pending_bridges.get(rule.id, []):
 			_append_outcome(report, pending)
@@ -256,6 +299,35 @@ func resolve(
 			report.total
 		))
 	return report
+
+func _append_lock_rewards(
+	report: ResolutionReport,
+	state: RoundState,
+	assigned_ids: Array,
+	table_passed: bool
+) -> void:
+	for played_card in state.played_cards:
+		if played_card is not PlayedCard:
+			continue
+		if played_card.primary_target not in assigned_ids:
+			continue
+		for effect in played_card.effective_effects():
+			if effect.operation != EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+				continue
+			var label := (
+				"%s：定格骰所在规则台通过，固定奖励 +%d"
+				% [played_card.definition.display_name, effect.amount]
+				if table_passed
+				else "%s：定格骰所在规则台未通过"
+					% played_card.definition.display_name
+			)
+			_append_outcome(report, EngravingOutcome.new(
+				played_card.definition.id,
+				label,
+				effect.amount if table_passed else 0,
+				&"",
+				table_passed
+			))
 
 func _append_outcome(report: ResolutionReport, outcome: EngravingOutcome) -> void:
 	if outcome.effect_applied:

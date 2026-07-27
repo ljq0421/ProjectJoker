@@ -19,23 +19,12 @@ static func play_card(
 			real_card_count += 1
 	if real_card_count >= MAX_CARDS_PER_ROUND:
 		return ActionResult.new(false, "每轮最多使用两张手法牌", state)
-	if (
-		played_card.definition.target_type != CardDefinition.TargetType.GLOBAL
-		and played_card.primary_target == &""
-	):
-		return ActionResult.new(false, "请选择手法牌目标", state)
-	if (
-		played_card.definition.target_type == CardDefinition.TargetType.GAP
-		and played_card.secondary_target == &""
-	):
-		return ActionResult.new(false, "桌间手法牌需要两个相邻规则轨", state)
-	for effect in played_card.definition.effects:
-		if effect.operation == EffectSpec.Operation.ADJUST_DIE:
-			var reason := EngravingResolver.new().modification_block_reason(
-				state, played_card.primary_target, context
-			)
-			if not reason.is_empty():
-				return ActionResult.new(false, reason, state)
+	var target_error := _validate_targets(state, played_card)
+	if not target_error.is_empty():
+		return ActionResult.new(false, target_error, state)
+	var effect_error := _validate_effect_guards(state, played_card, context)
+	if not effect_error.is_empty():
+		return ActionResult.new(false, effect_error, state)
 
 	var original := played_card.clone()
 	original.play_id = StringName("play_%d" % (real_card_count + 1))
@@ -48,6 +37,12 @@ static func play_card(
 		return ActionResult.new(false, mirror_result.reason, state)
 
 	var next_state := state.clone()
+	for effect in original.effective_effects():
+		if effect.operation == EffectSpec.Operation.REFUND_CALIBRATION:
+			next_state.calibration_points = mini(
+				next_state.calibration_points + effect.amount,
+				2
+			)
 	next_state.played_cards.append(original)
 	if mirror_result.generated:
 		next_state.played_cards.append(mirror_result.copy)
@@ -56,3 +51,68 @@ static func play_card(
 		if not report.valid:
 			return ActionResult.new(false, report.reason, state)
 	return ActionResult.new(true, "", next_state)
+
+static func _validate_targets(
+	state: RoundState,
+	played_card: PlayedCard
+) -> String:
+	match played_card.definition.target_type:
+		CardDefinition.TargetType.GLOBAL:
+			return ""
+		CardDefinition.TargetType.DICE_PAIR:
+			if (
+				played_card.primary_target == &""
+				or played_card.secondary_target == &""
+			):
+				return "双骰手法牌需要选择两颗骰子"
+			if played_card.primary_target == played_card.secondary_target:
+				return "双骰手法牌需要两颗不同的骰子"
+			if (
+				state.find_die(played_card.primary_target) == null
+				or state.find_die(played_card.secondary_target) == null
+			):
+				return "双骰手法牌指向了未知骰子"
+		CardDefinition.TargetType.GAP:
+			if played_card.primary_target == &"":
+				return "请选择手法牌目标"
+			if played_card.secondary_target == &"":
+				return "桌间手法牌需要两个相邻规则轨"
+		CardDefinition.TargetType.DIE:
+			if played_card.primary_target == &"":
+				return "请选择手法牌目标"
+			if state.find_die(played_card.primary_target) == null:
+				return "手法牌指向了未知骰子"
+		_:
+			if played_card.primary_target == &"":
+				return "请选择手法牌目标"
+	return ""
+
+static func _validate_effect_guards(
+	state: RoundState,
+	played_card: PlayedCard,
+	context: ResolutionContext
+) -> String:
+	var engraving_resolver := EngravingResolver.new()
+	for die_id in played_card.modified_die_ids():
+		var reason := engraving_resolver.modification_block_reason(
+			state,
+			die_id,
+			context
+		)
+		if not reason.is_empty():
+			return reason
+	for die_id in played_card.locked_die_ids():
+		var reason := engraving_resolver.modification_block_reason(
+			state,
+			die_id,
+			context
+		)
+		if not reason.is_empty():
+			return reason
+	for effect in played_card.effective_effects():
+		if (
+			effect.operation == EffectSpec.Operation.REFUND_CALIBRATION
+			and state.calibration_points >= 2
+		):
+			return "尚未消耗校准点，不能回收刻度"
+	return ""
