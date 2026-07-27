@@ -1,0 +1,138 @@
+[gd_resource type="Resource" script_class="DealerRoundSchedule" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/dealer_round_schedule.gd" id="1_schedule"]
+[ext_resource type="Script" path="res://scripts/run/encounter_round_plan.gd" id="2_plan"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="3_encounter"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="4_profile"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="5_rule"]
+[ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/solo_verdict.tres" id="6_operation"]
+[ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/three_seats_present.tres" id="7_distribution"]
+
+[sub_resource type="Resource" id="Profile_round_1"]
+script = ExtResource("4_profile")
+
+[sub_resource type="Resource" id="R1_left"]
+script = ExtResource("5_rule")
+id = &"left"
+display_name = "正面：精确为 9"
+slot_count = 2
+target_value = 9
+coefficient = 5
+
+[sub_resource type="Resource" id="R1_middle"]
+script = ExtResource("5_rule")
+id = &"middle"
+display_name = "正面：两枚全偶"
+condition_type = 1
+slot_count = 2
+coefficient = 5
+
+[sub_resource type="Resource" id="R1_right"]
+script = ExtResource("5_rule")
+id = &"right"
+display_name = "正面：单骰精确 4"
+slot_count = 1
+target_value = 4
+coefficient = 6
+
+[sub_resource type="Resource" id="Encounter_round_1"]
+script = ExtResource("3_encounter")
+id = &"faceless_master_round_front"
+rules = Array[ExtResource("5_rule")]([SubResource("R1_left"), SubResource("R1_middle"), SubResource("R1_right")])
+rule_profile = SubResource("Profile_round_1")
+
+[sub_resource type="Resource" id="Plan_round_1"]
+script = ExtResource("2_plan")
+id = &"faceless_plan_front"
+display_name = "正面"
+encounter = SubResource("Encounter_round_1")
+public_summary = "从左向右结算；不生成镜像副本。"
+
+[sub_resource type="Resource" id="Profile_round_2"]
+script = ExtResource("4_profile")
+resolution_direction = 1
+
+[sub_resource type="Resource" id="R2_left"]
+script = ExtResource("5_rule")
+id = &"left"
+display_name = "反面：连续两数"
+condition_type = 2
+slot_count = 2
+coefficient = 5
+
+[sub_resource type="Resource" id="R2_middle"]
+script = ExtResource("5_rule")
+id = &"middle"
+display_name = "反面：单骰精确 3"
+slot_count = 1
+target_value = 3
+coefficient = 6
+
+[sub_resource type="Resource" id="R2_right"]
+script = ExtResource("5_rule")
+id = &"right"
+display_name = "反面：精确为 8"
+slot_count = 2
+target_value = 8
+coefficient = 5
+
+[sub_resource type="Resource" id="Encounter_round_2"]
+script = ExtResource("3_encounter")
+id = &"faceless_master_round_reverse"
+rules = Array[ExtResource("5_rule")]([SubResource("R2_left"), SubResource("R2_middle"), SubResource("R2_right")])
+rule_profile = SubResource("Profile_round_2")
+
+[sub_resource type="Resource" id="Plan_round_2"]
+script = ExtResource("2_plan")
+id = &"faceless_plan_reverse"
+display_name = "反面"
+encounter = SubResource("Encounter_round_2")
+public_summary = "从右向左结算；不生成镜像副本；结算后选择第三轮限制。"
+
+[sub_resource type="Resource" id="Profile_round_3"]
+script = ExtResource("4_profile")
+mirror_first_table_card = true
+mirror_limit_per_round = 1
+
+[sub_resource type="Resource" id="R3_left"]
+script = ExtResource("5_rule")
+id = &"left"
+display_name = "无面：单骰精确 5"
+slot_count = 1
+target_value = 5
+coefficient = 6
+
+[sub_resource type="Resource" id="R3_middle"]
+script = ExtResource("5_rule")
+id = &"middle"
+display_name = "无面：连续两数"
+condition_type = 2
+slot_count = 2
+coefficient = 6
+
+[sub_resource type="Resource" id="R3_right"]
+script = ExtResource("5_rule")
+id = &"right"
+display_name = "无面：两枚全偶"
+condition_type = 1
+slot_count = 2
+coefficient = 6
+
+[sub_resource type="Resource" id="Encounter_round_3"]
+script = ExtResource("3_encounter")
+id = &"faceless_master_round_unmasked"
+rules = Array[ExtResource("5_rule")]([SubResource("R3_left"), SubResource("R3_middle"), SubResource("R3_right")])
+rule_profile = SubResource("Profile_round_3")
+
+[sub_resource type="Resource" id="Plan_round_3"]
+script = ExtResource("2_plan")
+id = &"faceless_plan_unmasked"
+display_name = "无面"
+encounter = SubResource("Encounter_round_3")
+public_summary = "从左向右结算；第一张合格桌间牌生成弱化镜像副本；应用已选限制。"
+
+[resource]
+script = ExtResource("1_schedule")
+round_plans = Array[ExtResource("2_plan")]([SubResource("Plan_round_1"), SubResource("Plan_round_2"), SubResource("Plan_round_3")])
+operation_restriction = ExtResource("6_operation")
+distribution_restriction = ExtResource("7_distribution")

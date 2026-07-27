@@ -308,6 +308,7 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.run_rng = run_rng
 	setup.deck_ids = deck_ids.duplicate()
 	setup.encounter = room.encounter
+	setup.fixed_restriction = room.restriction
 	setup.resolution_context = ResolutionContext.new(null, engraving_catalog)
 	setup.success_intel_reward = room.success_intel_reward
 	setup.prepare_shop_offers = false
@@ -339,6 +340,7 @@ func _create_dealer(
 	setup.run_rng = run_rng
 	setup.deck_ids = next_deck.duplicate()
 	setup.encounter = area_definition.dealer_encounter
+	setup.round_schedule = area_definition.dealer_round_schedule
 	setup.resolution_context = ResolutionContext.new(
 		dealer_catalog.find_dealer(area_definition.dealer_id),
 		engraving_catalog

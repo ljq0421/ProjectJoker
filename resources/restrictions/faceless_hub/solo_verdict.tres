@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FinalRestrictionDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/final_restriction_definition.gd" id="1_restriction"]
+
+[resource]
+script = ExtResource("1_restriction")
+id = &"solo_verdict"
+display_name = "独手裁决"
+rule_text = "本轮最多使用 1 张真实手法牌；镜像副本不计入上限。"
+category = 0
+operation = 0
+amount = 1

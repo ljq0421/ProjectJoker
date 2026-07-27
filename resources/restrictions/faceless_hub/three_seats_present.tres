@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FinalRestrictionDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/final_restriction_definition.gd" id="1_restriction"]
+
+[resource]
+script = ExtResource("1_restriction")
+id = &"three_seats_present"
+display_name = "三席到场"
+rule_text = "确认结算时，左、中、右三张规则台都必须至少分配 1 颗骰子。"
+category = 1
+operation = 1
+amount = 3

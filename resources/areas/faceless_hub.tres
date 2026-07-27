@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AreaDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/areas/area_definition.gd" id="1_area"]
+[ext_resource type="Resource" path="res://resources/rooms/faceless_hub/crossed_archive.tres" id="2_room_a"]
+[ext_resource type="Resource" path="res://resources/rooms/faceless_hub/reverse_index.tres" id="3_room_b"]
+[ext_resource type="Resource" path="res://resources/rooms/faceless_hub/single_hand_agenda.tres" id="4_room_c"]
+[ext_resource type="Resource" path="res://resources/rooms/faceless_hub/three_seat_protocol.tres" id="5_room_d"]
+[ext_resource type="Resource" path="res://resources/encounters/faceless_hub/faceless_master_schedule.tres" id="6_schedule"]
+
+[resource]
+script = ExtResource("1_area")
+id = &"faceless_hub"
+display_name = "无面中枢"
+first_route_ids = Array[StringName]([&"faceless_room_crossed_archive", &"faceless_room_reverse_index"])
+second_route_ids = Array[StringName]([&"faceless_room_single_hand_agenda", &"faceless_room_three_seat_protocol"])
+rooms = Array[ExtResource("2_room_a")]([ExtResource("2_room_a"), ExtResource("3_room_b"), ExtResource("4_room_c"), ExtResource("5_room_d")])
+starting_deck_ids = Array[StringName]([&"starter_nudge_up_1", &"starter_nudge_down_1", &"starter_map_2", &"starter_repeat_1", &"starter_link", &"starter_reverse", &"mirror_folded_map", &"mirror_soft_echo", &"mirror_hinged_bridge", &"faceless_swap_values", &"faceless_refund_calibration", &"faceless_three_seats"])
+starting_intel_tickets = 8
+initial_engraving_id = &"engraving_backflow_bridge"
+initial_engraving_die_id = &"d3"
+initial_engraving_face = 4
+dealer_id = &"dealer_faceless_master"
+dealer_round_schedule = ExtResource("6_schedule")
+dealer_target = 240
+shop_offer_ids = Array[StringName]([&"faceless_copy_value", &"faceless_flip_value", &"faceless_lock_bonus", &"faceless_exact_tolerance", &"faceless_even_tolerance", &"faceless_sequence_tolerance", &"faceless_table_receipt", &"faceless_full_allocation", &"faceless_complete_dossier", &"faceless_strict_mapping", &"faceless_reverse_replay", &"faceless_compressed_repeat", &"faceless_closed_circuit", &"shop_amplified_chain", &"mirror_double_exposure", &"mirror_deep_echo"])
+engraving_offer_ids = Array[StringName]([&"engraving_low_murmur", &"engraving_terminal_anchor", &"engraving_two_way_bridge", &"engraving_sequence_prism"])
