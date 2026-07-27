@@ -286,7 +286,7 @@ func _on_die_activated(die_id: StringName) -> void:
 
 func _on_card_activated(card_index: int) -> void:
 	var card := session.hand[card_index]
-	var token: Control = hand_container.get_child(card_index)
+	var report_selection := false
 	var action := (
 		&"card_global"
 		if card.target_type == CardDefinition.TargetType.GLOBAL
@@ -299,7 +299,7 @@ func _on_card_activated(card_index: int) -> void:
 	if accepted:
 		_record_tutorial_action(action, payload)
 		if action == &"select_card":
-			card_selected.emit(card_index, card, token)
+			report_selection = true
 		SfxAccess.play(
 			self,
 			&"card_play" if action == &"card_global" else &"card_select"
@@ -307,6 +307,20 @@ func _on_card_activated(card_index: int) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if report_selection:
+		var token := _find_hand_card_token(card_index)
+		if token != null:
+			card_selected.emit(card_index, card, token)
+
+func _find_hand_card_token(card_index: int) -> CardToken:
+	for child in hand_container.get_children():
+		if (
+			child is CardToken
+			and not child.is_queued_for_deletion()
+			and child.card_index == card_index
+		):
+			return child
+	return null
 
 func _on_lane_activated(table_id: StringName) -> void:
 	var action := &"click_assign"
