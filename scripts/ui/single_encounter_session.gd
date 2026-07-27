@@ -52,7 +52,11 @@ func activate_table(table_id: StringName) -> bool:
 		if rule == null:
 			return _fail("规则轨不存在")
 		return _accept(
-			controller.assign_die(selection.die_id, table_id, rule.slot_count),
+			controller.assign_die(
+				selection.die_id,
+				table_id,
+				controller.effective_slot_count(table_id)
+			),
 			true
 		)
 	if selection.kind == InteractionState.Kind.CARD:
@@ -77,7 +81,14 @@ func assign_dropped_die(die_id: StringName, table_id: StringName) -> bool:
 	var rule := _find_rule(table_id)
 	if rule == null:
 		return _fail("规则轨不存在")
-	return _accept(controller.assign_die(die_id, table_id, rule.slot_count), false)
+	return _accept(
+		controller.assign_die(
+			die_id,
+			table_id,
+			controller.effective_slot_count(table_id)
+		),
+		false
+	)
 
 func return_die_to_tray(die_id: StringName) -> bool:
 	return _accept(controller.unassign_die(die_id), false)

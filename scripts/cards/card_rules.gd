@@ -22,7 +22,12 @@ static func play_card(
 	var target_error := _validate_targets(state, played_card)
 	if not target_error.is_empty():
 		return ActionResult.new(false, target_error, state)
-	var effect_error := _validate_effect_guards(state, played_card, context)
+	var effect_error := _validate_effect_guards(
+		state,
+		played_card,
+		context,
+		encounter
+	)
 	if not effect_error.is_empty():
 		return ActionResult.new(false, effect_error, state)
 
@@ -90,7 +95,8 @@ static func _validate_targets(
 static func _validate_effect_guards(
 	state: RoundState,
 	played_card: PlayedCard,
-	context: ResolutionContext
+	context: ResolutionContext,
+	encounter: EncounterDefinition
 ) -> String:
 	var engraving_resolver := EngravingResolver.new()
 	for die_id in played_card.modified_die_ids():
@@ -115,4 +121,110 @@ static func _validate_effect_guards(
 			and state.calibration_points >= 2
 		):
 			return "尚未消耗校准点，不能回收刻度"
+		if effect.operation == EffectSpec.Operation.MODIFY_CONDITION:
+			if encounter == null:
+				return "条件手法牌需要当前遭遇规则"
+			var rule := _find_rule(encounter, played_card.primary_target)
+			if rule == null:
+				return "条件手法牌指向了未知规则台"
+			if not _modifier_matches_rule(effect.condition_modifier, rule):
+				return "这张条件手法牌与目标规则台不匹配"
+			if (
+				effect.condition_modifier
+				== EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT
+			):
+				var next_slot_count := (
+					effective_slot_count(
+						state,
+						encounter,
+						played_card.primary_target
+					)
+					+ effect.amount
+				)
+				if next_slot_count > 6:
+					return "加严后单张规则台不能超过六个骰位"
+				var next_total := effect.amount
+				for encounter_rule in encounter.rules:
+					next_total += effective_slot_count(
+						state,
+						encounter,
+						encounter_rule.id
+					)
+				if next_total > state.dice.size():
+					return "加严后整局所需骰位超过六颗骰子"
+		if (
+			effect.operation
+			== EffectSpec.Operation.GRANT_INTEL_ON_CONDITION
+			and (
+				effect.intel_condition
+				== EffectSpec.IntelCondition.TARGET_TABLE_PASSED
+			)
+			and (
+				encounter == null
+				or _find_rule(encounter, played_card.primary_target) == null
+			)
+		):
+			return "情报手法牌指向了未知规则台"
 	return ""
+
+static func effective_slot_count(
+	state: RoundState,
+	encounter: EncounterDefinition,
+	table_id: StringName
+) -> int:
+	var rule := _find_rule(encounter, table_id)
+	if rule == null:
+		return 0
+	var slot_count := rule.slot_count
+	for played_card in state.played_cards:
+		if played_card is not PlayedCard or played_card.primary_target != table_id:
+			continue
+		for effect in played_card.effective_effects():
+			if (
+				effect.operation == EffectSpec.Operation.MODIFY_CONDITION
+				and (
+					effect.condition_modifier
+					== EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT
+				)
+			):
+				slot_count += effect.amount
+	return slot_count
+
+static func condition_modifiers(
+	state: RoundState,
+	table_id: StringName
+) -> Array:
+	var modifiers: Array = []
+	for played_card in state.played_cards:
+		if played_card is not PlayedCard or played_card.primary_target != table_id:
+			continue
+		for effect in played_card.effective_effects():
+			if effect.operation == EffectSpec.Operation.MODIFY_CONDITION:
+				modifiers.append(effect.condition_modifier)
+	return modifiers
+
+static func _modifier_matches_rule(
+	modifier: EffectSpec.ConditionModifier,
+	rule: RuleDefinition
+) -> bool:
+	match modifier:
+		EffectSpec.ConditionModifier.EXACT_TOLERANCE:
+			return rule.condition_type == RuleDefinition.ConditionType.EXACT_SUM
+		EffectSpec.ConditionModifier.ALLOW_ONE_ODD:
+			return rule.condition_type == RuleDefinition.ConditionType.ALL_EVEN
+		EffectSpec.ConditionModifier.ALLOW_ONE_GAP:
+			return rule.condition_type == RuleDefinition.ConditionType.CONSECUTIVE
+		EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT:
+			return true
+	return false
+
+static func _find_rule(
+	encounter: EncounterDefinition,
+	table_id: StringName
+) -> RuleDefinition:
+	if encounter == null:
+		return null
+	for rule in encounter.rules:
+		if rule.id == table_id:
+			return rule
+	return null

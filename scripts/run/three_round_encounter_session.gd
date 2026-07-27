@@ -27,6 +27,7 @@ var starter_deck_ids: Array[StringName] = []
 var committed_reports: Array[ResolutionReport] = []
 var cumulative_total: int = 0
 var intel_tickets: int = 0
+var earned_intel_tickets: int = 0
 var shop_offer_ids: Array[StringName] = []
 var last_error: String = ""
 var selected_final_restriction: FinalRestrictionDefinition
@@ -81,6 +82,7 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 
 	committed_reports.append(report)
 	cumulative_total += report.total
+	earned_intel_tickets += report.intel_delta
 	if current_round < ROUND_COUNT:
 		if setup.round_schedule != null and current_round == 2:
 			status = Status.AWAITING_RESTRICTION
@@ -89,7 +91,10 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 	else:
 		if cumulative_total >= target_total:
 			status = Status.SUCCEEDED
-			intel_tickets = setup.success_intel_reward
+			intel_tickets = (
+				setup.success_intel_reward
+				+ earned_intel_tickets
+			)
 			if setup.prepare_shop_offers:
 				var shuffled_shop_ids := _run_rng.shuffle(catalog.shop_ids())
 				shop_offer_ids.assign(shuffled_shop_ids.slice(0, 3))

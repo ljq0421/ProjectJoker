@@ -12,7 +12,27 @@ enum Operation {
 	FLIP_DIE,
 	LOCK_DIE_WITH_BONUS,
 	REFUND_CALIBRATION,
+	MODIFY_CONDITION,
+	GRANT_INTEL_ON_CONDITION,
+}
+
+enum ConditionModifier {
+	EXACT_TOLERANCE,
+	ALLOW_ONE_ODD,
+	ALLOW_ONE_GAP,
+	INCREASE_SLOT_COUNT,
+}
+
+enum IntelCondition {
+	TARGET_TABLE_PASSED,
+	ALL_DICE_ASSIGNED,
+	ALL_TABLES_OCCUPIED,
+	ALL_TABLES_PASSED,
 }
 
 @export var operation: Operation = Operation.ADJUST_DIE
 @export var amount: int = 0
+@export var condition_modifier: ConditionModifier = (
+	ConditionModifier.EXACT_TOLERANCE
+)
+@export var intel_condition: IntelCondition = IntelCondition.TARGET_TABLE_PASSED

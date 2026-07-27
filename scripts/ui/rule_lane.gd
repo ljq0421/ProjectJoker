@@ -25,11 +25,23 @@ func bind_lane(
 	assigned_dice: Array,
 	die_scene: PackedScene,
 	selected_die_id: StringName,
-	engraving_catalog: EngravingCatalog = null
+	engraving_catalog: EngravingCatalog = null,
+	effective_slot_count: int = -1,
+	condition_summary: String = ""
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
-	condition_label.text = "%d 个骰位 · 系数 ×%d" % [rule.slot_count, rule.coefficient]
+	var slot_count := (
+		rule.slot_count
+		if effective_slot_count < 0
+		else effective_slot_count
+	)
+	condition_label.text = "%d 个骰位 · 系数 ×%d" % [
+		slot_count,
+		rule.coefficient,
+	]
+	if not condition_summary.is_empty():
+		condition_label.text += "\n条件变化：%s" % condition_summary
 	for child in slots.get_children():
 		child.queue_free()
 	for die in assigned_dice:
@@ -42,7 +54,7 @@ func bind_lane(
 			true
 		)
 		token.die_activated.connect(func(id: StringName) -> void: die_activated.emit(id))
-	for empty_index in range(rule.slot_count - assigned_dice.size()):
+	for empty_index in range(slot_count - assigned_dice.size()):
 		var empty := Label.new()
 		empty.text = "＋"
 		empty.custom_minimum_size = Vector2(54, 54)

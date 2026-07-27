@@ -60,6 +60,8 @@ func _clone_effect(effect: EffectSpec) -> EffectSpec:
 	var copy := EffectSpec.new()
 	copy.operation = effect.operation
 	copy.amount = effect.amount
+	copy.condition_modifier = effect.condition_modifier
+	copy.intel_condition = effect.intel_condition
 	return copy
 
 func _append_unique(values: Array[StringName], value: StringName) -> void:

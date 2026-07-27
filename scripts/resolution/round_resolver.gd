@@ -22,6 +22,7 @@ func resolve(
 	var coefficient_modifiers: Dictionary = {}
 	var repeat_counts: Dictionary = {}
 	var neighbor_links: Dictionary = {}
+	var passed_rule_ids: Dictionary = {}
 	var reverse_order := (
 		encounter.rule_profile != null
 		and encounter.rule_profile.resolution_direction
@@ -161,7 +162,12 @@ func resolve(
 			state, assigned_ids, rule.id, normalized_context
 		)
 		var result := _evaluator.evaluate(
-			rule, values, effective_modifier, parity_overrides
+			rule,
+			values,
+			effective_modifier,
+			parity_overrides,
+			CardRules.condition_modifiers(state, rule.id),
+			CardRules.effective_slot_count(state, encounter, rule.id)
 		)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))
@@ -207,6 +213,7 @@ func resolve(
 				report.total
 			))
 		resolved_table_totals[rule.id] = result.total * resolution_count
+		passed_rule_ids[rule.id] = true
 		_append_lock_rewards(
 			report,
 			state,
@@ -271,6 +278,13 @@ func resolve(
 					link.mirror_slot_id
 				))
 
+	_append_intel_outcomes(
+		report,
+		state,
+		encounter,
+		passed_rule_ids
+	)
+
 	if normalized_context.dealer != null:
 		var assigned: Dictionary = {}
 		for table_id in state.assignments:
@@ -299,6 +313,67 @@ func resolve(
 			report.total
 		))
 	return report
+
+func _append_intel_outcomes(
+	report: ResolutionReport,
+	state: RoundState,
+	encounter: EncounterDefinition,
+	passed_rule_ids: Dictionary
+) -> void:
+	var assigned_die_ids: Dictionary = {}
+	for table_id in state.assignments:
+		for die_id in state.assignments[table_id]:
+			assigned_die_ids[die_id] = true
+	var all_tables_occupied := true
+	for rule in encounter.rules:
+		var assigned: Array = state.assignments.get(rule.id, [])
+		if assigned.is_empty():
+			all_tables_occupied = false
+			break
+
+	for played_card in state.played_cards:
+		if played_card is not PlayedCard:
+			continue
+		for effect in played_card.effective_effects():
+			if (
+				effect.operation
+				!= EffectSpec.Operation.GRANT_INTEL_ON_CONDITION
+			):
+				continue
+			var satisfied := false
+			var condition_copy := ""
+			match effect.intel_condition:
+				EffectSpec.IntelCondition.TARGET_TABLE_PASSED:
+					satisfied = passed_rule_ids.has(played_card.primary_target)
+					condition_copy = "指定规则台已通过"
+				EffectSpec.IntelCondition.ALL_DICE_ASSIGNED:
+					satisfied = assigned_die_ids.size() == state.dice.size()
+					condition_copy = "全部骰子已分配"
+				EffectSpec.IntelCondition.ALL_TABLES_OCCUPIED:
+					satisfied = all_tables_occupied
+					condition_copy = "三张规则台均有骰子"
+				EffectSpec.IntelCondition.ALL_TABLES_PASSED:
+					satisfied = passed_rule_ids.size() == encounter.rules.size()
+					condition_copy = "全部规则台已通过"
+			if satisfied:
+				report.intel_delta += effect.amount
+			report.events.append(ResolutionEvent.new(
+				played_card.definition.id,
+				(
+					"%s：%s，预计情报 +%d"
+					% [
+						played_card.definition.display_name,
+						condition_copy,
+						effect.amount,
+					]
+					if satisfied
+					else "%s：%s未满足，情报 +0"
+						% [played_card.definition.display_name, condition_copy]
+				),
+				0,
+				report.total,
+				satisfied
+			))
 
 func _append_lock_rewards(
 	report: ResolutionReport,

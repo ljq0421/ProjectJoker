@@ -127,7 +127,9 @@ func refresh_from_session() -> void:
 			assigned,
 			DIE_SCENE,
 			session.selection.die_id,
-			engraving_catalog
+			engraving_catalog,
+			session.controller.effective_slot_count(rule.id),
+			session.controller.condition_summary(rule.id)
 		)
 		lanes[lane_index].set_legal_target(
 			selected_target_type == CardDefinition.TargetType.TABLE

@@ -102,6 +102,54 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append(
 							"card %s calibration refund must equal one" % card.id
 						)
+				EffectSpec.Operation.MODIFY_CONDITION:
+					if card.target_type != CardDefinition.TargetType.TABLE:
+						errors.append(
+							"card %s condition modifier requires a table target"
+							% card.id
+						)
+					if effect.amount != 1:
+						errors.append(
+							"card %s condition modifier amount must equal one"
+							% card.id
+						)
+					if effect.condition_modifier not in [
+						EffectSpec.ConditionModifier.EXACT_TOLERANCE,
+						EffectSpec.ConditionModifier.ALLOW_ONE_ODD,
+						EffectSpec.ConditionModifier.ALLOW_ONE_GAP,
+						EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT,
+					]:
+						errors.append(
+							"card %s has an unknown condition modifier" % card.id
+						)
+				EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
+					if effect.amount < 1:
+						errors.append(
+							"card %s intel reward must be positive" % card.id
+						)
+					if effect.intel_condition not in [
+						EffectSpec.IntelCondition.TARGET_TABLE_PASSED,
+						EffectSpec.IntelCondition.ALL_DICE_ASSIGNED,
+						EffectSpec.IntelCondition.ALL_TABLES_OCCUPIED,
+						EffectSpec.IntelCondition.ALL_TABLES_PASSED,
+					]:
+						errors.append(
+							"card %s has an unknown intel condition" % card.id
+						)
+					elif (
+						effect.intel_condition
+						== EffectSpec.IntelCondition.TARGET_TABLE_PASSED
+					):
+						if card.target_type != CardDefinition.TargetType.TABLE:
+							errors.append(
+								"card %s target-table intel requires a table target"
+								% card.id
+							)
+					elif card.target_type != CardDefinition.TargetType.GLOBAL:
+						errors.append(
+							"card %s global intel condition requires a global target"
+							% card.id
+						)
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
 					if card.target_type not in [
 						CardDefinition.TargetType.TABLE,

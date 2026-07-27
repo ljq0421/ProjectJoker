@@ -55,6 +55,23 @@ func play_card(played_card: PlayedCard) -> ActionResult:
 		encounter
 	))
 
+func effective_slot_count(table_id: StringName) -> int:
+	return CardRules.effective_slot_count(state, encounter, table_id)
+
+func condition_summary(table_id: StringName) -> String:
+	var parts: Array[String] = []
+	for modifier in CardRules.condition_modifiers(state, table_id):
+		match modifier:
+			EffectSpec.ConditionModifier.EXACT_TOLERANCE:
+				parts.append("精确值允许 ±1")
+			EffectSpec.ConditionModifier.ALLOW_ONE_ODD:
+				parts.append("允许 1 颗奇数")
+			EffectSpec.ConditionModifier.ALLOW_ONE_GAP:
+				parts.append("允许 1 个差二缺口")
+			EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT:
+				parts.append("所需骰位 +1")
+	return "；".join(parts)
+
 func undo() -> bool:
 	if committed:
 		return false
