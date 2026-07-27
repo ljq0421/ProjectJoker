@@ -6,11 +6,18 @@ const MAX_CARDS_PER_ROUND := 2
 static func play_card(
 	state: RoundState,
 	played_card: PlayedCard,
-	context: ResolutionContext = null
+	context: ResolutionContext = null,
+	encounter: EncounterDefinition = null
 ) -> ActionResult:
 	if played_card.definition == null:
 		return ActionResult.new(false, "手法牌定义缺失", state)
-	if state.played_cards.size() >= MAX_CARDS_PER_ROUND:
+	if played_card.is_mirror_copy:
+		return ActionResult.new(false, "镜像副本不能作为真实牌使用", state)
+	var real_card_count := 0
+	for existing_card in state.played_cards:
+		if existing_card is PlayedCard and not existing_card.is_mirror_copy:
+			real_card_count += 1
+	if real_card_count >= MAX_CARDS_PER_ROUND:
 		return ActionResult.new(false, "每轮最多使用两张手法牌", state)
 	if (
 		played_card.definition.target_type != CardDefinition.TargetType.GLOBAL
@@ -30,6 +37,22 @@ static func play_card(
 			if not reason.is_empty():
 				return ActionResult.new(false, reason, state)
 
+	var original := played_card.clone()
+	original.play_id = StringName("play_%d" % (real_card_count + 1))
+	var mirror_result := MirrorCopyResolver.new().resolve(
+		original,
+		state,
+		encounter
+	)
+	if not mirror_result.accepted:
+		return ActionResult.new(false, mirror_result.reason, state)
+
 	var next_state := state.clone()
-	next_state.played_cards.append(played_card.clone())
+	next_state.played_cards.append(original)
+	if mirror_result.generated:
+		next_state.played_cards.append(mirror_result.copy)
+	if encounter != null:
+		var report := RoundResolver.new().resolve(next_state, encounter, context)
+		if not report.valid:
+			return ActionResult.new(false, report.reason, state)
 	return ActionResult.new(true, "", next_state)

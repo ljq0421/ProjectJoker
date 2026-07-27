@@ -96,7 +96,11 @@ func commit() -> ResolutionReport:
 func is_card_used(card_index: int) -> bool:
 	var id := hand[card_index].id
 	return controller.state.played_cards.any(
-		func(played_card) -> bool: return played_card.definition.id == id
+		func(played_card) -> bool:
+			return (
+				not played_card.is_mirror_copy
+				and played_card.definition.id == id
+			)
 	)
 
 func _find_rule(table_id: StringName) -> RuleDefinition:

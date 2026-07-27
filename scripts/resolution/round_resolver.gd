@@ -25,7 +25,7 @@ func resolve(
 	var reverse_order := false
 
 	for played_card in state.played_cards:
-		for effect in played_card.definition.effects:
+		for effect in played_card.effective_effects():
 			match effect.operation:
 				EffectSpec.Operation.ADJUST_DIE:
 					if not die_values.has(played_card.primary_target):

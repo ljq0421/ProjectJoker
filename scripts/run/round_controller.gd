@@ -38,7 +38,12 @@ func unassign_die(die_id: StringName) -> ActionResult:
 func play_card(played_card: PlayedCard) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "本轮已经结算", state)
-	return _accept(CardRules.play_card(state, played_card, resolution_context))
+	return _accept(CardRules.play_card(
+		state,
+		played_card,
+		resolution_context,
+		encounter
+	))
 
 func undo() -> bool:
 	if committed:
