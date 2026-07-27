@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_engraving"]
+
+[resource]
+script = ExtResource("1_engraving")
+id = &"engraving_terminal_anchor"
+display_name = "终点锚"
+rule_text = "激活后不能修改；处于本轮最后结算规则台且该台通过时固定 +5。"
+operation = 7
+amount = 5
+tags = PackedStringArray("锚定", "顺序", "固定奖励")

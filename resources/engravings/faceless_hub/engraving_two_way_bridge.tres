@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_engraving"]
+
+[resource]
+script = ExtResource("1_engraving")
+id = &"engraving_two_way_bridge"
+display_name = "双向桥"
+rule_text = "所在规则台通过时，向前后相邻规则台各传递该骰有效点数的一半，向下取整。"
+operation = 8
+amount = 2
+tags = PackedStringArray("桥接", "双向", "固定触发")

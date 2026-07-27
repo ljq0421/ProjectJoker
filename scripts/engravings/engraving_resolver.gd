@@ -27,7 +27,10 @@ func modification_block_reason(
 	var definition := active_definition(state.find_die(die_id), context)
 	if (
 		definition != null
-		and definition.operation == EngravingDefinition.Operation.ANCHOR_DIE
+		and definition.operation in [
+			EngravingDefinition.Operation.ANCHOR_DIE,
+			EngravingDefinition.Operation.ANCHOR_LAST_TABLE,
+		]
 	):
 		return "锚定刻印已激活，这颗骰子本轮不能修改点数"
 	return ""
@@ -50,6 +53,23 @@ func parity_overrides(
 						== EngravingDefinition.Operation.MIRROR_PRISM
 					and _has_adjacent_mirror_copy(state, rule_id)
 				)
+			)
+		)
+	return flags
+
+func sequence_overrides(
+	state: RoundState,
+	assigned_ids: Array,
+	context: ResolutionContext
+) -> Array[bool]:
+	var flags: Array[bool] = []
+	for die_id in assigned_ids:
+		var definition := active_definition(state.find_die(die_id), context)
+		flags.append(
+			definition != null
+			and (
+				definition.operation
+				== EngravingDefinition.Operation.PRISM_SEQUENCE
 			)
 		)
 	return flags
@@ -110,11 +130,54 @@ func table_outcomes(
 						],
 						floori(float(higher_neighbor) / float(definition.amount))
 					))
+			EngravingDefinition.Operation.ECHO_LOWER_ADJACENT:
+				var neighbor_values: Array[int] = []
+				if slot_index > 0:
+					neighbor_values.append(
+						int(die_values.get(assigned_ids[slot_index - 1], 0))
+					)
+				if slot_index + 1 < assigned_ids.size():
+					neighbor_values.append(
+						int(die_values.get(assigned_ids[slot_index + 1], 0))
+					)
+				if neighbor_values.is_empty():
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：没有相邻骰" % definition.display_name,
+						0,
+						&"",
+						false
+					))
+				else:
+					var lower_neighbor: int = int(neighbor_values.min())
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：复制较低相邻骰 %d" % [
+							definition.display_name,
+							lower_neighbor,
+						],
+						lower_neighbor
+					))
 			EngravingDefinition.Operation.ANCHOR_DIE:
 				outcomes.append(EngravingOutcome.new(
 					definition.id,
 					"%s：固定奖励 +%d" % [definition.display_name, definition.amount],
 					definition.amount
+				))
+			EngravingDefinition.Operation.ANCHOR_LAST_TABLE:
+				var is_last := rule_index == ordered_rule_ids.size() - 1
+				outcomes.append(EngravingOutcome.new(
+					definition.id,
+					(
+						"%s：最后结算规则台固定奖励 +%d"
+						% [definition.display_name, definition.amount]
+						if is_last
+						else "%s：当前不是最后结算规则台"
+							% definition.display_name
+					),
+					definition.amount if is_last else 0,
+					&"",
+					is_last
 				))
 			EngravingDefinition.Operation.BRIDGE_FORWARD:
 				if rule_index + 1 >= ordered_rule_ids.size():
@@ -158,6 +221,31 @@ func table_outcomes(
 						int(die_values.get(die_id, die.value)),
 						target_table_id
 					))
+			EngravingDefinition.Operation.BRIDGE_BIDIRECTIONAL:
+				var transfer_value := floori(
+					float(die_values.get(die_id, die.value))
+					/ float(definition.amount)
+				)
+				var neighbor_indexes := [rule_index - 1, rule_index + 1]
+				for neighbor_index in neighbor_indexes:
+					if (
+						neighbor_index < 0
+						or neighbor_index >= ordered_rule_ids.size()
+					):
+						continue
+					var target_table_id: StringName = (
+						ordered_rule_ids[neighbor_index]
+					)
+					outcomes.append(EngravingOutcome.new(
+						definition.id,
+						"%s：%s → %s" % [
+							definition.display_name,
+							ordered_rule_ids[rule_index],
+							target_table_id,
+						],
+						transfer_value,
+						target_table_id
+					))
 			EngravingDefinition.Operation.PRISM_PARITY:
 				outcomes.append(EngravingOutcome.new(
 					definition.id,
@@ -180,6 +268,12 @@ func table_outcomes(
 					0,
 					&"",
 					is_adjacent
+				))
+			EngravingDefinition.Operation.PRISM_SEQUENCE:
+				outcomes.append(EngravingOutcome.new(
+					definition.id,
+					"%s：关系值可视为高一或低一" % definition.display_name,
+					0
 				))
 	return outcomes
 

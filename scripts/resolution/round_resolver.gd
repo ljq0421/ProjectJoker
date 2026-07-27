@@ -167,7 +167,12 @@ func resolve(
 			effective_modifier,
 			parity_overrides,
 			CardRules.condition_modifiers(state, rule.id),
-			CardRules.effective_slot_count(state, encounter, rule.id)
+			CardRules.effective_slot_count(state, encounter, rule.id),
+			_engraving_resolver.sequence_overrides(
+				state,
+				assigned_ids,
+				normalized_context
+			)
 		)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))

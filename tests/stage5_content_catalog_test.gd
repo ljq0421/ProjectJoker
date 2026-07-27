@@ -27,13 +27,17 @@ func run() -> void:
 		"engraving_silver_anchor",
 		"engraving_backflow_bridge",
 		"engraving_mirror_prism",
+		"engraving_low_murmur",
+		"engraving_terminal_anchor",
+		"engraving_two_way_bridge",
+		"engraving_sequence_prism",
 	])
 	var actual := PackedStringArray()
 	for engraving_id in engravings.all_ids():
 		actual.append(String(engraving_id))
 	actual.sort()
 	expected.sort()
-	assert_equal(actual, expected, "catalog should expose exactly four engravings")
+	assert_equal(actual, expected, "catalog should expose exactly twelve engravings")
 
 	var expected_operations := {
 		&"engraving_echo": [EngravingDefinition.Operation.ECHO_ADJACENT, 2],
@@ -44,6 +48,10 @@ func run() -> void:
 		&"engraving_silver_anchor": [EngravingDefinition.Operation.ANCHOR_DIE, 3],
 		&"engraving_backflow_bridge": [EngravingDefinition.Operation.BRIDGE_BACKWARD, 1],
 		&"engraving_mirror_prism": [EngravingDefinition.Operation.MIRROR_PRISM, 0],
+		&"engraving_low_murmur": [EngravingDefinition.Operation.ECHO_LOWER_ADJACENT, 0],
+		&"engraving_terminal_anchor": [EngravingDefinition.Operation.ANCHOR_LAST_TABLE, 5],
+		&"engraving_two_way_bridge": [EngravingDefinition.Operation.BRIDGE_BIDIRECTIONAL, 2],
+		&"engraving_sequence_prism": [EngravingDefinition.Operation.PRISM_SEQUENCE, 0],
 	}
 	for engraving in engravings.all_engravings():
 		assert_false(engraving.rule_text.strip_edges().is_empty(), "rule text should exist")

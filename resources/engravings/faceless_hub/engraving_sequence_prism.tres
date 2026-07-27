@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_engraving"]
+
+[resource]
+script = ExtResource("1_engraving")
+id = &"engraving_sequence_prism"
+display_name = "序列棱镜"
+rule_text = "连续数条件中可把该骰视为高 1 或低 1；计分仍使用真实有效点数。"
+operation = 9
+amount = 0
+tags = PackedStringArray("序列", "关系", "固定触发")

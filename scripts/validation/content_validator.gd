@@ -293,6 +293,18 @@ func validate_engravings(engravings: Array) -> Array[String]:
 			EngravingDefinition.Operation.PRISM_PARITY, EngravingDefinition.Operation.MIRROR_PRISM:
 				if engraving.amount != 0:
 					errors.append("prism engraving amount must equal zero")
+			EngravingDefinition.Operation.ECHO_LOWER_ADJACENT:
+				if engraving.amount != 0:
+					errors.append("lower echo engraving amount must equal zero")
+			EngravingDefinition.Operation.ANCHOR_LAST_TABLE:
+				if engraving.amount < 1:
+					errors.append("last-table anchor reward must be positive")
+			EngravingDefinition.Operation.BRIDGE_BIDIRECTIONAL:
+				if engraving.amount != 2:
+					errors.append("bidirectional bridge divisor must equal two")
+			EngravingDefinition.Operation.PRISM_SEQUENCE:
+				if engraving.amount != 0:
+					errors.append("sequence prism amount must equal zero")
 			_:
 				errors.append("engraving %s has unknown operation" % engraving.id)
 	return errors

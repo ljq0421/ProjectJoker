@@ -13,13 +13,19 @@ const MIRROR_HALL_PATHS := [
 	"res://resources/engravings/mirror_hall/engraving_backflow_bridge.tres",
 	"res://resources/engravings/mirror_hall/engraving_mirror_prism.tres",
 ]
+const FACELESS_HUB_PATHS := [
+	"res://resources/engravings/faceless_hub/engraving_low_murmur.tres",
+	"res://resources/engravings/faceless_hub/engraving_terminal_anchor.tres",
+	"res://resources/engravings/faceless_hub/engraving_two_way_bridge.tres",
+	"res://resources/engravings/faceless_hub/engraving_sequence_prism.tres",
+]
 
 var _engravings: Array[EngravingDefinition] = []
 var _by_id: Dictionary = {}
 var _load_errors: Array[String] = []
 
 func _init() -> void:
-	for path in PATHS + MIRROR_HALL_PATHS:
+	for path in PATHS + MIRROR_HALL_PATHS + FACELESS_HUB_PATHS:
 		var resource := load(path)
 		if not resource is EngravingDefinition:
 			_load_errors.append("failed to load engraving resource: %s" % path)
@@ -56,12 +62,20 @@ func mirror_hall_ids() -> Array[StringName]:
 			ids.append(engraving.id)
 	return ids
 
+func faceless_hub_ids() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for path in FACELESS_HUB_PATHS:
+		var engraving := load(path) as EngravingDefinition
+		if engraving != null:
+			ids.append(engraving.id)
+	return ids
+
 func find_engraving(engraving_id: StringName) -> EngravingDefinition:
 	return _by_id.get(engraving_id) as EngravingDefinition
 
 func validate() -> Array[String]:
 	var errors: Array[String] = _load_errors.duplicate()
 	errors.append_array(ContentValidator.new().validate_engravings(all_engravings()))
-	if _engravings.size() != 8:
-		errors.append("engraving catalog must contain exactly eight engravings")
+	if _engravings.size() != 12:
+		errors.append("engraving catalog must contain exactly twelve engravings")
 	return errors
