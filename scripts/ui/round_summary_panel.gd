@@ -99,15 +99,17 @@ func show_dealer_failure(run_session: ThreeRoundEncounterSession) -> void:
 
 func show_area_failure(
 	run_session: ThreeRoundEncounterSession,
-	dealer_failure: bool
+	dealer_failure: bool,
+	area_name: String = "金线回廊",
+	dealer_name: String = "铁算盘"
 ) -> void:
 	visible = true
 	SfxAccess.play(self, &"round_failure")
 	_hide_actions()
 	title_label.text = (
-		"铁算盘挑战未达标"
+		"%s挑战未达标" % dealer_name
 		if dealer_failure
-		else "金线回廊解析未达标"
+		else "%s解析未达标" % area_name
 	)
 	detail_label.text = "累计解析：%d / %d\n目标差值：%d" % [
 		run_session.cumulative_total,
@@ -115,7 +117,7 @@ func show_area_failure(
 		maxi(run_session.target_total - run_session.cumulative_total, 0),
 	]
 	retry_button.visible = true
-	retry_button.text = "重新开始金线回廊"
+	retry_button.text = "重新开始%s" % area_name
 	return_button.visible = true
 	return_button.text = "返回入口"
 

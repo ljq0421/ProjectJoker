@@ -150,9 +150,14 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		encounter_screen.show_external_error(result.reason)
 		return
 	if area_session.phase == AreaRunSession.Phase.FAILED:
+		var dealer := area_session.dealer_catalog.find_dealer(
+			area_session.area_definition.dealer_id
+		)
 		summary_panel.show_area_failure(
 			area_session.encounter_session,
-			area_session.failure_origin == AreaRunSession.Phase.DEALER
+			area_session.failure_origin == AreaRunSession.Phase.DEALER,
+			area_session.area_definition.display_name,
+			dealer.display_name
 		)
 		return
 	if area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:

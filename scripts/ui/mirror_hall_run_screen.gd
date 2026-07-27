@@ -59,12 +59,14 @@ func _after_card_selected(
 	_selected_card_target = token
 	_request_guide(&"mirror")
 
-func _after_dealer_bound() -> void:
-	call_deferred("_request_guide", &"dealer")
-
 func _request_context_hint(checkpoint_id: StringName) -> void:
 	if checkpoint_id == &"dealer":
-		_request_guide(checkpoint_id)
+		_request_guide_after_layout(checkpoint_id)
+
+func _request_guide_after_layout(checkpoint_id: StringName) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_request_guide(checkpoint_id)
 
 func _close_context_hint() -> void:
 	if is_instance_valid(guide_overlay):

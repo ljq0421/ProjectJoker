@@ -35,7 +35,6 @@ func _request_context_hint(checkpoint_id: StringName) -> void:
 	if _guide_load_warning_pending and checkpoint_id == &"route":
 		route_panel.show_error("无法读取区域提示状态；本次仍可正常游玩。")
 		_guide_load_warning_pending = false
-		return
 	_request_guide(checkpoint_id)
 
 func _close_context_hint() -> void:

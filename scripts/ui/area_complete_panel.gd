@@ -64,6 +64,9 @@ func bind_summary(
 		])
 	var dealer: Dictionary = summary["dealer"]
 	var dealer_definition := dealer_catalog.find_dealer(dealer["id"])
+	%CompleteTitle.text = "%s · 账目封存" % area_definition.display_name
+	%SealMark.text = "%s  /  CLOSED" % String(area_definition.id).to_upper()
+	%RestartAreaButton.text = "重新开始%s" % area_definition.display_name
 	score_lines.append("%s　%d / %d" % [
 		dealer_definition.display_name,
 		dealer["cumulative_total"],
