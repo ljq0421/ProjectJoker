@@ -15,6 +15,10 @@ func run() -> void:
 			screen.get_node_or_null("%" + node_name) != null,
 			"faceless hub scene should own %s" % node_name
 		)
+	assert_true(
+		screen.get_node_or_null("%FacelessHubGuideOverlay") != null,
+		"faceless hub scene should own guide overlay"
+	)
 	var strip: RoundScheduleStrip = screen.get_node("%RoundScheduleStrip")
 	for node_name in ["RoundOneCard", "RoundTwoCard", "RoundThreeCard"]:
 		assert_true(

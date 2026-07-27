@@ -31,6 +31,8 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var run_trial_button: Button = %RunTrialButton
 @onready var mirror_hall_run_button: Button = %MirrorHallRunButton
 @onready var replay_mirror_hall_guide_button: Button = %ReplayMirrorHallGuideButton
+@onready var faceless_hub_run_button: Button = %FacelessHubRunButton
+@onready var replay_faceless_hub_guide_button: Button = %ReplayFacelessHubGuideButton
 @onready var entry_groups: VBoxContainer = %EntryGroups
 
 var session: SingleEncounterSession
@@ -64,6 +66,10 @@ func _ready() -> void:
 	mirror_hall_run_button.pressed.connect(_on_mirror_hall_run_pressed)
 	replay_mirror_hall_guide_button.pressed.connect(
 		_on_replay_mirror_hall_guide_pressed
+	)
+	faceless_hub_run_button.pressed.connect(_on_faceless_hub_run_pressed)
+	replay_faceless_hub_guide_button.pressed.connect(
+		_on_replay_faceless_hub_guide_pressed
 	)
 	if tutorial_auto_start:
 		tutorial.call_deferred("maybe_start")
@@ -539,6 +545,29 @@ func _launch_mirror_hall() -> void:
 	get_tree().root.set_meta("mirror_hall_guide_config_path", tutorial_config_path)
 	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/mirror_hall_run_screen.tscn")
+
+func _on_faceless_hub_run_pressed() -> void:
+	_launch_faceless_hub()
+
+func _on_replay_faceless_hub_guide_pressed() -> void:
+	var store := FacelessHubGuideProgressStore.new(tutorial_config_path)
+	var result := store.reset()
+	if result != OK:
+		_on_tutorial_persistence_warning(
+			"无法重置无面中枢提示；仍可正常进入无面中枢。"
+		)
+		return
+	_launch_faceless_hub()
+
+func _launch_faceless_hub() -> void:
+	get_tree().root.set_meta(
+		"faceless_hub_guide_config_path",
+		tutorial_config_path
+	)
+	SfxAccess.play(self, &"page_transition")
+	get_tree().change_scene_to_file(
+		"res://scenes/run/faceless_hub_run_screen.tscn"
+	)
 
 func _on_replay_advanced_guide_pressed() -> void:
 	var store := IronAbacusGuideProgressStore.new(tutorial_config_path)

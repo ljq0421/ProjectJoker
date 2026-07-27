@@ -21,6 +21,8 @@ func run() -> void:
 		"ReplayGoldCorridorGuideButton": "重看金线回廊提示",
 		"MirrorHallRunButton": "进入反照牌厅",
 		"ReplayMirrorHallGuideButton": "重看反照牌厅提示",
+		"FacelessHubRunButton": "进入无面中枢",
+		"ReplayFacelessHubGuideButton": "重看无面中枢提示",
 	}
 	for node_name in expected_copy:
 		var button := screen.get_node_or_null("%" + node_name) as Button
@@ -42,5 +44,11 @@ func run() -> void:
 			screen.get_node("%MirrorHallRunButton")
 		),
 		"mirror entry belongs to area trials"
+	)
+	assert_true(
+		screen.get_node("%AreaTrialEntryGroup").is_ancestor_of(
+			screen.get_node("%FacelessHubRunButton")
+		),
+		"faceless entry belongs to area trials"
 	)
 	screen.free()

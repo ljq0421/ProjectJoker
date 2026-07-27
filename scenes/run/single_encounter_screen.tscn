@@ -203,6 +203,23 @@ layout_mode = 2
 text = "重看反照牌厅提示"
 tooltip_text = "只重置反照牌厅的方向、镜像与庄家提示"
 
+[node name="FacelessHubEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+layout_mode = 2
+text = "无面中枢"
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+
+[node name="FacelessHubRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "进入无面中枢"
+tooltip_text = "体验复合规则、公开三轮议程、双骰手法与最终限制选择"
+
+[node name="ReplayFacelessHubGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "重看无面中枢提示"
+tooltip_text = "只重置无面中枢的复合规则、三轮议程与最终限制提示"
+
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
 layout_mode = 2
 size_flags_horizontal = 3

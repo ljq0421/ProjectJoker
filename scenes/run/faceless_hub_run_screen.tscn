@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/run/area_run_screen.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/ui/faceless_hub_run_screen.gd" id="2_script"]
 [ext_resource type="PackedScene" path="res://scenes/components/round_schedule_strip.tscn" id="3_schedule"]
 [ext_resource type="PackedScene" path="res://scenes/components/final_restriction_panel.tscn" id="4_restriction"]
+[ext_resource type="PackedScene" path="res://scenes/components/iron_abacus_guide_overlay.tscn" id="5_guide"]
 
 [node name="FacelessHubRunScreen" instance=ExtResource("1_base")]
 script = ExtResource("2_script")
@@ -16,3 +17,8 @@ visible = false
 unique_name_in_owner = true
 layout_mode = 1
 z_index = 35
+
+[node name="FacelessHubGuideOverlay" parent="." instance=ExtResource("5_guide")]
+unique_name_in_owner = true
+layout_mode = 1
+z_index = 50
