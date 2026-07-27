@@ -14,3 +14,9 @@ func draw_round() -> Array[StringName]:
 	for draw_index in range(mini(HAND_SIZE, _draw_pile.size())):
 		hand.append(_draw_pile.pop_front())
 	return hand
+
+func snapshot_draw_pile() -> Array[StringName]:
+	return _draw_pile.duplicate()
+
+func restore_draw_pile(snapshot: Array[StringName]) -> void:
+	_draw_pile.assign(snapshot)

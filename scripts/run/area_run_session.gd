@@ -163,6 +163,19 @@ func advance_encounter_round() -> OperationResult:
 	last_error = ""
 	return OperationResult.new(true)
 
+func choose_dealer_restriction(
+	restriction_id: StringName
+) -> OperationResult:
+	if phase != Phase.DEALER:
+		return _fail("只有庄家阶段可以选择最终限制")
+	if encounter_session == null:
+		return _fail("当前三轮遭遇不存在")
+	var result := encounter_session.choose_final_restriction(restriction_id)
+	if not result.accepted:
+		return _fail(result.reason)
+	last_error = ""
+	return OperationResult.new(true)
+
 func open_shop() -> OperationResult:
 	if (
 		phase != Phase.NORMAL_ROOM

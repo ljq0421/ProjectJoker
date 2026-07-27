@@ -5,6 +5,7 @@ enum Status {
 	NOT_STARTED,
 	PLAYING,
 	ROUND_SUMMARY,
+	AWAITING_RESTRICTION,
 	SUCCEEDED,
 	FAILED,
 }
@@ -28,6 +29,7 @@ var cumulative_total: int = 0
 var intel_tickets: int = 0
 var shop_offer_ids: Array[StringName] = []
 var last_error: String = ""
+var selected_final_restriction: FinalRestrictionDefinition
 
 var _run_rng: RunRng
 var _deck := CardDeck.new()
@@ -80,7 +82,10 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 	committed_reports.append(report)
 	cumulative_total += report.total
 	if current_round < ROUND_COUNT:
-		status = Status.ROUND_SUMMARY
+		if setup.round_schedule != null and current_round == 2:
+			status = Status.AWAITING_RESTRICTION
+		else:
+			status = Status.ROUND_SUMMARY
 	else:
 		if cumulative_total >= target_total:
 			status = Status.SUCCEEDED
@@ -98,22 +103,81 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 func advance_round() -> OperationResult:
 	if status != Status.ROUND_SUMMARY:
 		return _fail("当前不能进入下一轮")
+	var rng_snapshot := _run_rng.snapshot_state()
+	var deck_snapshot := _deck.snapshot_draw_pile()
 	current_round += 1
 	var begin_result := _begin_round()
 	if not begin_result.accepted:
 		current_round -= 1
+		_run_rng.restore_state(rng_snapshot)
+		_deck.restore_draw_pile(deck_snapshot)
 		return begin_result
 	status = Status.PLAYING
 	last_error = ""
 	return OperationResult.new(true)
 
+func choose_final_restriction(
+	restriction_id: StringName
+) -> OperationResult:
+	if status != Status.AWAITING_RESTRICTION:
+		return _fail("当前不能选择最终限制")
+	var chosen: FinalRestrictionDefinition
+	for option in public_restriction_options():
+		if option.id == restriction_id:
+			chosen = option
+			break
+	if chosen == null:
+		return _fail("所选限制不在公开候选中")
+
+	var rng_snapshot := _run_rng.snapshot_state()
+	var deck_snapshot := _deck.snapshot_draw_pile()
+	var previous_hand := current_hand_ids.duplicate()
+	var previous_session := current_session
+	var previous_restriction := selected_final_restriction
+	var previous_round := current_round
+
+	selected_final_restriction = chosen
+	current_round = 3
+	var begin_result := _begin_round()
+	if not begin_result.accepted:
+		_run_rng.restore_state(rng_snapshot)
+		_deck.restore_draw_pile(deck_snapshot)
+		current_hand_ids.assign(previous_hand)
+		current_session = previous_session
+		selected_final_restriction = previous_restriction
+		current_round = previous_round
+		status = Status.AWAITING_RESTRICTION
+		return begin_result
+	status = Status.PLAYING
+	last_error = ""
+	return OperationResult.new(true)
+
+func current_round_plan() -> EncounterRoundPlan:
+	if (
+		setup.round_schedule == null
+		or current_round < 1
+		or current_round > setup.round_schedule.round_plans.size()
+	):
+		return null
+	return setup.round_schedule.round_plans[current_round - 1]
+
+func public_restriction_options() -> Array[FinalRestrictionDefinition]:
+	if setup.round_schedule == null:
+		return []
+	return setup.round_schedule.restriction_options()
+
+func active_restriction() -> FinalRestrictionDefinition:
+	if current_round == 3 and selected_final_restriction != null:
+		return selected_final_restriction
+	return setup.fixed_restriction
+
 func _begin_round() -> OperationResult:
-	current_hand_ids = _deck.draw_round()
-	if current_hand_ids.size() != CardDeck.HAND_SIZE:
+	var next_hand_ids := _deck.draw_round()
+	if next_hand_ids.size() != CardDeck.HAND_SIZE:
 		return _fail("当前轮没有抽到四张手法牌")
 
 	var hand: Array[CardDefinition] = []
-	for card_id in current_hand_ids:
+	for card_id in next_hand_ids:
 		var card := catalog.find_card(card_id)
 		if card == null:
 			return _fail("手牌包含未知卡牌：%s" % card_id)
@@ -134,17 +198,24 @@ func _begin_round() -> OperationResult:
 			profile.engraving_id if profile != null else &"",
 			profile.engraved_face if profile != null else 0
 		))
-	var encounter := (
-		setup.encounter
-		if setup.encounter != null
-		else SingleEncounterFixture.make_encounter()
-	)
+	var round_plan := current_round_plan()
+	var encounter: EncounterDefinition
+	if round_plan != null:
+		encounter = round_plan.encounter
+	elif setup.encounter != null:
+		encounter = setup.encounter
+	else:
+		encounter = SingleEncounterFixture.make_encounter()
+	if encounter == null:
+		return _fail("当前回合遭遇不存在")
 	var context := (
 		setup.resolution_context
 		if setup.resolution_context != null
 		else ResolutionContext.empty()
 	)
-	current_session = SingleEncounterSession.new(state, encounter, hand, context)
+	var next_session := SingleEncounterSession.new(state, encounter, hand, context)
+	current_hand_ids.assign(next_hand_ids)
+	current_session = next_session
 	return OperationResult.new(true)
 
 func _profile_for(die_id: StringName) -> DieState:
@@ -156,6 +227,14 @@ func _profile_for(die_id: StringName) -> DieState:
 func _validate_setup() -> String:
 	if setup.success_intel_reward < 0:
 		return "成功情报券奖励不能为负数"
+	if setup.round_schedule != null:
+		var schedule_errors := setup.round_schedule.validate()
+		if not schedule_errors.is_empty():
+			return "回合日程无效：%s" % "；".join(schedule_errors)
+	if setup.fixed_restriction != null:
+		var restriction_errors := setup.fixed_restriction.validate()
+		if not restriction_errors.is_empty():
+			return "固定限制无效：%s" % "；".join(restriction_errors)
 
 	var candidate_deck := (
 		setup.deck_ids
@@ -172,7 +251,7 @@ func _validate_setup() -> String:
 			return "遭遇牌组包含重复卡牌：%s" % card_id
 		deck_ids[card_id] = true
 
-	if setup.encounter != null:
+	if setup.round_schedule == null and setup.encounter != null:
 		var encounter_errors := ContentValidator.new().validate(setup.encounter.rules, [])
 		if not encounter_errors.is_empty():
 			return "遭遇规则无效：%s" % "；".join(encounter_errors)
