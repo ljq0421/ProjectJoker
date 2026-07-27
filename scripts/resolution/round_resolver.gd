@@ -22,10 +22,22 @@ func resolve(
 	var coefficient_modifiers: Dictionary = {}
 	var repeat_counts: Dictionary = {}
 	var neighbor_links: Dictionary = {}
-	var reverse_order := false
+	var reverse_order := (
+		encounter.rule_profile != null
+		and encounter.rule_profile.resolution_direction
+			== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
+	)
 
 	for played_card in state.played_cards:
 		for effect in played_card.effective_effects():
+			var single_table_target: StringName = (
+				played_card.secondary_target
+				if (
+					played_card.definition.target_type
+					== CardDefinition.TargetType.GAP
+				)
+				else played_card.primary_target
+			)
 			match effect.operation:
 				EffectSpec.Operation.ADJUST_DIE:
 					if not die_values.has(played_card.primary_target):
@@ -36,16 +48,18 @@ func resolve(
 						6
 					)
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
-					if not table_ids.has(played_card.primary_target):
+					if not table_ids.has(single_table_target):
 						return _invalid("手法牌指向了未知规则轨")
-					coefficient_modifiers[played_card.primary_target] = (
-						coefficient_modifiers.get(played_card.primary_target, 0) + effect.amount
+					coefficient_modifiers[single_table_target] = (
+						coefficient_modifiers.get(single_table_target, 0)
+						+ effect.amount
 					)
 				EffectSpec.Operation.REPEAT_TABLE:
-					if not table_ids.has(played_card.primary_target):
+					if not table_ids.has(single_table_target):
 						return _invalid("手法牌指向了未知规则轨")
-					repeat_counts[played_card.primary_target] = (
-						repeat_counts.get(played_card.primary_target, 0) + effect.amount
+					repeat_counts[single_table_target] = (
+						repeat_counts.get(single_table_target, 0)
+						+ effect.amount
 					)
 				EffectSpec.Operation.REVERSE_RESOLUTION:
 					reverse_order = not reverse_order
@@ -55,16 +69,30 @@ func resolve(
 						or not table_ids.has(played_card.secondary_target)
 					):
 						return _invalid("桥接牌指向了未知规则轨")
-					neighbor_links[played_card.secondary_target] = {
+					if not neighbor_links.has(played_card.secondary_target):
+						neighbor_links[played_card.secondary_target] = []
+					neighbor_links[played_card.secondary_target].append({
 						"source_table": played_card.primary_target,
 						"card_id": played_card.definition.id,
 						"card_name": played_card.definition.display_name,
-					}
+						"is_mirror_copy": played_card.is_mirror_copy,
+						"source_card_id": played_card.source_card_id,
+						"source_slot_id": played_card.source_slot_id,
+						"mirror_slot_id": _gap_id(played_card),
+					})
+		var card_label: String = played_card.definition.display_name
+		if played_card.is_mirror_copy:
+			card_label = "镜像副本：%s" % card_label
 		report.events.append(ResolutionEvent.new(
 			played_card.definition.id,
-			played_card.definition.display_name,
+			card_label,
 			0,
-			report.total
+			report.total,
+			true,
+			played_card.is_mirror_copy,
+			played_card.source_card_id,
+			played_card.source_slot_id,
+			_gap_id(played_card)
 		))
 
 	var ordered_rules := encounter.rules.duplicate()
@@ -73,6 +101,12 @@ func resolve(
 	var ordered_rule_ids: Array[StringName] = []
 	for rule in ordered_rules:
 		ordered_rule_ids.append(rule.id)
+	report.resolution_direction = (
+		EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
+		if reverse_order
+		else EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT
+	)
+	report.ordered_rule_ids.assign(ordered_rule_ids)
 
 	var resolved_table_totals: Dictionary = {}
 	var pending_bridges: Dictionary = {}
@@ -154,15 +188,28 @@ func resolve(
 				pending_bridges[outcome.target_table_id].append(outcome)
 
 		if neighbor_links.has(rule.id):
-			var link: Dictionary = neighbor_links[rule.id]
-			var linked_value: int = resolved_table_totals.get(link.source_table, 0)
-			report.total += linked_value
-			report.events.append(ResolutionEvent.new(
-				link.card_id,
-				"%s：%s → %s" % [link.card_name, link.source_table, rule.id],
-				linked_value,
-				report.total
-			))
+			for link in neighbor_links[rule.id]:
+				var linked_value: int = resolved_table_totals.get(
+					link.source_table,
+					0
+				)
+				report.total += linked_value
+				report.events.append(ResolutionEvent.new(
+					link.card_id,
+					"%s%s：%s → %s" % [
+						"镜像副本：" if link.is_mirror_copy else "",
+						link.card_name,
+						link.source_table,
+						rule.id,
+					],
+					linked_value,
+					report.total,
+					true,
+					link.is_mirror_copy,
+					link.source_card_id,
+					link.source_slot_id,
+					link.mirror_slot_id
+				))
 
 	if normalized_context.dealer != null:
 		var assigned: Dictionary = {}
@@ -209,3 +256,14 @@ func _invalid(reason: String) -> ResolutionReport:
 	report.valid = false
 	report.reason = reason
 	return report
+
+func _gap_id(played_card: PlayedCard) -> StringName:
+	var targets := {
+		played_card.primary_target: true,
+		played_card.secondary_target: true,
+	}
+	if targets.has(&"left") and targets.has(&"middle"):
+		return &"left_gap"
+	if targets.has(&"middle") and targets.has(&"right"):
+		return &"right_gap"
+	return &""

@@ -50,13 +50,25 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 					if effect.amount == 0:
 						errors.append("card %s adjust-die amount cannot be zero" % card.id)
 				EffectSpec.Operation.MODIFY_COEFFICIENT:
-					if card.target_type != CardDefinition.TargetType.TABLE:
-						errors.append("card %s coefficient effect requires a table target" % card.id)
+					if card.target_type not in [
+						CardDefinition.TargetType.TABLE,
+						CardDefinition.TargetType.GAP,
+					]:
+						errors.append(
+							"card %s coefficient effect requires a table or gap target"
+							% card.id
+						)
 					if effect.amount == 0:
 						errors.append("card %s coefficient amount cannot be zero" % card.id)
 				EffectSpec.Operation.REPEAT_TABLE:
-					if card.target_type != CardDefinition.TargetType.TABLE:
-						errors.append("card %s repeat effect requires a table target" % card.id)
+					if card.target_type not in [
+						CardDefinition.TargetType.TABLE,
+						CardDefinition.TargetType.GAP,
+					]:
+						errors.append(
+							"card %s repeat effect requires a table or gap target"
+							% card.id
+						)
 					if effect.amount < 1:
 						errors.append("card %s repeat amount must be positive" % card.id)
 				EffectSpec.Operation.REVERSE_RESOLUTION:
@@ -67,6 +79,40 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append("card %s link effect requires a gap target" % card.id)
 					if effect.amount != 1:
 						errors.append("card %s link amount must equal one" % card.id)
+		if not card.mirror_effects.is_empty():
+			if card.target_type != CardDefinition.TargetType.GAP:
+				errors.append(
+					"card %s mirror effects require a gap target" % card.id
+				)
+			for effect in card.mirror_effects:
+				if effect.operation not in [
+					EffectSpec.Operation.MODIFY_COEFFICIENT,
+					EffectSpec.Operation.REPEAT_TABLE,
+					EffectSpec.Operation.LINK_NEIGHBORS,
+				]:
+					errors.append(
+						"card %s has forbidden mirror operation" % card.id
+					)
+					continue
+				match effect.operation:
+					EffectSpec.Operation.MODIFY_COEFFICIENT:
+						if effect.amount == 0:
+							errors.append(
+								"card %s mirror coefficient amount cannot be zero"
+								% card.id
+							)
+					EffectSpec.Operation.REPEAT_TABLE:
+						if effect.amount < 1:
+							errors.append(
+								"card %s mirror repeat amount must be positive"
+								% card.id
+							)
+					EffectSpec.Operation.LINK_NEIGHBORS:
+						if effect.amount != 1:
+							errors.append(
+								"card %s mirror link amount must equal one"
+								% card.id
+							)
 	return errors
 
 func validate_dealers(dealers: Array) -> Array[String]:
