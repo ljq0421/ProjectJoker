@@ -34,6 +34,13 @@ func _ready() -> void:
 func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	visible = true
 	_hide_actions()
+	match run_session.status:
+		ThreeRoundEncounterSession.Status.SUCCEEDED:
+			SfxAccess.play(self, &"round_success")
+		ThreeRoundEncounterSession.Status.FAILED:
+			SfxAccess.play(self, &"round_failure")
+		_:
+			SfxAccess.play(self, &"panel_open")
 	var last_total := 0
 	if not run_session.committed_reports.is_empty():
 		last_total = run_session.committed_reports[-1].total
@@ -55,6 +62,7 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 
 func show_dealer_ready(deck_ids: Array[StringName], intel_tickets: int) -> void:
 	visible = true
+	SfxAccess.play(self, &"panel_open")
 	_hide_actions()
 	title_label.text = "铁算盘正在等候"
 	detail_label.text = (
@@ -66,6 +74,7 @@ func show_dealer_ready(deck_ids: Array[StringName], intel_tickets: int) -> void:
 
 func show_dealer_failure(run_session: ThreeRoundEncounterSession) -> void:
 	visible = true
+	SfxAccess.play(self, &"round_failure")
 	_hide_actions()
 	var last_report: ResolutionReport = (
 		run_session.committed_reports[-1]
@@ -93,6 +102,7 @@ func show_area_failure(
 	dealer_failure: bool
 ) -> void:
 	visible = true
+	SfxAccess.play(self, &"round_failure")
 	_hide_actions()
 	title_label.text = (
 		"铁算盘挑战未达标"
@@ -111,6 +121,7 @@ func show_area_failure(
 
 func show_verification_result(applied: bool, reason: String) -> void:
 	visible = true
+	SfxAccess.play(self, &"round_success" if applied else &"round_failure")
 	_hide_actions()
 	title_label.text = "刻印验证完成" if applied else "刻印尚未触发"
 	detail_label.text = reason
@@ -125,6 +136,7 @@ func show_verification_result(applied: bool, reason: String) -> void:
 
 func show_stage_complete(deck_ids: Array[StringName], intel_tickets: int) -> void:
 	visible = true
+	SfxAccess.play(self, &"panel_open")
 	_hide_actions()
 	title_label.text = "阶段试局完成"
 	detail_label.text = "最终牌组：%d 张\n剩余情报券：%d" % [

@@ -66,10 +66,12 @@ func bind_summary(
 	%CompleteErrorLabel.text = ""
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	SfxAccess.play(self, &"area_complete")
 	return true
 
 func show_error(message: String) -> void:
 	%CompleteErrorLabel.text = message
+	SfxAccess.play(self, &"error")
 
 func close() -> void:
 	visible = false

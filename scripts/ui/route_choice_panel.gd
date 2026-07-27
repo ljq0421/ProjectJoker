@@ -37,6 +37,7 @@ func bind_routes(
 
 func show_error(message: String) -> void:
 	%RouteErrorLabel.text = message
+	SfxAccess.play(self, &"error")
 
 func close() -> void:
 	visible = false

@@ -75,10 +75,15 @@ func _add_card(
 	token.card_selected.connect(_on_card_selected)
 
 func _on_card_selected(card_id: StringName, role: StringName) -> void:
+	var selection_changed := false
 	if role == &"offer":
+		selection_changed = selected_offer_id != card_id
 		selected_offer_id = card_id
 	elif role == &"deck":
+		selection_changed = selected_deck_id != card_id
 		selected_deck_id = card_id
+	if selection_changed:
+		SfxAccess.play(self, &"card_select")
 	error_label.text = ""
 	_refresh()
 
@@ -88,6 +93,9 @@ func _on_confirm_pressed() -> void:
 	if result.accepted:
 		selected_offer_id = &""
 		selected_deck_id = &""
+		SfxAccess.play(self, &"shop_purchase")
+	elif not result.reason.is_empty():
+		SfxAccess.play(self, &"error")
 	_refresh()
 
 func _card_name(card_id: StringName) -> String:

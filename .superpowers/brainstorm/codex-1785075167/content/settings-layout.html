@@ -1,0 +1,272 @@
+<style>
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin-top: 24px;
+  }
+  .layout-choice {
+    border: 1px solid rgba(111, 245, 235, .22);
+    border-radius: 18px;
+    background: linear-gradient(145deg, rgba(26, 18, 62, .94), rgba(9, 15, 44, .96));
+    overflow: hidden;
+    cursor: pointer;
+    transition: .18s ease;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+  }
+  .layout-choice:hover {
+    border-color: rgba(111, 245, 235, .58);
+    transform: translateY(-2px);
+  }
+  .layout-choice.selected {
+    border-color: #79fff1;
+    box-shadow: 0 0 0 2px rgba(121, 255, 241, .15), 0 20px 70px rgba(39, 222, 218, .18);
+  }
+  .preview {
+    aspect-ratio: 16 / 9;
+    position: relative;
+    padding: 18px;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(170, 82, 238, .2), transparent 28%),
+      radial-gradient(circle at 78% 24%, rgba(54, 234, 226, .14), transparent 30%),
+      #07091c;
+    color: #e9fbff;
+  }
+  .ghost-game {
+    position: absolute;
+    inset: 0;
+    opacity: .2;
+    background:
+      linear-gradient(90deg, transparent 0 14%, rgba(128, 93, 220, .25) 14% 15%, transparent 15% 75%, rgba(91, 230, 226, .18) 75% 76%, transparent 76%),
+      linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: auto, 28px 28px, 28px 28px;
+  }
+  .glass-shell {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    border: 1px solid rgba(138, 255, 245, .34);
+    border-radius: 14px;
+    padding: 14px;
+    background: linear-gradient(145deg, rgba(20, 15, 53, .92), rgba(10, 20, 52, .88));
+    box-shadow: inset 0 0 25px rgba(103, 232, 231, .04), 0 0 40px rgba(86, 75, 223, .17);
+  }
+  .settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(127, 255, 244, .16);
+  }
+  .title-stack strong {
+    display: block;
+    font-size: 14px;
+    letter-spacing: .08em;
+  }
+  .title-stack span {
+    display: block;
+    margin-top: 2px;
+    color: #8ba9b8;
+    font-size: 8px;
+    letter-spacing: .14em;
+  }
+  .close-chip, .apply-chip, .reset-chip, .tab-chip {
+    border: 1px solid rgba(126, 255, 242, .35);
+    border-radius: 8px;
+    padding: 5px 9px;
+    background: rgba(36, 45, 89, .65);
+    color: #cffff8;
+    font-size: 8px;
+  }
+  .apply-chip {
+    background: linear-gradient(90deg, rgba(61, 195, 196, .55), rgba(101, 83, 215, .55));
+  }
+  .reset-chip { color: #b5c7d1; }
+  .two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+    margin-top: 11px;
+  }
+  .glass-section {
+    border: 1px solid rgba(125, 218, 241, .15);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(6, 13, 37, .46);
+  }
+  .section-title {
+    margin-bottom: 8px;
+    color: #8ffef3;
+    font-size: 9px;
+    letter-spacing: .12em;
+  }
+  .setting-row {
+    display: grid;
+    grid-template-columns: 62px 1fr 22px;
+    align-items: center;
+    gap: 6px;
+    min-height: 20px;
+    color: #d9e9ef;
+    font-size: 7px;
+  }
+  .track {
+    height: 3px;
+    border-radius: 4px;
+    background: rgba(160, 180, 205, .2);
+    overflow: hidden;
+  }
+  .track::before {
+    content: "";
+    display: block;
+    width: 68%;
+    height: 100%;
+    background: linear-gradient(90deg, #7c75f2, #73f8e9);
+    box-shadow: 0 0 8px #72e8df;
+  }
+  .toggle {
+    width: 18px;
+    height: 9px;
+    border-radius: 9px;
+    background: rgba(112, 252, 238, .45);
+    position: relative;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #eaffff;
+  }
+  .select-box {
+    border: 1px solid rgba(133, 219, 235, .2);
+    border-radius: 6px;
+    padding: 4px 6px;
+    color: #d9e8ef;
+    background: rgba(22, 28, 65, .75);
+  }
+  .footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .sidebar-body {
+    display: grid;
+    grid-template-columns: 82px 1fr;
+    gap: 10px;
+    margin-top: 11px;
+    height: calc(100% - 48px);
+  }
+  .side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-right: 8px;
+    border-right: 1px solid rgba(128, 255, 244, .14);
+  }
+  .tab-chip.active {
+    border-color: #73f7e9;
+    color: #efffff;
+    background: rgba(63, 170, 176, .32);
+  }
+  .layout-copy {
+    padding: 15px 16px 17px;
+  }
+  .layout-copy h3 { margin: 0 0 6px; }
+  .layout-copy p { margin: 0; color: #9fb0bd; font-size: 13px; line-height: 1.5; }
+  .badge {
+    display: inline-flex;
+    margin-bottom: 8px;
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: rgba(88, 220, 211, .12);
+    color: #83f8ed;
+    font-size: 11px;
+  }
+  @media (max-width: 850px) {
+    .layout-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<h2>全屏设置覆盖层：哪种信息结构更合适？</h2>
+<p class="subtitle">两种方案都保留当前对局并暂停底层。点击卡片选择；推荐 A。</p>
+
+<div class="layout-grid">
+  <div class="layout-choice" data-choice="a-two-column" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="ghost-game"></div>
+      <div class="glass-shell">
+        <div class="settings-head">
+          <div class="title-stack">
+            <strong>设置 / SETTINGS</strong>
+            <span>DREAM GLASS CONTROL LAYER</span>
+          </div>
+          <div class="close-chip">关闭 ×</div>
+        </div>
+        <div class="two-columns">
+          <div class="glass-section">
+            <div class="section-title">声音 / AUDIO</div>
+            <div class="setting-row"><span>总音量</span><div class="track"></div><div class="toggle"></div></div>
+            <div class="setting-row"><span>界面音效</span><div class="track"></div><div class="toggle"></div></div>
+            <div class="setting-row"><span>玩法音效</span><div class="track"></div><div class="toggle"></div></div>
+            <div style="margin-top:8px;color:#7f9aa7;font-size:7px;">拖动后即时预听 · 自动保存</div>
+          </div>
+          <div class="glass-section">
+            <div class="section-title">显示 / DISPLAY</div>
+            <div class="setting-row"><span>显示模式</span><div class="select-box">窗口模式⌄</div><span></span></div>
+            <div class="setting-row"><span>分辨率</span><div class="select-box">1920 × 1080⌄</div><span></span></div>
+            <div class="setting-row"><span>垂直同步</span><span></span><div class="toggle"></div></div>
+            <div class="footer-row">
+              <div class="reset-chip">恢复默认</div>
+              <div class="apply-chip">应用显示设置</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="layout-copy">
+      <span class="badge">推荐</span>
+      <h3>A · 双栏总览</h3>
+      <p>声音和显示同时可见，桌面 16:9 空间利用最好；所有设置一眼可达，减少切换和迷路。</p>
+    </div>
+  </div>
+
+  <div class="layout-choice" data-choice="b-sidebar" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="ghost-game"></div>
+      <div class="glass-shell">
+        <div class="settings-head">
+          <div class="title-stack">
+            <strong>设置 / SETTINGS</strong>
+            <span>DREAM GLASS CONTROL LAYER</span>
+          </div>
+          <div class="close-chip">关闭 ×</div>
+        </div>
+        <div class="sidebar-body">
+          <div class="side-nav">
+            <div class="tab-chip active">声音</div>
+            <div class="tab-chip">显示</div>
+            <div style="flex:1"></div>
+            <div class="reset-chip">恢复默认</div>
+          </div>
+          <div class="glass-section">
+            <div class="section-title">声音 / AUDIO</div>
+            <div class="setting-row"><span>总音量</span><div class="track"></div><div class="toggle"></div></div>
+            <div class="setting-row"><span>界面音效</span><div class="track"></div><div class="toggle"></div></div>
+            <div class="setting-row"><span>玩法音效</span><div class="track"></div><div class="toggle"></div></div>
+            <div style="margin-top:12px;color:#7f9aa7;font-size:7px;">选择左侧“显示”进入分辨率与垂直同步设置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="layout-copy">
+      <span class="badge">可扩展</span>
+      <h3>B · 侧栏分页</h3>
+      <p>未来增加控制、辅助功能等分类时更易扩展，但当前只有两个分类，会多一次无必要的页面切换。</p>
+    </div>
+  </div>
+</div>

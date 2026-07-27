@@ -135,6 +135,7 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		return
 	if slice_session.phase == IronAbacusSliceSession.Phase.ENGRAVING_REWARD:
 		summary_panel.close()
+		SfxAccess.play(self, &"round_success")
 		reward_panel.bind_reward(
 			slice_session.engraving_offer_ids,
 			slice_session.die_profiles,
@@ -156,6 +157,7 @@ func _on_next_round_requested() -> void:
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_shop_requested() -> void:
@@ -167,6 +169,7 @@ func _on_shop_requested() -> void:
 	summary_panel.close()
 	encounter_screen.visible = false
 	shop_screen.bind_session(slice_session.shop_session, slice_session.card_catalog)
+	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_guide", &"shop")
 
 func _on_shop_leave_requested() -> void:
@@ -174,6 +177,7 @@ func _on_shop_leave_requested() -> void:
 	var result := slice_session.leave_shop()
 	if not result.accepted:
 		shop_screen.get_node("%ShopErrorLabel").text = result.reason
+		SfxAccess.play(self, &"error")
 		return
 	shop_screen.visible = false
 	summary_panel.show_dealer_ready(slice_session.deck_ids, slice_session.intel_tickets)
@@ -184,6 +188,7 @@ func _on_dealer_requested() -> void:
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_dealer_retry_requested() -> void:
@@ -191,7 +196,9 @@ func _on_dealer_retry_requested() -> void:
 	var result := slice_session.retry_dealer()
 	if not result.accepted:
 		summary_panel.get_node("%SummaryDetail").text = result.reason
+		SfxAccess.play(self, &"error")
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_verification_retry_requested() -> void:
@@ -199,7 +206,9 @@ func _on_verification_retry_requested() -> void:
 	var result := slice_session.retry_verification()
 	if not result.accepted:
 		summary_panel.get_node("%SummaryDetail").text = result.reason
+		SfxAccess.play(self, &"error")
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_restart_requested() -> void:
@@ -207,17 +216,22 @@ func _on_restart_requested() -> void:
 	var result := slice_session.restart_slice()
 	if not result.accepted:
 		summary_panel.get_node("%SummaryDetail").text = result.reason
+		SfxAccess.play(self, &"error")
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_return_requested() -> void:
 	_close_guide()
+	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/single_encounter_screen.tscn")
 
 func _on_engraving_selected(engraving_id: StringName) -> void:
 	var result := slice_session.select_engraving(engraving_id)
 	if not result.accepted:
 		reward_panel.show_error(result.reason)
+	else:
+		SfxAccess.play(self, &"engraving_select")
 
 func _on_install_requested(
 	engraving_id: StringName,
@@ -232,6 +246,7 @@ func _on_install_requested(
 	if not result.accepted:
 		reward_panel.show_error(result.reason)
 		return
+	SfxAccess.play(self, &"engraving_install")
 	reward_panel.close()
 	bind_current_encounter()
 
@@ -376,17 +391,22 @@ func _on_guide_acknowledged(checkpoint_id: StringName) -> void:
 	guide_overlay.close_card()
 	if save_result != OK:
 		_show_guide_persistence_warning()
+	else:
+		SfxAccess.play(self, &"ui_confirm")
 
 func _on_guide_dismiss_all_requested(_checkpoint_id: StringName) -> void:
 	var save_result := guide_store.dismiss_all()
 	guide_overlay.close_card()
 	if save_result != OK:
 		_show_guide_persistence_warning()
+	else:
+		SfxAccess.play(self, &"ui_back")
 
 func _show_guide_persistence_warning() -> void:
 	var message := "无法保存进阶引导状态；下次启动可能再次显示。"
 	if shop_screen.visible:
 		shop_screen.get_node("%ShopErrorLabel").text = message
+		SfxAccess.play(self, &"error")
 	elif reward_panel.visible:
 		reward_panel.show_error(message)
 	else:

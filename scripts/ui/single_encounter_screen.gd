@@ -29,6 +29,7 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 
 var session: SingleEncounterSession
 var dealer_definition: DealerDefinition
+var owns_session := true
 
 func _ready() -> void:
 	session = SingleEncounterSession.new(
@@ -71,6 +72,7 @@ func bind_external_session(
 	replay_gold_corridor_guide_button.visible = false
 	run_trial_button.visible = false
 	session = p_session
+	owns_session = false
 	set_run_status(area_copy, goal_copy)
 	refresh_from_session()
 
@@ -100,9 +102,11 @@ func bind_verification(engraving: EngravingDefinition) -> void:
 func show_external_error(message: String) -> void:
 	session.last_error = message
 	error_label.text = message
+	SfxAccess.play(self, &"error")
 
 func show_transient_warning(message: String) -> void:
 	error_label.text = message
+	SfxAccess.play(self, &"error")
 
 func refresh_from_session() -> void:
 	var state := session.controller.state
@@ -179,6 +183,7 @@ func reset_teaching_encounter() -> void:
 		SingleEncounterFixture.make_encounter(),
 		SingleEncounterFixture.make_hand()
 	)
+	owns_session = true
 	refresh_from_session()
 
 func start_tutorial_replay() -> void:
@@ -241,8 +246,12 @@ func _on_die_activated(die_id: StringName) -> void:
 		payload["card_index"] = session.selection.card_index
 	if not _tutorial_allows(action, payload):
 		return
-	if session.activate_die(die_id):
+	var accepted := session.activate_die(die_id)
+	if accepted:
 		_record_tutorial_action(action, payload)
+		SfxAccess.play(self, &"card_play" if action == &"card_die" else &"die_select")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_card_activated(card_index: int) -> void:
@@ -255,8 +264,15 @@ func _on_card_activated(card_index: int) -> void:
 	var payload := {"card_index": card_index}
 	if not _tutorial_allows(action, payload):
 		return
-	if session.activate_card(card_index):
+	var accepted := session.activate_card(card_index)
+	if accepted:
 		_record_tutorial_action(action, payload)
+		SfxAccess.play(
+			self,
+			&"card_play" if action == &"card_global" else &"card_select"
+		)
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_lane_activated(table_id: StringName) -> void:
@@ -271,24 +287,36 @@ func _on_lane_activated(table_id: StringName) -> void:
 		payload = {"table_id": table_id}
 	if not _tutorial_allows(action, payload):
 		return
-	if session.activate_table(table_id):
+	var accepted := session.activate_table(table_id)
+	if accepted:
 		_record_tutorial_action(action, payload)
+		SfxAccess.play(self, &"card_play" if action == &"card_table" else &"die_place")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	var payload := {"die_id": die_id, "table_id": table_id}
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
-	if session.assign_dropped_die(die_id, table_id):
+	var accepted := session.assign_dropped_die(die_id, table_id)
+	if accepted:
 		_record_tutorial_action(&"drag_assign", payload)
+		SfxAccess.play(self, &"die_place")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_die_return_requested(die_id: StringName) -> void:
 	var payload := {"die_id": die_id}
 	if not _tutorial_allows(&"return_die", payload):
 		return
-	if session.return_die_to_tray(die_id):
+	var accepted := session.return_die_to_tray(die_id)
+	if accepted:
 		_record_tutorial_action(&"return_die", payload)
+		SfxAccess.play(self, &"die_return")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
@@ -299,27 +327,40 @@ func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
 	}
 	if not _tutorial_allows(&"card_gap", payload):
 		return
-	if session.activate_gap(left_id, right_id):
+	var accepted := session.activate_gap(left_id, right_id)
+	if accepted:
 		_record_tutorial_action(&"card_gap", payload)
+		SfxAccess.play(self, &"card_play")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_calibrate_pressed(delta: int) -> void:
 	if session.selection.kind != InteractionState.Kind.DIE:
+		SfxAccess.play(self, &"error")
 		session.last_error = "请先选择一颗骰子"
 		refresh_from_session()
 		return
 	var payload := {"die_id": session.selection.die_id, "delta": delta}
 	if not _tutorial_allows(&"calibrate", payload):
 		return
-	if session.calibrate_die(session.selection.die_id, delta):
+	var accepted := session.calibrate_die(session.selection.die_id, delta)
+	if accepted:
 		_record_tutorial_action(&"calibrate", payload)
+		SfxAccess.play(self, &"calibrate_up" if delta > 0 else &"calibrate_down")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_undo_pressed() -> void:
 	if not _tutorial_allows(&"undo", {}):
 		return
-	if session.undo():
+	var accepted := session.undo()
+	if accepted:
 		_record_tutorial_action(&"undo", {})
+		SfxAccess.play(self, &"undo")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
 func _on_confirm_pressed() -> void:
@@ -329,6 +370,8 @@ func _on_confirm_pressed() -> void:
 	var report := session.commit()
 	if report.valid and not was_committed and session.controller.committed:
 		_record_tutorial_action(&"commit", {})
+		if owns_session:
+			SfxAccess.play(self, &"round_commit")
 	refresh_from_session()
 	if report.valid and not was_committed and session.controller.committed:
 		round_committed.emit(report)
@@ -348,6 +391,7 @@ func _on_replay_gold_corridor_guide_pressed() -> void:
 
 func _launch_gold_corridor() -> void:
 	get_tree().root.set_meta("gold_corridor_guide_config_path", tutorial_config_path)
+	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/gold_corridor_run_screen.tscn")
 
 func _on_replay_advanced_guide_pressed() -> void:
@@ -362,4 +406,5 @@ func _on_replay_advanced_guide_pressed() -> void:
 
 func _launch_iron_abacus_slice() -> void:
 	get_tree().root.set_meta("iron_abacus_guide_config_path", tutorial_config_path)
+	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/iron_abacus_slice_screen.tscn")

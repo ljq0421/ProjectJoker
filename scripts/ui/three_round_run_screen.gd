@@ -42,6 +42,7 @@ func open_shop() -> void:
 	summary_panel.close()
 	encounter_screen.visible = false
 	shop_screen.bind_session(shop_session, catalog)
+	SfxAccess.play(self, &"panel_open")
 
 func _bind_current_round() -> void:
 	encounter_screen.visible = true
@@ -79,6 +80,7 @@ func _on_next_round_requested() -> void:
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	_bind_current_round()
 
 func _on_shop_leave_requested() -> void:
@@ -89,7 +91,9 @@ func _on_shop_leave_requested() -> void:
 	)
 
 func _on_retry_requested() -> void:
+	SfxAccess.play(self, &"page_transition")
 	get_tree().reload_current_scene()
 
 func _on_return_requested() -> void:
+	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/single_encounter_screen.tscn")

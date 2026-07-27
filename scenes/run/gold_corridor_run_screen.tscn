@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/gold_corridor_run_screen.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/components/engraving_reward_panel.tscn" id="7_reward"]
 [ext_resource type="PackedScene" path="res://scenes/components/area_complete_panel.tscn" id="8_complete"]
 [ext_resource type="PackedScene" path="res://scenes/components/iron_abacus_guide_overlay.tscn" id="guide_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="settings_layer"]
 
 [node name="GoldCorridorRunScreen" type="Control"]
 layout_mode = 3
@@ -19,6 +20,9 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
+
+[node name="SettingsLayer" parent="." instance=ExtResource("settings_layer")]
+unique_name_in_owner = true
 
 [node name="EncounterScreen" parent="." instance=ExtResource("3_encounter")]
 unique_name_in_owner = true

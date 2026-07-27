@@ -75,6 +75,8 @@ func _show_route_choice() -> void:
 	if _guide_load_warning_pending:
 		route_panel.show_error("无法读取区域提示状态；本次仍可正常游玩。")
 		_guide_load_warning_pending = false
+	else:
+		SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_guide", &"route")
 
 func _on_route_selected(room_id: StringName) -> void:
@@ -83,6 +85,7 @@ func _on_route_selected(room_id: StringName) -> void:
 	if not result.accepted:
 		route_panel.show_error(result.reason)
 		return
+	SfxAccess.play(self, &"route_select")
 	route_panel.close()
 	bind_current_encounter()
 
@@ -142,6 +145,7 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		return
 	if area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:
 		summary_panel.close()
+		SfxAccess.play(self, &"round_success")
 		reward_panel.bind_reward(
 			area_session.engraving_offer_ids,
 			area_session.die_profiles,
@@ -158,6 +162,7 @@ func _on_next_round_requested() -> void:
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
 		return
+	SfxAccess.play(self, &"ui_confirm")
 	bind_current_encounter()
 
 func _on_shop_requested() -> void:
@@ -169,6 +174,7 @@ func _on_shop_requested() -> void:
 	summary_panel.close()
 	encounter_screen.visible = false
 	shop_screen.bind_session(area_session.shop_session, area_session.card_catalog)
+	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_guide", &"shop")
 
 func _on_shop_leave_requested() -> void:
@@ -176,11 +182,13 @@ func _on_shop_leave_requested() -> void:
 	var result := area_session.leave_shop()
 	if not result.accepted:
 		shop_screen.get_node("%ShopErrorLabel").text = result.reason
+		SfxAccess.play(self, &"error")
 		return
 	shop_screen.visible = false
 	if area_session.phase == AreaRunSession.Phase.ROUTE_CHOICE:
 		_show_route_choice()
 	elif area_session.phase == AreaRunSession.Phase.DEALER:
+		SfxAccess.play(self, &"ui_back")
 		bind_current_encounter()
 	else:
 		encounter_screen.show_external_error("商店结算后的区域阶段无效")
@@ -189,6 +197,8 @@ func _on_engraving_selected(engraving_id: StringName) -> void:
 	var result := area_session.select_engraving(engraving_id)
 	if not result.accepted:
 		reward_panel.show_error(result.reason)
+	else:
+		SfxAccess.play(self, &"engraving_select")
 
 func _on_install_requested(
 	engraving_id: StringName,
@@ -223,6 +233,7 @@ func _on_restart_requested() -> void:
 
 func _on_return_requested() -> void:
 	_close_guide()
+	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/single_encounter_screen.tscn")
 
 func _show_start_error(message: String) -> void:
@@ -293,12 +304,16 @@ func _on_guide_acknowledged(checkpoint_id: StringName) -> void:
 	guide_overlay.close_card()
 	if result != OK:
 		_show_guide_persistence_warning()
+	else:
+		SfxAccess.play(self, &"ui_confirm")
 
 func _on_guide_dismiss_all_requested(_checkpoint_id: StringName) -> void:
 	var result := guide_store.dismiss_all()
 	guide_overlay.close_card()
 	if result != OK:
 		_show_guide_persistence_warning()
+	else:
+		SfxAccess.play(self, &"ui_back")
 
 func _show_guide_persistence_warning() -> void:
 	var message := "无法保存区域提示状态；下次启动可能再次显示。"
@@ -306,6 +321,7 @@ func _show_guide_persistence_warning() -> void:
 		route_panel.show_error(message)
 	elif shop_screen.visible:
 		shop_screen.get_node("%ShopErrorLabel").text = message
+		SfxAccess.play(self, &"error")
 	elif reward_panel.visible:
 		reward_panel.show_error(message)
 	else:

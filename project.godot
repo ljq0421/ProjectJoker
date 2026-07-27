@@ -11,9 +11,14 @@ config_version=5
 [application]
 
 config/name="project-joker"
+run/main_scene="res://scenes/run/single_encounter_screen.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/run/single_encounter_screen.tscn"
+
+[autoload]
+
+SfxService="*res://scripts/audio/sfx_service.gd"
+SettingsService="*res://scripts/settings/settings_service.gd"
 
 [display]
 
@@ -22,7 +27,6 @@ window/size/viewport_height=1080
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
 
 [physics]
 

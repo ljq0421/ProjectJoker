@@ -1,0 +1,500 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/settings_layer.gd" id="1"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
+
+[node name="SettingsLayer" type="CanvasLayer"]
+layer = 0
+process_mode = 3
+script = ExtResource("1")
+
+[node name="SettingsRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2")
+
+[node name="SettingsButton" type="Button" parent="SettingsRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 72.0
+grow_horizontal = 0
+mouse_filter = 0
+text = "设置"
+tooltip_text = "打开声音与显示设置"
+
+[node name="SettingsOverlay" type="Control" parent="SettingsRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="DimBackground" type="ColorRect" parent="SettingsRoot/SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.018, 0.016, 0.07, 0.9)
+
+[node name="SafeArea" type="MarginContainer" parent="SettingsRoot/SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 40.0
+offset_right = -48.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="GlassPanel" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea"]
+layout_mode = 2
+
+[node name="MainMargin" type="MarginContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 26
+
+[node name="MainColumn" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Header" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleColumn" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="SettingsTitle" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
+layout_mode = 2
+text = "设置 / SETTINGS"
+theme_override_colors/font_color = Color(0.66, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="SettingsSubtitle" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
+layout_mode = 2
+text = "DREAM GLASS CONTROL LAYER"
+theme_override_colors/font_color = Color(0.48, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 48)
+layout_mode = 2
+text = "关闭 ×"
+
+[node name="Divider" type="HSeparator" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+
+[node name="Content" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="SidebarPanel" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="SidebarMargin" type="MarginContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="Sidebar" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CategoryLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+layout_mode = 2
+text = "设置分类"
+theme_override_colors/font_color = Color(0.55, 0.7, 0.78, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="AudioTabButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "声音 / AUDIO"
+
+[node name="DisplayTabButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+toggle_mode = true
+text = "显示 / DISPLAY"
+
+[node name="SidebarSpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="PauseHint" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+layout_mode = 2
+text = "设置打开期间\n当前对局已暂停"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ContentPanel" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ContentMargin" type="MarginContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="AudioPage" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="AudioTitle" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+layout_mode = 2
+text = "声音 / AUDIO"
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="AudioDescription" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+layout_mode = 2
+text = "拖动时即时调整；松开滑杆后播放一次预听并保存。"
+theme_override_colors/font_color = Color(0.56, 0.68, 0.75, 1)
+
+[node name="MasterRow" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Label" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow/Row"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "总音量"
+vertical_alignment = 1
+
+[node name="MasterSlider" type="HSlider" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 100.0
+
+[node name="MasterValueLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="MasterMuteCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 0)
+layout_mode = 2
+text = "静音"
+
+[node name="UiRow" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/UiRow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Label" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/UiRow/Row"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "界面音效"
+vertical_alignment = 1
+
+[node name="UiSlider" type="HSlider" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/UiRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 50.0
+
+[node name="UiValueLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/UiRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "50%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="UiMuteCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/UiRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 0)
+layout_mode = 2
+text = "静音"
+
+[node name="GameplayRow" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/GameplayRow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Label" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/GameplayRow/Row"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "玩法音效"
+vertical_alignment = 1
+
+[node name="GameplaySlider" type="HSlider" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/GameplayRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 79.0
+
+[node name="GameplayValueLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/GameplayRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "79%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="GameplayMuteCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/GameplayRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 0)
+layout_mode = 2
+text = "静音"
+
+[node name="AudioSpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="RestoreAudioDefaultsButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 52)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "恢复声音默认值"
+
+[node name="DisplayPage" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="DisplayTitle" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+layout_mode = 2
+text = "显示 / DISPLAY"
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="DisplayDescription" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+layout_mode = 2
+text = "显示设置会先试用，确认保留后才写入配置。"
+theme_override_colors/font_color = Color(0.56, 0.68, 0.75, 1)
+
+[node name="DisplayGrid" type="GridContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 18
+columns = 2
+
+[node name="ModeLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "显示模式"
+vertical_alignment = 1
+
+[node name="DisplayModeOption" type="OptionButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResolutionLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "窗口分辨率"
+vertical_alignment = 1
+
+[node name="ResolutionOption" type="OptionButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VsyncLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "垂直同步"
+vertical_alignment = 1
+
+[node name="VsyncCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 52)
+layout_mode = 2
+text = "启用"
+
+[node name="DisplayHintLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "窗口模式将使用所选 16:9 分辨率"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.72, 0.8, 1)
+
+[node name="DisplaySpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="DisplayActions" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="RestoreDisplayDefaultsButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 52)
+layout_mode = 2
+text = "恢复显示默认值"
+
+[node name="ActionSpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayActions"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="ApplyDisplayButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/DisplayPage/DisplayActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 52)
+layout_mode = 2
+text = "应用显示设置"
+
+[node name="SettingsStatusLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
+
+[node name="DisplayConfirmationLayer" type="Control" parent="SettingsRoot/SettingsOverlay"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="ConfirmationDim" type="ColorRect" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.01, 0.01, 0.04, 0.82)
+
+[node name="ConfirmationCenter" type="CenterContainer" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ConfirmationPanel" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter"]
+custom_minimum_size = Vector2(620, 300)
+layout_mode = 2
+
+[node name="ConfirmationMargin" type="MarginContainer" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 30
+
+[node name="ConfirmationColumn" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ConfirmationTitle" type="Label" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn"]
+layout_mode = 2
+text = "保留显示设置吗？"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.66, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="ConfirmationCopy" type="Label" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn"]
+layout_mode = 2
+text = "如果画面显示正常，请确认保留。"
+horizontal_alignment = 1
+
+[node name="ConfirmationCountdownLabel" type="Label" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "10 秒后自动恢复"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.75, 0.46, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="ConfirmationActions" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="RevertDisplayButton" type="Button" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn/ConfirmationActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 54)
+layout_mode = 2
+text = "恢复原设置"
+
+[node name="KeepDisplayButton" type="Button" parent="SettingsRoot/SettingsOverlay/DisplayConfirmationLayer/ConfirmationCenter/ConfirmationPanel/ConfirmationMargin/ConfirmationColumn/ConfirmationActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 54)
+layout_mode = 2
+text = "保留更改"

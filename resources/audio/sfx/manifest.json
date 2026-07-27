@@ -1,0 +1,475 @@
+{
+  "assets": [
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "calibrate_up",
+        "calibrate_down"
+      ],
+      "file": "calibrate.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 85.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 85,
+        "frequencies": [
+          1160.0,
+          2320.0
+        ],
+        "profile": "calibration_tick"
+      },
+      "parameters_sha256": "cfbfb14cdbd389efe0bed2b31815ec981f0cb5dcd0caa995fb35d3caa3efe3f8",
+      "seed": 26072026,
+      "sha256": "aef541b5f7bc0b3c8a607949b687ea443eb0053dfe6b7d2615412201df9d7275",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "card_play"
+      ],
+      "file": "card_play.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 270.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 270,
+        "noise": 0.18,
+        "profile": "air_release",
+        "sweep": [
+          760.0,
+          1710.0
+        ]
+      },
+      "parameters_sha256": "5ce6080e2496074949e5c212bb65c3cf006fe48a586ef73f4fc9c7acb13306a7",
+      "seed": 26073035,
+      "sha256": "6488f75bd03dbf6834672694013b1ad8806be27e1059f1433b2f2f7ee097cb51",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "card_select"
+      ],
+      "file": "card_select.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 90.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 90,
+        "frequency": 2860.0,
+        "noise": 0.16,
+        "profile": "air_tick"
+      },
+      "parameters_sha256": "56ed90508e3d13eef29917b86b65ad3d5a6ff4c367afdc118cb4cc7e4199c738",
+      "seed": 26074044,
+      "sha256": "54527cc1fc85944dbe067d5502feed6e2c9f487e3720fd6e09519107f6b05ca3",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "die_place",
+        "die_return"
+      ],
+      "file": "die_land.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 230.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "body": [
+          176.0,
+          352.0
+        ],
+        "duration_ms": 230,
+        "profile": "crystal_impact",
+        "shimmer": [
+          790.0,
+          1370.0,
+          2380.0
+        ]
+      },
+      "parameters_sha256": "aa998c91862e35d40b515edb1c98a84d3dbe05dcd9774b74d211c91b4e7cea54",
+      "seed": 26075053,
+      "sha256": "d1fbbecff0f2f8d5201c931e3b2cc8f5dfa29c91f6d9f828cb57cab23e65f5a6",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "die_select"
+      ],
+      "file": "die_select.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 105.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 105,
+        "frequencies": [
+          980.0,
+          1870.0,
+          2890.0
+        ],
+        "profile": "crystal_pickup"
+      },
+      "parameters_sha256": "91125d74c1b63f09dd916f417122cab7c017048c01230f849eecc06fb1511ff3",
+      "seed": 26076062,
+      "sha256": "cf699b5b39804121df6c10c206c189007d55963c414f808c6d6e35ce919dc16f",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "engraving_select",
+        "engraving_install"
+      ],
+      "file": "engraving.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 330.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "body": [
+          655.0,
+          988.0
+        ],
+        "duration_ms": 330,
+        "impact": 2180.0,
+        "profile": "precision_lock"
+      },
+      "parameters_sha256": "4ce140a3f986fdbd1152b55f1075e04f1bc311f515a3f0a9601c278331ceaa8f",
+      "seed": 26077071,
+      "sha256": "eaafcac7152f05cf03b17fb155800bd93587ac72146fe3413218895af81711de",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "error"
+      ],
+      "file": "error.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 190.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 190,
+        "frequencies": [
+          174.0,
+          226.0,
+          452.0
+        ],
+        "profile": "restrained_warning"
+      },
+      "parameters_sha256": "c3ce5a4ad545a1c447a515e51ac4a6e75196fc26f5e0144434ab4e84cfb43ca6",
+      "seed": 26078080,
+      "sha256": "b3b4bac7848c306647c4166b6d6b806490763a9ba3cb736bb5947c82431c283f",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "round_failure"
+      ],
+      "file": "failure.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 620.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 620,
+        "ends": [
+          415.3,
+          349.23,
+          277.18
+        ],
+        "profile": "failure_chord",
+        "starts": [
+          466.16,
+          392.0,
+          329.63
+        ]
+      },
+      "parameters_sha256": "99ca7a1f78777da98120c81af8e3cb25fd170d2905944ca28644dc9b99d59181",
+      "seed": 26079089,
+      "sha256": "e6c05eba3f337258cad4536130f1c783d7befe4f4e56a39497bceae2bdf02c3e",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "page_transition"
+      ],
+      "file": "page_transition.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 420.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 420,
+        "landing": [
+          610.0,
+          970.0
+        ],
+        "profile": "whoosh_land",
+        "sweep": [
+          310.0,
+          920.0
+        ]
+      },
+      "parameters_sha256": "1315be0304bba3dd9d73786189749dc5cc5a9f759b4fb57c8bcd0627910bdf53",
+      "seed": 26080098,
+      "sha256": "abdc4bce59503376ff0417b3a8ddf8fb4849f1e3f6e9e5bdec27309a4f285f2c",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "panel_open"
+      ],
+      "file": "panel_open.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 360.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 360,
+        "profile": "bloom",
+        "shimmer": [
+          1940.0,
+          3070.0
+        ],
+        "sweep": [
+          430.0,
+          1120.0
+        ]
+      },
+      "parameters_sha256": "2ae19930506e2a7f07b409e6fe34a29f348ac9a508be8448b66f4a4dd4da7e78",
+      "seed": 26081107,
+      "sha256": "3a0f3e141496b45c019f5a936770cf87caf7c2fd95b0805dc96638991490bd00",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "route_select",
+        "shop_purchase"
+      ],
+      "file": "progress_confirm.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 300.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 300,
+        "notes": [
+          620.0,
+          930.0
+        ],
+        "profile": "double_confirm"
+      },
+      "parameters_sha256": "4d3950b711aa334c2361397acd7fda5e58fe3e9604e750c167d3f73a2e6223e1",
+      "seed": 26082116,
+      "sha256": "d35dc24691db2cbe1503a2b1e193608ca0295a50dc0922f2447e4329375b5baf",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "round_commit"
+      ],
+      "file": "round_commit.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 440.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "body": [
+          118.0,
+          236.0
+        ],
+        "duration_ms": 440,
+        "profile": "crystal_seal",
+        "seal": [
+          520.0,
+          780.0,
+          1310.0
+        ]
+      },
+      "parameters_sha256": "6a7bcaea8ddc832d385e2b3bfebbd07d6af54eeb9f219ab1dc158ccacdde82a9",
+      "seed": 26083125,
+      "sha256": "907fe7082cc5b6c66502edad7194f565da79a5ad650c85f84815ebc5b4bb6476",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "round_success",
+        "area_complete"
+      ],
+      "file": "success.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 680.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 680,
+        "frequencies": [
+          523.25,
+          659.25,
+          783.99,
+          1567.98
+        ],
+        "profile": "success_chord"
+      },
+      "parameters_sha256": "70f239e117915cf438ec0354de4a299919d93017bd18574a9ff0eae950b3beee",
+      "seed": 26084134,
+      "sha256": "0f198c344b9a0e83b72a5f0e989c91ca7e348fba35184950b60f9c6807bc457e",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "ui_back",
+        "panel_close"
+      ],
+      "file": "ui_back_fold.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 150.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 150,
+        "noise": 0.1,
+        "profile": "fold_down",
+        "sweep": [
+          2280.0,
+          820.0
+        ]
+      },
+      "parameters_sha256": "c60b1ba1725512df78d58c6917369c4a33cf59d352f5b8c826f64bc7ad3b0734",
+      "seed": 26085143,
+      "sha256": "893829f90c3d9c020566361fc35acfaf589a9e2980ab033fe9b416e8f6e8a31a",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "ui_confirm"
+      ],
+      "file": "ui_tap.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 90.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "amplitudes": [
+          0.72,
+          0.38,
+          0.18
+        ],
+        "decays": [
+          31.0,
+          42.0,
+          55.0
+        ],
+        "duration_ms": 90,
+        "frequencies": [
+          1680.0,
+          2730.0,
+          4210.0
+        ],
+        "profile": "glass_tap"
+      },
+      "parameters_sha256": "392eb99fb7c099396990ea7763d777e033fc30dbb465a801fef5b0ef6652c2dd",
+      "seed": 26086152,
+      "sha256": "879cca0839e6aa11c5d68841f6359749760780f5bfefce99cc06896ada39b24b",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "undo"
+      ],
+      "file": "undo.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 270.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 270,
+        "noise": 0.12,
+        "profile": "reverse_sweep",
+        "sweep": [
+          1880.0,
+          410.0
+        ]
+      },
+      "parameters_sha256": "8be1f438cc966ba80d36b00fff1a10db4bdcee5d5dd45ec7fc6098ef9e29864e",
+      "seed": 26087161,
+      "sha256": "830dedccee3223ba60de07b8bfea58a78f1e9ecc0f66091a4d844fcf98e87e6e",
+      "third_party_samples": false
+    }
+  ],
+  "generated_on": "2026-07-26",
+  "generator": {
+    "master_seed": 26072026,
+    "path": "tools/generate_sfx.py",
+    "runtime_dependencies": [],
+    "version": "1.0.0"
+  },
+  "schema_version": 1
+}

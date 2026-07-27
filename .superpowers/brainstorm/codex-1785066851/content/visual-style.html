@@ -1,0 +1,410 @@
+<style>
+  .joker-intro {
+    max-width: 1180px;
+    margin: 0 auto 22px;
+  }
+  .joker-intro strong { color: #eefcff; }
+  .joker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .joker-card {
+    overflow: hidden;
+    border-radius: 18px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.11);
+    background: #0a0920;
+    box-shadow: 0 18px 50px rgba(0,0,0,.28);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .joker-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  }
+  .joker-card.selected {
+    border-color: #7cfbe9;
+    box-shadow: 0 0 0 2px rgba(124,251,233,.25), 0 24px 60px rgba(0,0,0,.42);
+  }
+  .joker-preview {
+    position: relative;
+    height: 330px;
+    padding: 19px;
+    overflow: hidden;
+  }
+  .joker-meta {
+    padding: 18px 19px 20px;
+    background: rgba(8,7,25,.96);
+  }
+  .joker-meta h3 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 7px;
+    font-size: 18px;
+  }
+  .joker-meta p {
+    margin: 0;
+    color: #a9abc3;
+    line-height: 1.55;
+    font-size: 14px;
+  }
+  .choice-chip {
+    display: inline-grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    font-size: 12px;
+  }
+  .recommended {
+    margin-left: auto;
+    border: 1px solid rgba(124,251,233,.38);
+    border-radius: 999px;
+    padding: 3px 8px;
+    color: #7cfbe9;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .mini-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 13px;
+    font-size: 11px;
+    letter-spacing: .06em;
+  }
+  .mini-body {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 10px;
+  }
+  .mini-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .mini-copy {
+    font-size: 10px;
+    line-height: 1.45;
+    opacity: .72;
+  }
+  .mini-row {
+    display: flex;
+    gap: 7px;
+    margin-top: 10px;
+  }
+  .mini-button {
+    flex: 1;
+    padding: 8px 7px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 650;
+  }
+  .state-label {
+    margin-top: 16px;
+    margin-bottom: 7px;
+    font-size: 9px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    opacity: .6;
+  }
+  .state-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+  .state-swatch {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    font-size: 9px;
+  }
+
+  /* A: Dream glass table */
+  .style-a {
+    color: #f3efff;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(198,92,255,.27), transparent 31%),
+      radial-gradient(circle at 8% 84%, rgba(54,236,218,.18), transparent 35%),
+      linear-gradient(145deg, #090722, #160b31 58%, #071c29);
+  }
+  .style-a::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(119,255,235,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(119,255,235,.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom, black, transparent 92%);
+  }
+  .style-a > * { position: relative; }
+  .style-a .mini-topbar { color: #79f9e8; }
+  .glass-panel {
+    padding: 14px;
+    border: 1px solid rgba(111,255,236,.52);
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(34,24,74,.82), rgba(10,29,49,.7));
+    box-shadow: inset 0 0 30px rgba(95,232,220,.05), 0 8px 20px rgba(0,0,0,.24);
+    backdrop-filter: blur(12px);
+  }
+  .style-a .mini-title { color: #fff; text-shadow: 0 0 16px rgba(215,134,255,.42); }
+  .style-a .mini-button {
+    border: 1px solid #d783f4;
+    border-radius: 9px;
+    color: #faefff;
+    background: linear-gradient(180deg, rgba(116,52,164,.96), rgba(63,28,104,.96));
+    box-shadow: inset 0 1px rgba(255,255,255,.18);
+  }
+  .style-a .mini-button.primary {
+    border-color: #75f8e7;
+    background: linear-gradient(180deg, #1b7c80, #12505c);
+    box-shadow: 0 0 17px rgba(78,240,222,.16);
+  }
+  .style-a .state-swatch { border-radius: 7px; }
+  .style-a .state-swatch:nth-child(1) { background:#2e1651; border:1px solid #c47ae2; }
+  .style-a .state-swatch:nth-child(2) { background:#3d2863; border:1px solid #71f5e4; }
+  .style-a .state-swatch:nth-child(3) { background:#17535c; border:1px solid #a3fff4; }
+  .style-a .state-swatch:nth-child(4) { background:#171224; color:#625d72; border:1px solid #3b354a; }
+  .glass-ornament {
+    position: absolute;
+    right: -32px;
+    bottom: -36px;
+    width: 128px;
+    height: 128px;
+    border: 1px solid rgba(127,255,237,.22);
+    border-radius: 50%;
+    box-shadow: 0 0 0 16px rgba(117,255,238,.025), 0 0 0 32px rgba(210,123,255,.02);
+  }
+
+  /* B: Gold ledger */
+  .style-b {
+    color: #f8edce;
+    background:
+      radial-gradient(circle at 50% -10%, rgba(210,169,76,.18), transparent 42%),
+      linear-gradient(155deg, #040a1c, #0c1531 62%, #071729);
+  }
+  .style-b::after {
+    content:"";
+    position:absolute;
+    inset:13px;
+    border:1px solid rgba(219,179,84,.22);
+    pointer-events:none;
+  }
+  .style-b .mini-topbar { color:#e3bd63; }
+  .ledger-panel {
+    position: relative;
+    padding: 14px;
+    border: 1px solid #b99245;
+    background: linear-gradient(90deg, rgba(11,21,51,.98), rgba(16,30,63,.96));
+    box-shadow: inset 5px 0 #c5a04e, inset 7px 0 rgba(11,225,210,.2), 0 9px 24px rgba(0,0,0,.25);
+  }
+  .ledger-panel::before,
+  .ledger-panel::after {
+    content:"◆";
+    position:absolute;
+    top:-7px;
+    color:#d4ae59;
+    font-size:10px;
+  }
+  .ledger-panel::before { left:-5px; }
+  .ledger-panel::after { right:-5px; }
+  .style-b .mini-title { color:#e9c876; font-family: Georgia, serif; letter-spacing:.03em; }
+  .style-b .mini-button {
+    border: 1px solid #aa8740;
+    color: #f2dda8;
+    background: #172443;
+    clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 7px 100%, 0 50%);
+  }
+  .style-b .mini-button.primary {
+    color:#07141d;
+    border-color:#e6c56f;
+    background: linear-gradient(90deg,#c79e42,#efd982,#ba8d38);
+  }
+  .style-b .state-swatch {
+    border:1px solid #8a703a;
+    clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  }
+  .style-b .state-swatch:nth-child(1) { background:#162341; color:#e6cd91; }
+  .style-b .state-swatch:nth-child(2) { background:#1b3f4e; color:#8df5e9; border-color:#5fbfb4; }
+  .style-b .state-swatch:nth-child(3) { background:#b68b39; color:#07111d; border-color:#f3d87f; }
+  .style-b .state-swatch:nth-child(4) { background:#0b1224; color:#4f5360; border-color:#343743; }
+
+  /* C: Mask theatre */
+  .style-c {
+    color:#fff0fd;
+    background:
+      radial-gradient(ellipse at 50% 10%, rgba(249,76,191,.19), transparent 42%),
+      radial-gradient(ellipse at 100% 100%, rgba(68,224,230,.13), transparent 38%),
+      linear-gradient(145deg,#10051c,#260a34 54%,#090c22);
+  }
+  .mask-halo {
+    position:absolute;
+    left:50%;
+    top:17px;
+    width:150px;
+    height:150px;
+    transform:translateX(-50%);
+    border:1px solid rgba(250,123,218,.16);
+    border-radius:50%;
+    box-shadow:0 0 0 14px rgba(211,81,238,.035),0 0 45px rgba(245,73,196,.11);
+  }
+  .mask-halo::after {
+    content:"";
+    position:absolute;
+    inset:31px 44px;
+    border-radius:50% 50% 46% 46% / 38% 38% 62% 62%;
+    border:1px solid rgba(255,178,232,.28);
+    transform:rotate(8deg);
+  }
+  .style-c > *:not(.mask-halo) { position:relative; }
+  .style-c .mini-topbar { color:#ff8bd4; }
+  .mask-panel {
+    padding:14px;
+    border:1px solid rgba(246,111,210,.58);
+    border-radius:18px 5px 18px 5px;
+    background:linear-gradient(145deg,rgba(72,17,91,.88),rgba(19,15,55,.92));
+    box-shadow:inset 0 0 30px rgba(254,104,212,.05), 0 9px 24px rgba(0,0,0,.28);
+  }
+  .style-c .mini-title { color:#ffb4e3; font-style:italic; letter-spacing:.02em; }
+  .style-c .mini-button {
+    border:1px solid #ef6bc8;
+    border-radius:14px 4px 14px 4px;
+    color:#fff1fb;
+    background:linear-gradient(135deg,#742171,#33154e);
+  }
+  .style-c .mini-button.primary {
+    border-color:#78ece6;
+    background:linear-gradient(135deg,#1f7580,#24385d);
+    box-shadow:0 0 16px rgba(95,234,225,.13);
+  }
+  .style-c .state-swatch { border-radius:13px 3px 13px 3px; transform:skewX(-2deg); }
+  .style-c .state-swatch:nth-child(1) { background:#431447; border:1px solid #e663c0; }
+  .style-c .state-swatch:nth-child(2) { background:#5b205b; border:1px solid #ff9ddd; }
+  .style-c .state-swatch:nth-child(3) { background:#1a5564; border:1px solid #76e7e3; }
+  .style-c .state-swatch:nth-child(4) { background:#160d1c; color:#615363; border:1px solid #402d43; }
+
+  @media (max-width: 920px) {
+    .joker-grid { grid-template-columns: 1fr; }
+    .joker-preview { height: 310px; }
+  }
+</style>
+
+<div class="joker-intro">
+  <h2>基础界面套件：选择主视觉语言</h2>
+  <p class="subtitle">
+    三套方案都沿用项目已存在的深紫、青色、紫红与金色。请主要比较
+    <strong>面板轮廓、按钮状态和装饰密度</strong>，不是比较布局。
+  </p>
+</div>
+
+<div class="joker-grid">
+  <div class="joker-card" data-choice="a-dream-glass" onclick="toggleSelect(this)">
+    <div class="joker-preview style-a">
+      <div class="glass-ornament"></div>
+      <div class="mini-topbar"><span>梦层 01 · 无尽牌厅</span><span>解析 44 / 100</span></div>
+      <div class="mini-body">
+        <div class="glass-panel">
+          <div class="mini-title">镜面夫人</div>
+          <div class="mini-copy">半透明深色玻璃、细青色描边与克制的霓虹辉光。</div>
+          <div class="mini-row">
+            <div class="mini-button">规则详情</div>
+          </div>
+        </div>
+        <div class="glass-panel">
+          <div class="mini-title">中轨 · 连续</div>
+          <div class="mini-copy">槽位与信息层级清楚，允许背景梦境从面板下方隐约透出。</div>
+          <div class="mini-row">
+            <div class="mini-button">撤销</div>
+            <div class="mini-button primary">确认结算</div>
+          </div>
+        </div>
+      </div>
+      <div class="state-label">Button states</div>
+      <div class="state-row">
+        <div class="state-swatch">普通</div>
+        <div class="state-swatch">悬停</div>
+        <div class="state-swatch">按下</div>
+        <div class="state-swatch">禁用</div>
+      </div>
+    </div>
+    <div class="joker-meta">
+      <h3><span class="choice-chip">A</span> 梦境玻璃牌桌 <span class="recommended">推荐</span></h3>
+      <p>最贴近当前 Theme，改造风险最低。清晰、轻盈，适合长时间阅读规则和结算轨迹。</p>
+    </div>
+  </div>
+
+  <div class="joker-card" data-choice="b-gold-ledger" onclick="toggleSelect(this)">
+    <div class="joker-preview style-b">
+      <div class="mini-topbar"><span>AREA 01 / OPEN LEDGER</span><span>情报券 × 2</span></div>
+      <div class="mini-body">
+        <div class="ledger-panel">
+          <div class="mini-title">金线回廊</div>
+          <div class="mini-copy">深蓝账簿底、几何切角与金线脊柱，强调公开规则的仪式感。</div>
+          <div class="mini-row">
+            <div class="mini-button">查看账目</div>
+          </div>
+        </div>
+        <div class="ledger-panel">
+          <div class="mini-title">精确步幅</div>
+          <div class="mini-copy">硬朗、克制、结构化，区域和奖励信息看起来更像赌场账册。</div>
+          <div class="mini-row">
+            <div class="mini-button">返回</div>
+            <div class="mini-button primary">选择路线</div>
+          </div>
+        </div>
+      </div>
+      <div class="state-label">Button states</div>
+      <div class="state-row">
+        <div class="state-swatch">普通</div>
+        <div class="state-swatch">悬停</div>
+        <div class="state-swatch">按下</div>
+        <div class="state-swatch">禁用</div>
+      </div>
+    </div>
+    <div class="joker-meta">
+      <h3><span class="choice-chip">B</span> 金线账簿</h3>
+      <p>赌场与“规则公开”主题最强，信息秩序稳定；但金色主导会弱化现有青紫霓虹识别。</p>
+    </div>
+  </div>
+
+  <div class="joker-card" data-choice="c-mask-theatre" onclick="toggleSelect(this)">
+    <div class="joker-preview style-c">
+      <div class="mask-halo"></div>
+      <div class="mini-topbar"><span>规则监理 / MIRROR-01</span><span>轮次 1 / 3</span></div>
+      <div class="mini-body">
+        <div class="mask-panel">
+          <div class="mini-title">无面剧场</div>
+          <div class="mini-copy">不对称圆角、面具曲线与紫红辉光，让界面本身也像会变形。</div>
+          <div class="mini-row">
+            <div class="mini-button">窥视规则</div>
+          </div>
+        </div>
+        <div class="mask-panel">
+          <div class="mini-title">镜像轨迹</div>
+          <div class="mini-copy">角色感和神秘感最浓，适合庄家弹窗；大面积使用时信息负担更高。</div>
+          <div class="mini-row">
+            <div class="mini-button">撤回</div>
+            <div class="mini-button primary">接受诡局</div>
+          </div>
+        </div>
+      </div>
+      <div class="state-label">Button states</div>
+      <div class="state-row">
+        <div class="state-swatch">普通</div>
+        <div class="state-swatch">悬停</div>
+        <div class="state-swatch">按下</div>
+        <div class="state-swatch">禁用</div>
+      </div>
+    </div>
+    <div class="joker-meta">
+      <h3><span class="choice-chip">C</span> 扭曲面具剧场</h3>
+      <p>世界观最鲜明，适合稀有状态和庄家主题；装饰较强，需要严格限制使用范围。</p>
+    </div>
+  </div>
+</div>

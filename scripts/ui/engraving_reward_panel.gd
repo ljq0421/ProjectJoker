@@ -64,6 +64,7 @@ func bind_reward(
 
 func show_error(message: String) -> void:
 	%RewardErrorLabel.text = message
+	SfxAccess.play(self, &"error")
 
 func close() -> void:
 	visible = false
@@ -74,12 +75,18 @@ func _on_engraving_selected(engraving_id: StringName) -> void:
 	_update_selection()
 
 func _on_die_button_pressed(button: Button) -> void:
-	selected_die_id = button.get_meta("die_id")
+	var die_id: StringName = button.get_meta("die_id")
+	if selected_die_id != die_id:
+		SfxAccess.play(self, &"engraving_select")
+	selected_die_id = die_id
 	die_selected.emit(selected_die_id)
 	_update_selection()
 
 func _on_face_button_pressed(button: Button) -> void:
-	selected_face = int(button.get_meta("face"))
+	var face := int(button.get_meta("face"))
+	if selected_face != face:
+		SfxAccess.play(self, &"engraving_select")
+	selected_face = face
 	face_selected.emit(selected_face)
 	_update_selection()
 

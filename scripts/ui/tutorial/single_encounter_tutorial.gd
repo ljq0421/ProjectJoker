@@ -39,12 +39,17 @@ func maybe_start() -> void:
 		start(false)
 
 func start(replay: bool = false) -> void:
+	var was_visible := visible
+	var save_error := OK
 	if replay:
-		_show_save_error(progress_store.reset())
+		save_error = progress_store.reset()
+		_show_save_error(save_error)
 		screen.reset_teaching_encounter()
 	flow.start()
 	active = true
 	visible = true
+	if not was_visible and save_error == OK:
+		SfxAccess.play(self, &"panel_open")
 	_refresh()
 
 func allows(action: StringName, payload: Dictionary) -> bool:
@@ -137,19 +142,26 @@ func _step_title(index: int) -> String:
 
 func _on_continue_pressed() -> void:
 	flow.continue_step(screen.session)
+	SfxAccess.play(self, &"ui_confirm")
 	_refresh()
 
 func _on_skip_pressed() -> void:
-	_show_save_error(progress_store.mark_done())
+	var save_error := progress_store.mark_done()
+	_show_save_error(save_error)
 	active = false
 	visible = false
+	if save_error == OK:
+		SfxAccess.play(self, &"ui_back")
 
 func _on_finish_pressed() -> void:
 	if not flow.can_finish(screen.session):
 		return
-	_show_save_error(progress_store.mark_done())
+	var save_error := progress_store.mark_done()
+	_show_save_error(save_error)
 	active = false
 	visible = false
+	if save_error == OK:
+		SfxAccess.play(self, &"ui_confirm")
 
 func _show_save_error(error: Error) -> void:
 	warning_label.text = "" if error == OK else "无法保存引导状态；下次启动会再次显示。"

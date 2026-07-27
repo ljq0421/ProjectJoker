@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/tutorial/iron_abacus_guide_overlay.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
 
-[node name="IronAbacusGuideOverlay" type="Control"]
+[node name="IronAbacusGuideOverlay" type="Control" groups=["settings_entry_blocker"]]
 visible = false
 z_index = 200
 layout_mode = 3

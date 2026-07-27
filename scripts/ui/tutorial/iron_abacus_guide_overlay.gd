@@ -42,6 +42,7 @@ func _ready() -> void:
 	close_card()
 
 func open_card(card_spec: Dictionary, targets: Array) -> bool:
+	var was_open := is_open()
 	close_card()
 	var checkpoint_id: StringName = card_spec.get("id", &"")
 	if checkpoint_id == &"":
@@ -79,6 +80,8 @@ func open_card(card_spec: Dictionary, targets: Array) -> bool:
 		return false
 	_refresh_after_layout(refresh_serial, checkpoint_id)
 	acknowledge_button.grab_focus()
+	if not was_open:
+		SfxAccess.play(self, &"panel_open")
 	return true
 
 func close_card() -> void:
