@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_refund"]
+script = ExtResource("1_effect")
+operation = 9
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_refund_calibration"
+display_name = "校准回收"
+rule_text = "返还 1 点本轮已经使用的校准点，最多恢复到 2 点。"
+tags = PackedStringArray("全局", "校准", "恢复")
+target_type = 3
+suit = 1
+rank_label = "7"
+rarity = 1
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_refund")])

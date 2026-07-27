@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_lock"]
+script = ExtResource("1_effect")
+operation = 8
+amount = 4
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_lock_bonus"
+display_name = "定格"
+rule_text = "锁定一颗骰子的点数；其所在规则台通过时固定奖励 +4。"
+tags = PackedStringArray("骰值", "锁定", "奖励")
+suit = 0
+rank_label = "10"
+rarity = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_lock")])

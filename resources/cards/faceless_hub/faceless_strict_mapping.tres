@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_slots"]
+script = ExtResource("1_effect")
+operation = 10
+amount = 1
+condition_modifier = 3
+
+[sub_resource type="Resource" id="Effect_coefficient"]
+script = ExtResource("1_effect")
+operation = 1
+amount = 2
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_strict_mapping"
+display_name = "加严映射"
+rule_text = "指定规则台所需骰位 +1，同时系数 +2；总所需骰位不能超过 6。"
+tags = PackedStringArray("规则台", "公开代价", "系数")
+target_type = 1
+suit = 3
+rank_label = "7"
+rarity = 1
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_slots"), SubResource("Effect_coefficient")])

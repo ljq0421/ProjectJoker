@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_coefficient"]
+script = ExtResource("1_effect")
+operation = 1
+amount = -1
+
+[sub_resource type="Resource" id="Effect_repeat"]
+script = ExtResource("1_effect")
+operation = 2
+amount = 2
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_compressed_repeat"
+display_name = "压缩复写"
+rule_text = "指定规则台系数 -1（最低为 1），并额外结算 2 次。"
+tags = PackedStringArray("规则台", "公开代价", "重复")
+target_type = 1
+suit = 3
+rank_label = "9"
+rarity = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_coefficient"), SubResource("Effect_repeat")])

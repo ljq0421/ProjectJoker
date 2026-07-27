@@ -16,7 +16,7 @@ func run() -> void:
 	var areas := AreaCatalog.new()
 	var area := areas.mirror_hall()
 
-	assert_equal(cards.all_cards().size(), 24, "repository should contain 24 cards")
+	assert_equal(cards.all_cards().size(), 40, "repository should contain 40 cards")
 	assert_equal(engravings.all_engravings().size(), 8, "repository should contain 8 engravings")
 	assert_equal(dealers.all_dealers().size(), 2, "repository should contain 2 dealers")
 	assert_true(area != null, "mirror area should load")

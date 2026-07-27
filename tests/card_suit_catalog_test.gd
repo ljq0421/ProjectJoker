@@ -1,10 +1,10 @@
 extends "res://tests/test_case.gd"
 
 const EXPECTED_SUIT_COUNTS := {
-	CardDefinition.Suit.CLUBS: 6,
-	CardDefinition.Suit.HEARTS: 6,
-	CardDefinition.Suit.DIAMONDS: 6,
-	CardDefinition.Suit.SPADES: 6,
+	CardDefinition.Suit.CLUBS: 10,
+	CardDefinition.Suit.HEARTS: 10,
+	CardDefinition.Suit.DIAMONDS: 10,
+	CardDefinition.Suit.SPADES: 10,
 }
 
 func run() -> void:
@@ -40,7 +40,7 @@ func run() -> void:
 		assert_equal(
 			suit_counts[suit],
 			EXPECTED_SUIT_COUNTS[suit],
-			"suit %s should contain six legacy cards"
+			"suit %s should contain ten cards"
 			% CardDefinition.suit_copy_for(suit)
 		)
 		assert_equal(

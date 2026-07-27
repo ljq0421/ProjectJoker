@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_swap"]
+script = ExtResource("1_effect")
+operation = 5
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_swap_values"
+display_name = "换位"
+rule_text = "交换两颗不同骰子的当前有效点数。"
+tags = PackedStringArray("双骰", "骰值", "重构")
+target_type = 4
+suit = 0
+rank_label = "7"
+rarity = 1
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_swap")])

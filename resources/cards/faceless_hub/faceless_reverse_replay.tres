@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_reverse"]
+script = ExtResource("1_effect")
+operation = 3
+
+[sub_resource type="Resource" id="Effect_repeat"]
+script = ExtResource("1_effect")
+operation = 2
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_reverse_replay"
+display_name = "逆序重演"
+rule_text = "反转本轮结算方向，并令箭头所指规则台额外结算 1 次。"
+tags = PackedStringArray("桌间", "顺序", "重复")
+target_type = 2
+suit = 3
+rank_label = "8"
+rarity = 1
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_reverse"), SubResource("Effect_repeat")])

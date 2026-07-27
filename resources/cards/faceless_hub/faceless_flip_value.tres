@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_flip"]
+script = ExtResource("1_effect")
+operation = 7
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_flip_value"
+display_name = "翻面"
+rule_text = "令一颗骰子的当前有效点数变为 7 减去该点数。"
+tags = PackedStringArray("骰值", "翻面")
+suit = 0
+rank_label = "9"
+rarity = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_flip")])

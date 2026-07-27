@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_intel"]
+script = ExtResource("1_effect")
+operation = 11
+amount = 3
+intel_condition = 3
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_complete_dossier"
+display_name = "完整卷宗"
+rule_text = "本轮三张规则台全部通过后获得 3 情报。"
+tags = PackedStringArray("全局", "情报", "全通过")
+target_type = 3
+suit = 2
+rank_label = "10"
+rarity = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_intel")])

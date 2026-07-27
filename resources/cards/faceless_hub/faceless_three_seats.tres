@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_intel"]
+script = ExtResource("1_effect")
+operation = 11
+amount = 2
+intel_condition = 2
+
+[resource]
+script = ExtResource("2_card")
+id = &"faceless_three_seats"
+display_name = "三席记录"
+rule_text = "三张规则台均至少分配 1 颗骰子后获得 2 情报。"
+tags = PackedStringArray("全局", "情报", "布局")
+target_type = 3
+suit = 2
+rank_label = "9"
+rarity = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_intel")])
