@@ -99,7 +99,7 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 		active_phase == Phase.DEALER
 		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	):
-		var shuffled := run_rng.shuffle(engraving_catalog.all_ids())
+		var shuffled := run_rng.shuffle(engraving_catalog.legacy_ids())
 		engraving_offer_ids.clear()
 		for index in range(3):
 			engraving_offer_ids.append(shuffled[index])

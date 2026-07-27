@@ -295,7 +295,7 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.run_rng = run_rng
 	setup.deck_ids = deck_ids.duplicate()
 	setup.encounter = room.encounter
-	setup.resolution_context = ResolutionContext.empty()
+	setup.resolution_context = ResolutionContext.new(null, engraving_catalog)
 	setup.success_intel_reward = room.success_intel_reward
 	setup.prepare_shop_offers = false
 	setup.die_profiles = _clone_profiles(die_profiles)

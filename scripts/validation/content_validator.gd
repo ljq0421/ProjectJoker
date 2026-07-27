@@ -163,15 +163,15 @@ func validate_engravings(engravings: Array) -> Array[String]:
 			errors.append("engraving %s has no display tags" % engraving.id)
 		match engraving.operation:
 			EngravingDefinition.Operation.ECHO_ADJACENT:
-				if engraving.amount != 2:
-					errors.append("echo engraving divisor must equal two")
+				if engraving.amount < 1:
+					errors.append("echo engraving divisor must be positive")
 			EngravingDefinition.Operation.ANCHOR_DIE:
-				if engraving.amount != 4:
-					errors.append("anchor engraving reward must equal four")
-			EngravingDefinition.Operation.BRIDGE_FORWARD:
+				if engraving.amount < 1:
+					errors.append("anchor engraving reward must be positive")
+			EngravingDefinition.Operation.BRIDGE_FORWARD, EngravingDefinition.Operation.BRIDGE_BACKWARD:
 				if engraving.amount != 1:
 					errors.append("bridge engraving amount must equal one")
-			EngravingDefinition.Operation.PRISM_PARITY:
+			EngravingDefinition.Operation.PRISM_PARITY, EngravingDefinition.Operation.MIRROR_PRISM:
 				if engraving.amount != 0:
 					errors.append("prism engraving amount must equal zero")
 			_:

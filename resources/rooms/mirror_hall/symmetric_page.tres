@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="RoomDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_definition.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="3_profile"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="4_rule"]
+
+[sub_resource type="Resource" id="Profile"]
+script = ExtResource("3_profile")
+mirror_first_table_card = true
+mirror_limit_per_round = 1
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("4_rule")
+id = &"left"
+display_name = "精确为 10"
+slot_count = 2
+target_value = 10
+coefficient = 4
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("4_rule")
+id = &"middle"
+display_name = "连续三数"
+condition_type = 2
+slot_count = 3
+coefficient = 3
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("4_rule")
+id = &"right"
+display_name = "单枚偶数"
+condition_type = 1
+slot_count = 1
+coefficient = 4
+
+[sub_resource type="Resource" id="Encounter"]
+script = ExtResource("2_encounter")
+id = &"mirror_encounter_symmetric_page"
+rules = Array[ExtResource("4_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+rule_profile = SubResource("Profile")
+
+[resource]
+script = ExtResource("1_room")
+id = &"mirror_room_symmetric_page"
+display_name = "对称账页"
+description = "在两个桌间槽之间安排不同来源的真实牌与虚拟副本。"
+encounter = SubResource("Encounter")
+target_total = 140
+success_intel_reward = 8
+tags = PackedStringArray("正序", "对称", "组合")
+synergy_tags = PackedStringArray("桌间", "系数", "重复")

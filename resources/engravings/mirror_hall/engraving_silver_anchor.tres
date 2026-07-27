@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_engraving"]
+
+[resource]
+script = ExtResource("1_engraving")
+id = &"engraving_silver_anchor"
+display_name = "银锚"
+rule_text = "刻印面激活后不能校准或被点数牌修改；规则台通过时固定 +3。"
+operation = 1
+amount = 3
+tags = PackedStringArray("锚定", "镜像", "固定奖励")

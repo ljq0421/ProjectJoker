@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_link"]
+script = ExtResource("1_effect")
+operation = 4
+amount = 1
+
+[sub_resource type="Resource" id="Effect_repeat"]
+script = ExtResource("1_effect")
+operation = 2
+amount = 1
+
+[sub_resource type="Resource" id="Effect_mirror_link"]
+script = ExtResource("1_effect")
+operation = 4
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"mirror_silver_bridge"
+display_name = "银面长桥"
+rule_text = "连接两端，并令箭头所指规则台额外结算 1 次。镜像：只连接反照后的两端。"
+tags = PackedStringArray("桌间", "传递", "重复", "镜像")
+target_type = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_link"), SubResource("Effect_repeat")])
+mirror_effects = Array[ExtResource("1_effect")]([SubResource("Effect_mirror_link")])

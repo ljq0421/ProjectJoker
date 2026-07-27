@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_original"]
+script = ExtResource("1_effect")
+operation = 2
+amount = 2
+
+[sub_resource type="Resource" id="Effect_mirror"]
+script = ExtResource("1_effect")
+operation = 2
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"mirror_soft_echo"
+display_name = "轻声复写"
+rule_text = "令箭头所指规则台额外结算 2 次。镜像：反照后目标额外结算 1 次。"
+tags = PackedStringArray("桌间", "重复", "镜像")
+target_type = 2
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_original")])
+mirror_effects = Array[ExtResource("1_effect")]([SubResource("Effect_mirror")])

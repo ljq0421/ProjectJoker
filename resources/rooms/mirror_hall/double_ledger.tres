@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="RoomDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_definition.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="3_profile"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="4_rule"]
+
+[sub_resource type="Resource" id="Profile"]
+script = ExtResource("3_profile")
+mirror_first_table_card = true
+mirror_limit_per_round = 1
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("4_rule")
+id = &"left"
+display_name = "两枚全偶"
+condition_type = 1
+slot_count = 2
+coefficient = 3
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("4_rule")
+id = &"middle"
+display_name = "精确为 9"
+slot_count = 2
+target_value = 9
+coefficient = 3
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("4_rule")
+id = &"right"
+display_name = "连续两数"
+condition_type = 2
+slot_count = 2
+coefficient = 3
+
+[sub_resource type="Resource" id="Encounter"]
+script = ExtResource("2_encounter")
+id = &"mirror_encounter_double_ledger"
+rules = Array[ExtResource("4_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+rule_profile = SubResource("Profile")
+
+[resource]
+script = ExtResource("1_room")
+id = &"mirror_room_double_ledger"
+display_name = "双影账页"
+description = "比较原牌与镜像副本落在不同桌间槽后的确定性结果。"
+encounter = SubResource("Encounter")
+target_total = 116
+success_intel_reward = 6
+tags = PackedStringArray("正序", "镜像", "比较")
+synergy_tags = PackedStringArray("桌间", "重复", "镜像")

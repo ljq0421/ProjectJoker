@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EngravingDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/engravings/engraving_definition.gd" id="1_engraving"]
+
+[resource]
+script = ExtResource("1_engraving")
+id = &"engraving_mirror_prism"
+display_name = "镜棱"
+rule_text = "刻印面激活且所在规则台与镜像副本相邻时，在奇偶条件中同时视为奇数与偶数。"
+operation = 5
+amount = 0
+tags = PackedStringArray("奇偶", "邻接", "镜像")

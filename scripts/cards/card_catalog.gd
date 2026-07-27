@@ -25,14 +25,25 @@ const SHOP_PATHS := [
 	"res://resources/cards/stage6/shop_reverse_backup.tres",
 ]
 
+const MIRROR_HALL_PATHS := [
+	"res://resources/cards/mirror_hall/mirror_folded_map.tres",
+	"res://resources/cards/mirror_hall/mirror_soft_echo.tres",
+	"res://resources/cards/mirror_hall/mirror_hinged_bridge.tres",
+	"res://resources/cards/mirror_hall/mirror_double_exposure.tres",
+	"res://resources/cards/mirror_hall/mirror_deep_echo.tres",
+	"res://resources/cards/mirror_hall/mirror_silver_bridge.tres",
+]
+
 var _starter_cards: Array[CardDefinition] = []
 var _shop_cards: Array[CardDefinition] = []
+var _mirror_hall_cards: Array[CardDefinition] = []
 var _cards_by_id: Dictionary = {}
 var _load_errors: Array[String] = []
 
 func _init() -> void:
 	_starter_cards = _load_cards(STARTER_PATHS)
 	_shop_cards = _load_cards(SHOP_PATHS)
+	_mirror_hall_cards = _load_cards(MIRROR_HALL_PATHS)
 	for card in all_cards():
 		if _cards_by_id.has(card.id):
 			_load_errors.append("duplicate card ID: %s" % card.id)
@@ -43,6 +54,7 @@ func all_cards() -> Array[CardDefinition]:
 	var cards: Array[CardDefinition] = []
 	cards.append_array(_starter_cards)
 	cards.append_array(_shop_cards)
+	cards.append_array(_mirror_hall_cards)
 	return cards
 
 func starter_deck() -> Array[CardDefinition]:
@@ -57,6 +69,9 @@ func shop_pool() -> Array[CardDefinition]:
 func shop_ids() -> Array[StringName]:
 	return _ids(_shop_cards)
 
+func mirror_hall_card_ids() -> Array[StringName]:
+	return _ids(_mirror_hall_cards)
+
 func find_card(card_id: StringName) -> CardDefinition:
 	return _cards_by_id.get(card_id) as CardDefinition
 
@@ -67,9 +82,14 @@ func validate() -> Array[String]:
 		errors.append("starter deck must contain exactly twelve cards")
 	if _shop_cards.size() != 6:
 		errors.append("shop pool must contain exactly six cards")
+	if _mirror_hall_cards.size() != 6:
+		errors.append("mirror hall card group must contain exactly six cards")
 	for card_id in starter_ids():
 		if card_id in shop_ids():
 			errors.append("starter and shop IDs overlap: %s" % card_id)
+	for card_id in mirror_hall_card_ids():
+		if card_id in starter_ids() or card_id in shop_ids():
+			errors.append("mirror hall and legacy card IDs overlap: %s" % card_id)
 	return errors
 
 func _load_cards(paths: Array) -> Array[CardDefinition]:

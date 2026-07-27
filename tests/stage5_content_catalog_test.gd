@@ -23,6 +23,10 @@ func run() -> void:
 		"engraving_anchor",
 		"engraving_bridge",
 		"engraving_prism",
+		"engraving_afterimage",
+		"engraving_silver_anchor",
+		"engraving_backflow_bridge",
+		"engraving_mirror_prism",
 	])
 	var actual := PackedStringArray()
 	for engraving_id in engravings.all_ids():
@@ -36,6 +40,10 @@ func run() -> void:
 		&"engraving_anchor": [EngravingDefinition.Operation.ANCHOR_DIE, 4],
 		&"engraving_bridge": [EngravingDefinition.Operation.BRIDGE_FORWARD, 1],
 		&"engraving_prism": [EngravingDefinition.Operation.PRISM_PARITY, 0],
+		&"engraving_afterimage": [EngravingDefinition.Operation.ECHO_ADJACENT, 1],
+		&"engraving_silver_anchor": [EngravingDefinition.Operation.ANCHOR_DIE, 3],
+		&"engraving_backflow_bridge": [EngravingDefinition.Operation.BRIDGE_BACKWARD, 1],
+		&"engraving_mirror_prism": [EngravingDefinition.Operation.MIRROR_PRISM, 0],
 	}
 	for engraving in engravings.all_engravings():
 		assert_false(engraving.rule_text.strip_edges().is_empty(), "rule text should exist")
