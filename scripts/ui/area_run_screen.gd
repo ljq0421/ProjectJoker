@@ -9,12 +9,16 @@ extends Control
 @onready var route_panel: RouteChoicePanel = %RouteChoicePanel
 @onready var reward_panel: EngravingRewardPanel = %EngravingRewardPanel
 @onready var complete_panel: AreaCompletePanel = %AreaCompletePanel
+@onready var navigation_bar: Control = $NavigationBar
+@onready var home_button: Button = %HomeButton
 
 var area_session: AreaRunSession
 var _configured_area: AreaDefinition
 var _configured_seed := 0
 
 func _ready() -> void:
+	move_child(navigation_bar, get_child_count() - 1)
+	home_button.pressed.connect(_on_home_pressed)
 	encounter_screen.round_committed.connect(_on_round_committed)
 	encounter_screen.card_selected.connect(_after_card_selected)
 	summary_panel.next_round_requested.connect(_on_next_round_requested)
@@ -255,7 +259,10 @@ func _on_restart_requested() -> void:
 func _on_return_requested() -> void:
 	_close_context_hint()
 	SfxAccess.play(self, &"page_transition")
-	get_tree().change_scene_to_file("res://scenes/run/single_encounter_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
+
+func _on_home_pressed() -> void:
+	_on_return_requested()
 
 func _show_start_error(message: String) -> void:
 	_close_context_hint()

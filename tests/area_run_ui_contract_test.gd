@@ -38,6 +38,7 @@ func run() -> void:
 			"EngravingRewardPanel",
 			"AreaCompletePanel",
 			"SettingsLayer",
+			"HomeButton",
 		]:
 			assert_true(
 				screen.get_node_or_null("%" + node_name) != null,

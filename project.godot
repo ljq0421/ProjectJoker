@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="project-joker"
-run/main_scene="res://scenes/run/single_encounter_screen.tscn"
+run/main_scene="res://scenes/run/main_menu_screen.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 

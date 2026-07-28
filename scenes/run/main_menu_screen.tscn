@@ -1,0 +1,175 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu_screen.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[node name="MainMenuScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.025, 0.11, 1)
+mouse_filter = 2
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 152.0
+offset_top = 96.0
+offset_right = -152.0
+offset_bottom = -96.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="Eyebrow" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+text = "DREAM GLASS / ROUTE ENTRY"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Title" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+text = "梦层入口"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 54
+
+[node name="Subtitle" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+text = "选择一条路径，开始本次试炼。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="Spacer" type="Control" parent="SafeArea/Content"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="RouteGrid" type="GridContainer" parent="SafeArea/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 24
+
+[node name="GoldCorridorCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
+custom_minimum_size = Vector2(0, 330)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/GoldCorridorCard"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SafeArea/Content/RouteGrid/GoldCorridorCard/Content"]
+layout_mode = 2
+text = "金钱回廊"
+theme_override_colors/font_color = Color(0.88, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="Description" type="Label" parent="SafeArea/Content/RouteGrid/GoldCorridorCard/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "在两次路线选择与商店改牌之间，完成铁算盘的结算试炼。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="GoldCorridorButton" type="Button" parent="SafeArea/Content/RouteGrid/GoldCorridorCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "进入金钱回廊"
+tooltip_text = "从金钱回廊的第一组路线开始试炼"
+
+[node name="MirrorHallCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
+custom_minimum_size = Vector2(0, 330)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/MirrorHallCard"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SafeArea/Content/RouteGrid/MirrorHallCard/Content"]
+layout_mode = 2
+text = "反照牌厅"
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="Description" type="Label" parent="SafeArea/Content/RouteGrid/MirrorHallCard/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "面对反向结算、镜像牌面与镜面夫人的规则挑战。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="MirrorHallButton" type="Button" parent="SafeArea/Content/RouteGrid/MirrorHallCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "进入反照牌厅"
+tooltip_text = "从反照牌厅的第一组路线开始试炼"
+
+[node name="FacelessHubCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
+custom_minimum_size = Vector2(0, 330)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/FacelessHubCard"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SafeArea/Content/RouteGrid/FacelessHubCard/Content"]
+layout_mode = 2
+text = "无面中枢"
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="Description" type="Label" parent="SafeArea/Content/RouteGrid/FacelessHubCard/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "在三轮公开议程与最终限制中，挑战无面大师。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="FacelessHubButton" type="Button" parent="SafeArea/Content/RouteGrid/FacelessHubCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "进入无面中枢"
+tooltip_text = "从无面中枢的第一组路线开始试炼"
+
+[node name="PracticeRow" type="HBoxContainer" parent="SafeArea/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="PracticeHint" type="Label" parent="SafeArea/Content/PracticeRow"]
+layout_mode = 2
+text = "想先熟悉基础结算？"
+theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="PracticeButton" type="Button" parent="SafeArea/Content/PracticeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "进入基础牌局演练"
+tooltip_text = "进入基础牌局与教学入口"

@@ -59,8 +59,8 @@ func _run() -> void:
 	_assert(
 		current_scene != null
 		and current_scene.scene_file_path
-			== "res://scenes/run/single_encounter_screen.tscn",
-		"return button should open the entry encounter"
+			== "res://scenes/run/main_menu_screen.tscn",
+		"return button should open the main menu"
 	)
 
 	if _failed:

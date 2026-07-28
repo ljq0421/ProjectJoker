@@ -23,6 +23,24 @@ script = ExtResource("1_script")
 [node name="SettingsLayer" parent="." instance=ExtResource("9_settings")]
 unique_name_in_owner = true
 
+[node name="NavigationBar" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 224.0
+offset_bottom = 72.0
+grow_horizontal = 0
+grow_vertical = 0
+z_index = 60
+
+[node name="HomeButton" type="Button" parent="NavigationBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(192, 48)
+layout_mode = 2
+text = "返回主页面"
+tooltip_text = "结束当前区域试炼并返回梦层入口"
+
 [node name="EncounterScreen" parent="." instance=ExtResource("3_encounter")]
 unique_name_in_owner = true
 layout_mode = 1
