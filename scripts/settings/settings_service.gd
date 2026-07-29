@@ -1,6 +1,7 @@
 extends Node
 
 signal audio_changed(channel: StringName)
+signal accessibility_changed(key: StringName)
 signal preview_requested(cue_id: StringName)
 signal display_draft_changed
 signal display_confirmation_changed(active: bool, seconds_remaining: int)
@@ -48,6 +49,12 @@ const DEFAULT_SETTINGS := {
 		"window_height": 720,
 		"vsync_enabled": true,
 	},
+	"accessibility": {
+		"reduce_flashes": false,
+		"disable_distortion": false,
+		"resolution_speed": "normal",
+		"ui_scale_percent": 100,
+	},
 }
 
 var _store: RefCounted
@@ -89,6 +96,7 @@ func _load_from_store() -> void:
 	_display_draft = _settings["display"].duplicate(true)
 	_clear_display_confirmation()
 	_apply_all_audio()
+	_apply_ui_scale()
 	if bool(load_result.get("parse_failed", false)):
 		_report_error(String(load_result.get("error", "设置配置无法解析")))
 
@@ -197,6 +205,40 @@ func restore_audio_defaults() -> bool:
 		audio_changed.emit(channel)
 	var saved := _save_current()
 	preview_requested.emit(&"ui_confirm")
+	return saved
+
+func accessibility_value(key: StringName) -> Variant:
+	var accessibility: Dictionary = _settings.get("accessibility", {})
+	return accessibility.get(
+		String(key),
+		DEFAULT_SETTINGS["accessibility"].get(String(key))
+	)
+
+func set_accessibility_value(key: StringName, value: Variant) -> bool:
+	var key_string := String(key)
+	if not _is_valid_accessibility_value(key_string, value):
+		_report_error("不支持的无障碍设置：%s" % key_string)
+		return false
+	var accessibility: Dictionary = _settings["accessibility"]
+	if accessibility.get(key_string) == value:
+		return true
+	accessibility[key_string] = value
+	if key == &"ui_scale_percent":
+		_apply_ui_scale()
+	var saved := _save_current()
+	if saved:
+		accessibility_changed.emit(key)
+	return saved
+
+func restore_accessibility_defaults() -> bool:
+	_settings["accessibility"] = (
+		DEFAULT_SETTINGS["accessibility"].duplicate(true)
+	)
+	_apply_ui_scale()
+	var saved := _save_current()
+	if saved:
+		for key in DEFAULT_SETTINGS["accessibility"]:
+			accessibility_changed.emit(StringName(key))
 	return saved
 
 func confirmed_display() -> Dictionary:
@@ -336,6 +378,28 @@ func _apply_audio_channel(channel: StringName) -> bool:
 	)
 	AudioServer.set_bus_mute(bus_index, audio_muted(channel))
 	return true
+
+func _apply_ui_scale() -> void:
+	if not is_inside_tree():
+		return
+	var percent := int(accessibility_value(&"ui_scale_percent"))
+	get_tree().root.content_scale_factor = float(percent) / 100.0
+
+func _is_valid_accessibility_value(key: String, value: Variant) -> bool:
+	match key:
+		"reduce_flashes", "disable_distortion":
+			return typeof(value) == TYPE_BOOL
+		"resolution_speed":
+			return (
+				typeof(value) == TYPE_STRING
+				and String(value) in ["normal", "fast", "instant"]
+			)
+		"ui_scale_percent":
+			return (
+				typeof(value) == TYPE_INT
+				and int(value) in [100, 110, 125]
+			)
+	return false
 
 func _apply_confirmed_display_on_startup() -> void:
 	var startup_display: Dictionary = _settings["display"].duplicate(true)

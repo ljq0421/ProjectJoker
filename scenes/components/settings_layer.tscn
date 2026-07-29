@@ -32,7 +32,7 @@ offset_bottom = 72.0
 grow_horizontal = 0
 mouse_filter = 0
 text = "设置"
-tooltip_text = "打开声音与显示设置"
+tooltip_text = "打开声音、显示与无障碍设置"
 
 [node name="SettingsOverlay" type="Control" parent="SettingsRoot"]
 unique_name_in_owner = true
@@ -152,6 +152,13 @@ custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 toggle_mode = true
 text = "显示 / DISPLAY"
+
+[node name="AccessibilityTabButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+toggle_mode = true
+text = "无障碍 / ACCESS"
 
 [node name="SidebarSpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/SidebarPanel/SidebarMargin/Sidebar"]
 layout_mode = 2
@@ -408,6 +415,96 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 52)
 layout_mode = 2
 text = "应用显示设置"
+
+[node name="AccessibilityPage" type="VBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="AccessibilityTitle" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+layout_mode = 2
+text = "无障碍 / ACCESSIBILITY"
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="AccessibilityDescription" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+layout_mode = 2
+text = "这些选项立即生效并保存；正式结算始终保留完整文字信息。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.56, 0.68, 0.75, 1)
+
+[node name="AccessibilityGrid" type="GridContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 18
+columns = 2
+
+[node name="ReduceFlashesLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "降低闪光\n取消局部亮度脉冲"
+vertical_alignment = 1
+
+[node name="ReduceFlashesCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "启用"
+
+[node name="DisableDistortionLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "关闭屏幕扭曲\n取消位移、缩放和晃动"
+vertical_alignment = 1
+
+[node name="DisableDistortionCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "关闭"
+
+[node name="ResolutionSpeedLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "正式结算速度"
+vertical_alignment = 1
+
+[node name="ResolutionSpeedOption" type="OptionButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UiScaleLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "界面缩放"
+vertical_alignment = 1
+
+[node name="UiScaleOption" type="OptionButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage/AccessibilityGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AccessibilityHint" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+layout_mode = 2
+text = "结算播放期间仍可使用“2× 加速”或“立即完成”。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.72, 0.8, 1)
+
+[node name="AccessibilitySpacer" type="Control" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="RestoreAccessibilityDefaultsButton" type="Button" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AccessibilityPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "恢复无障碍默认值"
 
 [node name="SettingsStatusLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn"]
 unique_name_in_owner = true

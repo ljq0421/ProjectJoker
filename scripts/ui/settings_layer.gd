@@ -18,8 +18,10 @@ const ENTRY_BLOCKER_GROUP := &"settings_entry_blocker"
 @onready var overlay: Control = %SettingsOverlay
 @onready var audio_tab_button: Button = %AudioTabButton
 @onready var display_tab_button: Button = %DisplayTabButton
+@onready var accessibility_tab_button: Button = %AccessibilityTabButton
 @onready var audio_page: Control = %AudioPage
 @onready var display_page: Control = %DisplayPage
+@onready var accessibility_page: Control = %AccessibilityPage
 @onready var master_slider: HSlider = %MasterSlider
 @onready var ui_slider: HSlider = %UiSlider
 @onready var gameplay_slider: HSlider = %GameplaySlider
@@ -37,6 +39,10 @@ const ENTRY_BLOCKER_GROUP := &"settings_entry_blocker"
 @onready var status_label: Label = %SettingsStatusLabel
 @onready var confirmation_layer: Control = %DisplayConfirmationLayer
 @onready var confirmation_countdown_label: Label = %ConfirmationCountdownLabel
+@onready var reduce_flashes_check: CheckButton = %ReduceFlashesCheck
+@onready var disable_distortion_check: CheckButton = %DisableDistortionCheck
+@onready var resolution_speed_option: OptionButton = %ResolutionSpeedOption
+@onready var ui_scale_option: OptionButton = %UiScaleOption
 
 var _settings_service: Node
 var _previous_tree_paused := false
@@ -56,6 +62,7 @@ func _ready() -> void:
 	_settings_service = get_node_or_null("/root/SettingsService")
 	_bind_controls()
 	_populate_display_options()
+	_populate_accessibility_options()
 	overlay.visible = false
 	confirmation_layer.visible = false
 	settings_button.visible = true
@@ -123,6 +130,9 @@ func _bind_controls() -> void:
 	display_tab_button.pressed.connect(
 		func() -> void: _show_display_page(true)
 	)
+	accessibility_tab_button.pressed.connect(
+		func() -> void: _show_accessibility_page(true)
+	)
 
 	for channel in AUDIO_CHANNELS:
 		var slider := _slider_for(channel)
@@ -150,6 +160,21 @@ func _bind_controls() -> void:
 	apply_display_button.pressed.connect(_on_apply_display)
 	%KeepDisplayButton.pressed.connect(_on_keep_display)
 	%RevertDisplayButton.pressed.connect(_on_revert_display)
+	reduce_flashes_check.toggled.connect(
+		func(enabled: bool) -> void:
+			_on_accessibility_changed(&"reduce_flashes", enabled)
+	)
+	disable_distortion_check.toggled.connect(
+		func(enabled: bool) -> void:
+			_on_accessibility_changed(&"disable_distortion", enabled)
+	)
+	resolution_speed_option.item_selected.connect(
+		_on_resolution_speed_selected
+	)
+	ui_scale_option.item_selected.connect(_on_ui_scale_selected)
+	%RestoreAccessibilityDefaultsButton.pressed.connect(
+		_on_restore_accessibility_defaults
+	)
 
 func _bind_service() -> void:
 	_settings_service.connect(
@@ -171,6 +196,10 @@ func _bind_service() -> void:
 	_settings_service.connect(
 		"settings_error",
 		Callable(self, "_on_settings_error")
+	)
+	_settings_service.connect(
+		"accessibility_changed",
+		Callable(self, "_on_service_accessibility_changed")
 	)
 
 func _bind_entry_blockers() -> void:
@@ -210,12 +239,34 @@ func _populate_display_options() -> void:
 			resolution
 		)
 
+func _populate_accessibility_options() -> void:
+	resolution_speed_option.clear()
+	for item in [
+		["正常", "normal"],
+		["快速", "fast"],
+		["立即", "instant"],
+	]:
+		resolution_speed_option.add_item(item[0])
+		resolution_speed_option.set_item_metadata(
+			resolution_speed_option.item_count - 1,
+			item[1]
+		)
+	ui_scale_option.clear()
+	for percent in [100, 110, 125]:
+		ui_scale_option.add_item("%d%%" % percent)
+		ui_scale_option.set_item_metadata(
+			ui_scale_option.item_count - 1,
+			percent
+		)
+
 func _show_audio_page(play_sound: bool) -> void:
 	var changed := not audio_page.visible
 	audio_page.visible = true
 	display_page.visible = false
+	accessibility_page.visible = false
 	audio_tab_button.button_pressed = true
 	display_tab_button.button_pressed = false
+	accessibility_tab_button.button_pressed = false
 	if play_sound and changed:
 		SfxAccess.play(self, &"ui_confirm")
 
@@ -223,8 +274,21 @@ func _show_display_page(play_sound: bool) -> void:
 	var changed := not display_page.visible
 	audio_page.visible = false
 	display_page.visible = true
+	accessibility_page.visible = false
 	audio_tab_button.button_pressed = false
 	display_tab_button.button_pressed = true
+	accessibility_tab_button.button_pressed = false
+	if play_sound and changed:
+		SfxAccess.play(self, &"ui_confirm")
+
+func _show_accessibility_page(play_sound: bool) -> void:
+	var changed := not accessibility_page.visible
+	audio_page.visible = false
+	display_page.visible = false
+	accessibility_page.visible = true
+	audio_tab_button.button_pressed = false
+	display_tab_button.button_pressed = false
+	accessibility_tab_button.button_pressed = true
 	if play_sound and changed:
 		SfxAccess.play(self, &"ui_confirm")
 
@@ -299,11 +363,45 @@ func _on_revert_display() -> void:
 	if bool(_settings_service.call("revert_display_settings")):
 		SfxAccess.play(self, &"ui_back")
 
+func _on_accessibility_changed(key: StringName, value: Variant) -> void:
+	if _refreshing or _settings_service == null:
+		return
+	if bool(
+		_settings_service.call("set_accessibility_value", key, value)
+	):
+		SfxAccess.play(self, &"ui_confirm")
+
+func _on_resolution_speed_selected(index: int) -> void:
+	if _refreshing:
+		return
+	_on_accessibility_changed(
+		&"resolution_speed",
+		String(resolution_speed_option.get_item_metadata(index))
+	)
+
+func _on_ui_scale_selected(index: int) -> void:
+	if _refreshing:
+		return
+	_on_accessibility_changed(
+		&"ui_scale_percent",
+		int(ui_scale_option.get_item_metadata(index))
+	)
+
+func _on_restore_accessibility_defaults() -> void:
+	if _settings_service == null:
+		return
+	if bool(_settings_service.call("restore_accessibility_defaults")):
+		_refresh_accessibility()
+		SfxAccess.play(self, &"ui_confirm")
+
 func _on_service_audio_changed(channel: StringName) -> void:
 	_refresh_audio_channel(channel)
 
 func _on_preview_requested(cue_id: StringName) -> void:
 	SfxAccess.play(self, cue_id)
+
+func _on_service_accessibility_changed(_key: StringName) -> void:
+	_refresh_accessibility()
 
 func _on_display_draft_changed() -> void:
 	_refresh_display()
@@ -331,6 +429,7 @@ func _refresh_all() -> void:
 		return
 	_refresh_audio()
 	_refresh_display()
+	_refresh_accessibility()
 	var service_error := String(_settings_service.call("last_error"))
 	if not service_error.is_empty():
 		status_label.text = service_error
@@ -390,6 +489,48 @@ func _refresh_display() -> void:
 		_settings_service.call("can_apply_display_draft")
 	)
 	_refreshing = false
+
+func _refresh_accessibility() -> void:
+	if _settings_service == null:
+		return
+	_refreshing = true
+	reduce_flashes_check.button_pressed = bool(
+		_settings_service.call(
+			"accessibility_value",
+			&"reduce_flashes"
+		)
+	)
+	disable_distortion_check.button_pressed = bool(
+		_settings_service.call(
+			"accessibility_value",
+			&"disable_distortion"
+		)
+	)
+	_select_option_by_metadata(
+		resolution_speed_option,
+		String(
+			_settings_service.call(
+				"accessibility_value",
+				&"resolution_speed"
+			)
+		)
+	)
+	_select_option_by_metadata(
+		ui_scale_option,
+		int(
+			_settings_service.call(
+				"accessibility_value",
+				&"ui_scale_percent"
+			)
+		)
+	)
+	_refreshing = false
+
+func _select_option_by_metadata(option: OptionButton, value: Variant) -> void:
+	for index in range(option.item_count):
+		if option.get_item_metadata(index) == value:
+			option.select(index)
+			return
 
 func _slider_for(channel: StringName) -> HSlider:
 	match channel:

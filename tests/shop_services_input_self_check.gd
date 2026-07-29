@@ -242,7 +242,11 @@ func _complete_domain_encounter(area: AreaRunSession) -> void:
 func _complete_three_rounds() -> void:
 	screen.area_session.encounter_session.target_total = 0
 	for round_index in range(3):
-		await _click(screen.get_node("%EncounterScreen").get_node("%ConfirmButton"))
+		var encounter: SingleEncounterScreen = screen.get_node(
+			"%EncounterScreen"
+		)
+		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
 		await _settle()
 		if round_index < 2:
 			await _click(

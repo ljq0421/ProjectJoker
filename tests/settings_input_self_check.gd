@@ -82,6 +82,58 @@ func _run() -> void:
 	)
 	_assert_latest(&"panel_open", "opening should play panel_open once")
 
+	await _click(settings_layer.get_node("%AccessibilityTabButton"))
+	_assert_true(
+		settings_layer.get_node("%AccessibilityPage").visible,
+		"accessibility tab should show accessibility controls"
+	)
+	await _click(settings_layer.get_node("%ReduceFlashesCheck"))
+	await _click(settings_layer.get_node("%DisableDistortionCheck"))
+	_assert_true(
+		bool(settings_service.call(
+			"accessibility_value",
+			&"reduce_flashes"
+		)),
+		"real pointer should enable reduced flashes"
+	)
+	_assert_true(
+		bool(settings_service.call(
+			"accessibility_value",
+			&"disable_distortion"
+		)),
+		"real pointer should disable distortion"
+	)
+	var speed_option: OptionButton = settings_layer.get_node(
+		"%ResolutionSpeedOption"
+	)
+	speed_option.select(1)
+	speed_option.item_selected.emit(1)
+	_assert_equal(
+		settings_service.call(
+			"accessibility_value",
+			&"resolution_speed"
+		),
+		"fast",
+		"resolution speed option should persist fast mode"
+	)
+	var scale_option: OptionButton = settings_layer.get_node("%UiScaleOption")
+	scale_option.select(1)
+	scale_option.item_selected.emit(1)
+	await process_frame
+	_assert_true(
+		absf(root.content_scale_factor - 1.1) < 0.001,
+		"110% UI scale should apply to the root window"
+	)
+	await _click(
+		settings_layer.get_node("%RestoreAccessibilityDefaultsButton")
+	)
+	await process_frame
+	_assert_true(
+		absf(root.content_scale_factor - 1.0) < 0.001,
+		"restoring accessibility defaults should restore 100% UI scale"
+	)
+	await _click(settings_layer.get_node("%AudioTabButton"))
+
 	var assignments_before: Dictionary = (
 		screen.session.controller.state.assignments.duplicate(true)
 	)

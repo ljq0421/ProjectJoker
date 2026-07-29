@@ -92,6 +92,7 @@ func _check_size(viewport_size: Vector2i) -> void:
 	for node_name in [
 		"AudioTabButton",
 		"DisplayTabButton",
+		"AccessibilityTabButton",
 		"MasterSlider",
 		"UiSlider",
 		"GameplaySlider",
@@ -113,6 +114,23 @@ func _check_size(viewport_size: Vector2i) -> void:
 		"VsyncCheck",
 		"RestoreDisplayDefaultsButton",
 		"ApplyDisplayButton",
+	]:
+		var control: Control = layer.get_node("%%%s" % node_name)
+		_assert_rect_inside(
+			control.get_global_rect(),
+			overlay_rect,
+			node_name,
+			viewport_size
+		)
+
+	layer._show_accessibility_page(false)
+	await process_frame
+	for node_name in [
+		"ReduceFlashesCheck",
+		"DisableDistortionCheck",
+		"ResolutionSpeedOption",
+		"UiScaleOption",
+		"RestoreAccessibilityDefaultsButton",
 	]:
 		var control: Control = layer.get_node("%%%s" % node_name)
 		_assert_rect_inside(

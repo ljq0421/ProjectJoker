@@ -56,6 +56,7 @@ func run() -> void:
 		return
 	_test_store_validation_and_round_trip()
 	_test_service_audio_and_display_flow()
+	_test_accessibility_flow_and_legacy_defaults()
 
 func _test_store_validation_and_round_trip() -> void:
 	var path := _temporary_path("store")
@@ -79,6 +80,9 @@ func _test_store_validation_and_round_trip() -> void:
 	values["audio"]["ui_linear"] = 0.25
 	values["display"]["window_width"] = 1600
 	values["display"]["window_height"] = 900
+	values["accessibility"]["reduce_flashes"] = true
+	values["accessibility"]["resolution_speed"] = "fast"
+	values["accessibility"]["ui_scale_percent"] = 110
 	var save_result: Dictionary = store.save_settings(values)
 	assert_true(bool(save_result["ok"]), "valid settings should save")
 	var reloaded: Dictionary = store.load_settings(defaults)
@@ -92,6 +96,20 @@ func _test_store_validation_and_round_trip() -> void:
 		1600,
 		"saved window width should reload"
 	)
+	assert_true(
+		reloaded["values"]["accessibility"]["reduce_flashes"],
+		"saved flash preference should reload"
+	)
+	assert_equal(
+		reloaded["values"]["accessibility"]["resolution_speed"],
+		"fast",
+		"saved resolution speed should reload"
+	)
+	assert_equal(
+		reloaded["values"]["accessibility"]["ui_scale_percent"],
+		110,
+		"saved UI scale should reload"
+	)
 
 	var invalid := ConfigFile.new()
 	invalid.set_value("meta", "schema_version", 1)
@@ -99,6 +117,10 @@ func _test_store_validation_and_round_trip() -> void:
 	invalid.set_value("audio", "ui_linear", 0.33)
 	invalid.set_value("display", "window_width", 1111)
 	invalid.set_value("display", "window_height", 777)
+	invalid.set_value("accessibility", "reduce_flashes", "yes")
+	invalid.set_value("accessibility", "disable_distortion", true)
+	invalid.set_value("accessibility", "resolution_speed", "turbo")
+	invalid.set_value("accessibility", "ui_scale_percent", 999)
 	assert_equal(invalid.save(path), OK, "invalid fixture should save")
 	var validated: Dictionary = store.load_settings(defaults)
 	assert_equal(
@@ -114,6 +136,25 @@ func _test_store_validation_and_round_trip() -> void:
 		validated["values"]["display"]["window_width"],
 		1280,
 		"unapproved resolution should fall back"
+	)
+	assert_equal(
+		validated["values"]["accessibility"]["reduce_flashes"],
+		defaults["accessibility"]["reduce_flashes"],
+		"invalid flash preference should fall back alone"
+	)
+	assert_true(
+		validated["values"]["accessibility"]["disable_distortion"],
+		"valid sibling accessibility preference should survive"
+	)
+	assert_equal(
+		validated["values"]["accessibility"]["resolution_speed"],
+		defaults["accessibility"]["resolution_speed"],
+		"invalid resolution speed should fall back alone"
+	)
+	assert_equal(
+		validated["values"]["accessibility"]["ui_scale_percent"],
+		defaults["accessibility"]["ui_scale_percent"],
+		"invalid UI scale should fall back alone"
 	)
 
 	var corrupt := FileAccess.open(path, FileAccess.WRITE)
@@ -132,6 +173,98 @@ func _test_store_validation_and_round_trip() -> void:
 		corrupt_before,
 		"loading corrupt settings must not overwrite the source"
 	)
+	_remove_settings_files(path)
+
+func _test_accessibility_flow_and_legacy_defaults() -> void:
+	var path := _temporary_path("accessibility")
+	_remove_settings_files(path)
+	var store := SettingsStore.new(path)
+	var service_script := load("res://scripts/settings/settings_service.gd")
+	var defaults: Dictionary = service_script.new().default_settings()
+
+	var legacy := ConfigFile.new()
+	legacy.set_value("meta", "schema_version", 1)
+	legacy.set_value("audio", "ui_linear", 0.4)
+	legacy.set_value("display", "mode", "windowed")
+	legacy.set_value("display", "window_width", 1280)
+	legacy.set_value("display", "window_height", 720)
+	legacy.set_value("display", "vsync_enabled", true)
+	assert_equal(legacy.save(path), OK, "legacy settings fixture should save")
+	var legacy_result: Dictionary = store.load_settings(defaults)
+	assert_false(
+		bool(legacy_result["parse_failed"]),
+		"missing additive accessibility fields should not corrupt legacy settings"
+	)
+	assert_equal(
+		legacy_result["values"]["accessibility"],
+		defaults["accessibility"],
+		"legacy settings should receive accessibility defaults"
+	)
+	assert_true(
+		absf(float(legacy_result["values"]["audio"]["ui_linear"]) - 0.4)
+		< 0.0001,
+		"legacy sibling values should survive additive migration"
+	)
+
+	var service: Node = service_script.new()
+	service.configure_for_test(store, FakeDisplayAdapter.new(), 0.05)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(service)
+	var changed: Array[StringName] = []
+	service.accessibility_changed.connect(
+		func(key: StringName) -> void:
+			changed.append(key)
+	)
+	assert_equal(
+		service.accessibility_value(&"resolution_speed"),
+		"normal",
+		"normal resolution speed should be the default"
+	)
+	assert_true(
+		service.set_accessibility_value(&"reduce_flashes", true),
+		"valid flash preference should save"
+	)
+	assert_true(
+		service.set_accessibility_value(&"disable_distortion", true),
+		"valid distortion preference should save"
+	)
+	assert_true(
+		service.set_accessibility_value(&"resolution_speed", "instant"),
+		"valid resolution speed should save"
+	)
+	assert_true(
+		service.set_accessibility_value(&"ui_scale_percent", 125),
+		"valid UI scale should save"
+	)
+	assert_equal(
+		changed,
+		[
+			&"reduce_flashes",
+			&"disable_distortion",
+			&"resolution_speed",
+			&"ui_scale_percent",
+		],
+		"each accepted accessibility change should emit once"
+	)
+	assert_false(
+		service.set_accessibility_value(&"resolution_speed", "turbo"),
+		"invalid resolution speed should be rejected"
+	)
+	assert_equal(
+		service.accessibility_value(&"resolution_speed"),
+		"instant",
+		"rejected values must not mutate settings"
+	)
+	assert_true(
+		service.restore_accessibility_defaults(),
+		"restoring accessibility defaults should save"
+	)
+	assert_equal(
+		service.settings_snapshot()["accessibility"],
+		defaults["accessibility"],
+		"restoring accessibility defaults should restore every field"
+	)
+	service.free()
 	_remove_settings_files(path)
 
 func _test_service_audio_and_display_flow() -> void:

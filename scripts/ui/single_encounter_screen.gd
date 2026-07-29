@@ -60,6 +60,12 @@ func _ready() -> void:
 	%PlusButton.pressed.connect(func() -> void: _on_calibrate_pressed(1))
 	%UndoButton.pressed.connect(_on_undo_pressed)
 	confirm_button.pressed.connect(_on_confirm_pressed)
+	resolution_panel.playback_finished.connect(
+		_on_resolution_playback_finished
+	)
+	resolution_panel.source_focus_requested.connect(
+		_on_resolution_source_focus_requested
+	)
 	refresh_from_session()
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
 	tutorial.persistence_warning.connect(_on_tutorial_persistence_warning)
@@ -568,7 +574,41 @@ func _on_confirm_pressed() -> void:
 			SfxAccess.play(self, &"round_commit")
 	refresh_from_session()
 	if report.valid and not was_committed and session.controller.committed:
-		round_committed.emit(report)
+		resolution_panel.play_committed_report(
+			report,
+			_accessibility_settings()
+		)
+
+func _on_resolution_playback_finished(report: ResolutionReport) -> void:
+	_clear_resolution_source_focus()
+	round_committed.emit(report)
+
+func _on_resolution_source_focus_requested(source_id: StringName) -> void:
+	_clear_resolution_source_focus()
+	var lane_by_id := {
+		&"left": %LeftLane,
+		&"middle": %MiddleLane,
+		&"right": %RightLane,
+	}
+	if lane_by_id.has(source_id):
+		lane_by_id[source_id].self_modulate = TARGET_TINT
+	elif source_id == &"left_gap":
+		%LeftGap.self_modulate = TARGET_TINT
+	elif source_id == &"right_gap":
+		%RightGap.self_modulate = TARGET_TINT
+
+func _clear_resolution_source_focus() -> void:
+	for lane in lanes:
+		lane.self_modulate = Color.WHITE
+	%LeftGap.self_modulate = Color.WHITE
+	%RightGap.self_modulate = Color.WHITE
+
+func _accessibility_settings() -> Dictionary:
+	var settings_service := get_node_or_null("/root/SettingsService")
+	if settings_service == null:
+		return {}
+	var snapshot: Dictionary = settings_service.call("settings_snapshot")
+	return snapshot.get("accessibility", {}).duplicate(true)
 
 func _on_run_trial_pressed() -> void:
 	_launch_gold_corridor()

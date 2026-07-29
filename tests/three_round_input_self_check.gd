@@ -25,6 +25,8 @@ func _run() -> void:
 	for round_number in range(1, 4):
 		var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
+		await process_frame
 		var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
 		_assert_true(summary.visible, "commit should open the round summary")
 		if round_number < 3:

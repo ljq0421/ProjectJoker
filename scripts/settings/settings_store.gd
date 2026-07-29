@@ -92,6 +92,36 @@ func load_settings(defaults: Dictionary) -> Dictionary:
 	if typeof(vsync) == TYPE_BOOL:
 		display["vsync_enabled"] = vsync
 
+	var accessibility: Dictionary = values["accessibility"]
+	for key in ["reduce_flashes", "disable_distortion"]:
+		var value: Variant = config.get_value(
+			"accessibility",
+			key,
+			accessibility[key]
+		)
+		if typeof(value) == TYPE_BOOL:
+			accessibility[key] = value
+	var resolution_speed: Variant = config.get_value(
+		"accessibility",
+		"resolution_speed",
+		accessibility["resolution_speed"]
+	)
+	if (
+		typeof(resolution_speed) == TYPE_STRING
+		and String(resolution_speed) in ["normal", "fast", "instant"]
+	):
+		accessibility["resolution_speed"] = resolution_speed
+	var ui_scale_percent: Variant = config.get_value(
+		"accessibility",
+		"ui_scale_percent",
+		accessibility["ui_scale_percent"]
+	)
+	if (
+		typeof(ui_scale_percent) == TYPE_INT
+		and int(ui_scale_percent) in [100, 110, 125]
+	):
+		accessibility["ui_scale_percent"] = ui_scale_percent
+
 	return {
 		"values": values,
 		"parse_failed": false,
@@ -122,6 +152,14 @@ func save_settings(values: Dictionary) -> Dictionary:
 		"vsync_enabled",
 	]:
 		config.set_value("display", key, display.get(key))
+	var accessibility: Dictionary = values.get("accessibility", {})
+	for key in [
+		"reduce_flashes",
+		"disable_distortion",
+		"resolution_speed",
+		"ui_scale_percent",
+	]:
+		config.set_value("accessibility", key, accessibility.get(key))
 
 	var temporary_path := "%s.tmp" % config_path
 	var backup_path := "%s.bak" % config_path

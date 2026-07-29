@@ -175,6 +175,7 @@ func _complete_three_rounds(force_success: bool = true) -> void:
 	for round_number in range(1, 4):
 		var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
 		await _settle()
 		if round_number < 3:
 			await _click(run_screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton"))

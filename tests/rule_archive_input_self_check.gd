@@ -100,6 +100,7 @@ func _complete_distortion_archive(archive: RuleArchiveScreen) -> void:
 		await _click(_find_die(encounter, placement[0]))
 		await _click(_find_slot(encounter, placement[1], placement[2]))
 	await _click(encounter.get_node("%ConfirmButton"))
+	encounter.resolution_panel.finish_playback()
 	await _settle()
 	_assert_true(
 		encounter.session.controller.committed,

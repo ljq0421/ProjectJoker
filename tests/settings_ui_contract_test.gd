@@ -50,8 +50,10 @@ func _test_settings_scene_contract() -> void:
 	for node_name in [
 		"AudioTabButton",
 		"DisplayTabButton",
+		"AccessibilityTabButton",
 		"AudioPage",
 		"DisplayPage",
+		"AccessibilityPage",
 		"MasterSlider",
 		"UiSlider",
 		"GameplaySlider",
@@ -70,6 +72,11 @@ func _test_settings_scene_contract() -> void:
 		"DisplayConfirmationLayer",
 		"KeepDisplayButton",
 		"RevertDisplayButton",
+		"ReduceFlashesCheck",
+		"DisableDistortionCheck",
+		"ResolutionSpeedOption",
+		"UiScaleOption",
+		"RestoreAccessibilityDefaultsButton",
 	]:
 		assert_true(
 			layer.get_node_or_null("%%%s" % node_name) != null,

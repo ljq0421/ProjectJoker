@@ -112,6 +112,7 @@ func _commit_current_round(screen: FacelessHubRunScreen) -> void:
 	screen.encounter_screen.refresh_from_session()
 	await process_frame
 	screen.encounter_screen.get_node("%ConfirmButton").emit_signal("pressed")
+	screen.encounter_screen.resolution_panel.finish_playback()
 	await process_frame
 
 func _verify_restriction_reasons() -> void:

@@ -35,6 +35,8 @@ func _run() -> void:
 	for round_number in range(1, 4):
 		var encounter: SingleEncounterScreen = slice_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
+		await process_frame
 		var summary: RoundSummaryPanel = slice_screen.get_node("%RoundSummaryPanel")
 		_assert_true(summary.visible, "normal commit should show summary")
 		if round_number < 3:
@@ -72,6 +74,8 @@ func _run() -> void:
 		if round_number == 3:
 			await _click(_find_die(encounter, &"d1"))
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
+		await process_frame
 		if round_number < 3:
 			await _click(summary.get_node("%NextRoundButton"))
 
@@ -118,6 +122,8 @@ func _run() -> void:
 	await _click(_find_die(verification, &"d1"))
 	await _click_lane(verification.get_node("%RightLane"))
 	await _click(verification.get_node("%ConfirmButton"))
+	verification.resolution_panel.finish_playback()
+	await process_frame
 	_assert_true(
 		slice_screen.slice_session.phase == IronAbacusSliceSession.Phase.COMPLETE,
 		"applied engraving should complete the slice"

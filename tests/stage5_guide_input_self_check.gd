@@ -99,6 +99,8 @@ func _run() -> void:
 	slice_screen.slice_session.encounter_session.target_total = 0
 	for round_number in range(1, 4):
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
+		await process_frame
 		var summary: RoundSummaryPanel = slice_screen.get_node("%RoundSummaryPanel")
 		_assert_true(summary.visible, "normal commit should show summary")
 		if round_number < 3:
@@ -121,6 +123,8 @@ func _run() -> void:
 	for round_number in range(1, 4):
 		encounter = slice_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
+		encounter.resolution_panel.finish_playback()
+		await process_frame
 		if round_number < 3:
 			await _click(summary.get_node("%NextRoundButton"))
 			_assert_false(overlay.is_open(), "dealer next round should not repeat guide")
@@ -148,6 +152,8 @@ func _run() -> void:
 	await _click(_find_die(verification, &"d1"))
 	await _click_lane(verification.get_node("%RightLane"))
 	await _click(verification.get_node("%ConfirmButton"))
+	verification.resolution_panel.finish_playback()
+	await process_frame
 	_assert_true(
 		slice_screen.slice_session.phase == IronAbacusSliceSession.Phase.COMPLETE,
 		"guided real-input path should complete verification"

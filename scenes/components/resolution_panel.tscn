@@ -10,18 +10,51 @@ script = ExtResource("1")
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Heading" type="Label" parent="Content"]
+[node name="ResolutionHeading" type="Label" parent="Content"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "结算轨迹"
+text = "预测轨迹"
 theme_override_font_sizes/font_size = 24
+
+[node name="PlaybackStatus" type="Label" parent="Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "方案变化会立即刷新"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 14
 
 [node name="EventList" type="VBoxContainer" parent="Content"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 6
 
 [node name="Total" type="Label" parent="Content"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "预测结算：0"
 theme_override_font_sizes/font_size = 22
+
+[node name="PlaybackActions" type="HBoxContainer" parent="Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BoostResolutionButton" type="Button" parent="Content/PlaybackActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(132, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "2× 加速"
+tooltip_text = "仅加速本次正式结算"
+
+[node name="FinishResolutionButton" type="Button" parent="Content/PlaybackActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(132, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "立即完成"
+tooltip_text = "显示本次正式结算的全部剩余事件"
