@@ -101,6 +101,54 @@ func _test_shop_cues() -> void:
 	shop._on_confirm_pressed()
 	_assert_latest(&"shop_purchase", "accepted shop purchase should sound")
 
+	var area := AreaCatalog.new().gold_corridor()
+	var market: Array[StringName] = area.starting_deck_ids.duplicate()
+	market.append_array(area.shop_offer_ids)
+	var formal_session := ShopSession.new(
+		catalog,
+		area.starting_deck_ids,
+		market,
+		4,
+		ShopIntelSnapshot.routes(area.second_route_ids),
+		0,
+		true
+	)
+	shop.bind_session(formal_session, catalog)
+	assert_true(
+		shop.get_node("%ShopServiceStatusLabel").visible,
+		"formal shop should show service status"
+	)
+	var tickets_before := formal_session.intel_tickets
+	shop._on_refresh_pressed()
+	assert_true(
+		shop.get_node("%RefreshConfirmationDialog").visible,
+		"refresh should require confirmation"
+	)
+	assert_equal(formal_session.intel_tickets, tickets_before, "opening dialog should not spend")
+	started_cues.clear()
+	SfxService._last_played_at.erase(&"shop_purchase")
+	shop._on_refresh_confirmed()
+	_assert_latest(&"shop_purchase", "accepted refresh should use shop purchase cue")
+	assert_equal(
+		formal_session.intel_tickets,
+		tickets_before - ShopSession.REFRESH_PRICE,
+		"confirmed refresh should spend one"
+	)
+	assert_equal(shop.selected_offer_id, &"", "refresh should clear offer selection")
+	assert_equal(shop.selected_deck_id, &"", "refresh should clear deck selection")
+
+	var emitted_snapshots: Array[ShopIntelSnapshot] = []
+	shop.intel_view_requested.connect(
+		func(snapshot: ShopIntelSnapshot) -> void: emitted_snapshots.append(snapshot)
+	)
+	var before_intel := formal_session.intel_tickets
+	shop._on_intel_pressed()
+	assert_equal(formal_session.intel_tickets, before_intel - 1, "intel should spend once")
+	assert_equal(emitted_snapshots.size(), 1, "intel purchase should request its view")
+	shop._on_intel_pressed()
+	assert_equal(formal_session.intel_tickets, before_intel - 1, "reopen should be free")
+	assert_equal(emitted_snapshots.size(), 2, "purchased intel should reopen")
+
 	shop.free()
 
 func _assert_latest(cue_id: StringName, message: String) -> void:

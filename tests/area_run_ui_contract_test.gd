@@ -39,9 +39,20 @@ func run() -> void:
 			"AreaCompletePanel",
 			"SettingsLayer",
 			"HomeButton",
-		]:
+			]:
 			assert_true(
 				screen.get_node_or_null("%" + node_name) != null,
 				"%s should own %s" % [path, node_name]
+			)
+		var shop := screen.get_node("%ShopScreen")
+		for node_name in [
+			"ShopServiceStatusLabel",
+			"RefreshOffersButton",
+			"PurchaseIntelButton",
+			"RefreshConfirmationDialog",
+		]:
+			assert_true(
+				shop.get_node_or_null("%" + node_name) != null,
+				"%s shop should own %s" % [path, node_name]
 			)
 		screen.free()
