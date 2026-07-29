@@ -10,6 +10,7 @@ const REQUIRED_KEYS := [
 	"rooms",
 	"dealer",
 	"purchases",
+	"services",
 	"deck_ids",
 	"intel_tickets",
 	"engraving_id",
@@ -74,7 +75,10 @@ func bind_summary(
 	])
 	%RouteHistoryLabel.text = "\n".join(room_lines)
 	%ScoreHistoryLabel.text = "\n".join(score_lines)
-	%PurchaseHistoryLabel.text = _purchase_text(summary["purchases"], card_catalog)
+	%PurchaseHistoryLabel.text = "手法替换\n%s\n\n商店服务\n%s" % [
+		_purchase_text(summary["purchases"], card_catalog),
+		_service_text(summary["services"]),
+	]
 	%FinalDeckLabel.text = _deck_text(summary["deck_ids"], card_catalog)
 	%FinalResourceLabel.text = "剩余情报券｜%d" % summary["intel_tickets"]
 	var engraving := engraving_catalog.find_engraving(summary["engraving_id"])
@@ -148,6 +152,45 @@ func _summary_error(
 			return "替换记录包含未知手法牌"
 		if not record["price"] is int or record["price"] < 0:
 			return "替换记录价格无效"
+	if not summary["services"] is Array:
+		return "商店服务记录格式无效"
+	for record in summary["services"]:
+		if not record is Dictionary:
+			return "商店服务记录条目无效"
+		for key in ["shop_index", "service_type", "price", "intel_kind"]:
+			if not record.has(key):
+				return "商店服务记录缺少字段：%s" % key
+		if (
+			not record["shop_index"] is int
+			or record["shop_index"] < 0
+			or record["shop_index"] > 1
+		):
+			return "商店服务记录店次无效"
+		if (
+			not record["service_type"] is int
+			or record["service_type"] not in [
+				ShopServiceRecord.ServiceType.REFRESH,
+				ShopServiceRecord.ServiceType.INTEL,
+			]
+		):
+			return "商店服务记录类型无效"
+		if not record["price"] is int or record["price"] != 1:
+			return "商店服务记录价格无效"
+		if not record["intel_kind"] is int:
+			return "商店服务记录情报类型无效"
+		if (
+			record["service_type"] == ShopServiceRecord.ServiceType.REFRESH
+			and record["intel_kind"] != -1
+		):
+			return "刷新记录不能包含情报类型"
+		if (
+			record["service_type"] == ShopServiceRecord.ServiceType.INTEL
+			and record["intel_kind"] not in [
+				ShopIntelSnapshot.Kind.ROUTE_PAIR,
+				ShopIntelSnapshot.Kind.DEALER,
+			]
+		):
+			return "情报记录类型无效"
 	if not summary["deck_ids"] is Array or summary["deck_ids"].size() != 12:
 		return "最终牌组必须包含十二张牌"
 	var seen_cards: Dictionary = {}
@@ -177,6 +220,25 @@ func _purchase_text(purchases: Array, card_catalog: CardCatalog) -> String:
 		lines.append("%s → %s（%d 情报券）" % [
 			card_catalog.find_card(record["replaced_id"]).display_name,
 			card_catalog.find_card(record["offer_id"]).display_name,
+			record["price"],
+		])
+	return "\n".join(lines)
+
+func _service_text(services: Array) -> String:
+	if services.is_empty():
+		return "本区未购买商店服务"
+	var lines: Array[String] = []
+	for record in services:
+		var service_name := "整批刷新"
+		if record["service_type"] == ShopServiceRecord.ServiceType.INTEL:
+			service_name = (
+				"路线情报"
+				if record["intel_kind"] == ShopIntelSnapshot.Kind.ROUTE_PAIR
+				else "庄家情报"
+			)
+		lines.append("商店 %d｜%s（%d 情报券）" % [
+			record["shop_index"] + 1,
+			service_name,
 			record["price"],
 		])
 	return "\n".join(lines)

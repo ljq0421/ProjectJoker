@@ -161,11 +161,44 @@ func _test_complete_panel_contract() -> void:
 			"target_total": 150,
 			"cumulative_total": 171,
 		},
-		"purchases": [{
-			"offer_id": &"shop_deep_drop",
-			"replaced_id": &"starter_nudge_up_1",
-			"price": 1,
-		}],
+		"purchases": [
+			{
+				"offer_id": &"shop_deep_drop",
+				"replaced_id": &"starter_nudge_up_1",
+				"price": 1,
+			},
+			{
+				"offer_id": &"shop_reverse_backup",
+				"replaced_id": &"starter_map_1",
+				"price": 1,
+			},
+		],
+		"services": [
+			{
+				"shop_index": 0,
+				"service_type": ShopServiceRecord.ServiceType.REFRESH,
+				"price": 1,
+				"intel_kind": -1,
+			},
+			{
+				"shop_index": 0,
+				"service_type": ShopServiceRecord.ServiceType.INTEL,
+				"price": 1,
+				"intel_kind": ShopIntelSnapshot.Kind.ROUTE_PAIR,
+			},
+			{
+				"shop_index": 1,
+				"service_type": ShopServiceRecord.ServiceType.REFRESH,
+				"price": 1,
+				"intel_kind": -1,
+			},
+			{
+				"shop_index": 1,
+				"service_type": ShopServiceRecord.ServiceType.INTEL,
+				"price": 1,
+				"intel_kind": ShopIntelSnapshot.Kind.DEALER,
+			},
+		],
 		"deck_ids": _summary_deck(),
 		"intel_tickets": 3,
 		"engraving_id": &"engraving_anchor",
@@ -197,6 +230,102 @@ func _test_complete_panel_contract() -> void:
 		panel.get_node("%FinalEngravingLabel").text.contains("锚定"),
 		"summary should resolve engraving name"
 	)
+	var transaction_text: String = panel.get_node("%PurchaseHistoryLabel").text
+	assert_true("深降推码" in transaction_text, "purchase arrows should remain")
+	assert_true("回转备份" in transaction_text, "second purchase should remain")
+	for expected in [
+		"商店 1｜整批刷新（1 情报券）",
+		"商店 1｜路线情报（1 情报券）",
+		"商店 2｜整批刷新（1 情报券）",
+		"商店 2｜庄家情报（1 情报券）",
+	]:
+		assert_true(expected in transaction_text, "service row should render: %s" % expected)
+	assert_equal(
+		panel.get_node("%FinalResourceLabel").text,
+		"剩余情报券｜3",
+		"final balance should use the snapshot value directly"
+	)
+
+	var zero_services := summary.duplicate(true)
+	zero_services.services = []
+	assert_true(
+		panel.bind_summary(
+			zero_services,
+			AreaCatalog.new().gold_corridor(),
+			CardCatalog.new(),
+			DealerCatalog.new(),
+			EngravingCatalog.new()
+		),
+		"valid zero-service summary should bind"
+	)
+	assert_true(
+		"本区未购买商店服务" in panel.get_node("%PurchaseHistoryLabel").text,
+		"zero-service summary should say no services were purchased"
+	)
+
+	var invalid_service_cases: Array[Dictionary] = []
+	var missing_services := summary.duplicate(true)
+	missing_services.erase("services")
+	invalid_service_cases.append(missing_services)
+	var non_array_services := summary.duplicate(true)
+	non_array_services.services = {}
+	invalid_service_cases.append(non_array_services)
+	for missing_key in ["shop_index", "service_type", "price", "intel_kind"]:
+		var missing_field := summary.duplicate(true)
+		missing_field.services[0].erase(missing_key)
+		invalid_service_cases.append(missing_field)
+	for invalid_record in [
+		{
+			"shop_index": -1,
+			"service_type": ShopServiceRecord.ServiceType.REFRESH,
+			"price": 1,
+			"intel_kind": -1,
+		},
+		{
+			"shop_index": 2,
+			"service_type": ShopServiceRecord.ServiceType.REFRESH,
+			"price": 1,
+			"intel_kind": -1,
+		},
+		{
+			"shop_index": 0,
+			"service_type": 99,
+			"price": 1,
+			"intel_kind": -1,
+		},
+		{
+			"shop_index": 0,
+			"service_type": ShopServiceRecord.ServiceType.REFRESH,
+			"price": 2,
+			"intel_kind": -1,
+		},
+		{
+			"shop_index": 0,
+			"service_type": ShopServiceRecord.ServiceType.REFRESH,
+			"price": 1,
+			"intel_kind": ShopIntelSnapshot.Kind.ROUTE_PAIR,
+		},
+		{
+			"shop_index": 0,
+			"service_type": ShopServiceRecord.ServiceType.INTEL,
+			"price": 1,
+			"intel_kind": 99,
+		},
+	]:
+		var invalid_service := summary.duplicate(true)
+		invalid_service.services = [invalid_record]
+		invalid_service_cases.append(invalid_service)
+	for index in range(invalid_service_cases.size()):
+		assert_false(
+			panel.bind_summary(
+				invalid_service_cases[index],
+				AreaCatalog.new().gold_corridor(),
+				CardCatalog.new(),
+				DealerCatalog.new(),
+				EngravingCatalog.new()
+			),
+			"invalid service summary %d should fail closed" % index
+		)
 
 	var emitted := {"restart": false, "return": false}
 	panel.restart_requested.connect(func() -> void: emitted.restart = true)

@@ -39,6 +39,8 @@ func _test_all_route_combinations_complete() -> void:
 		assert_equal(summary.deck_ids.size(), 12, "summary keeps twelve cards")
 		assert_equal(summary.die_profiles.size(), 6, "summary keeps six dice")
 		assert_equal(summary.rooms.size(), 2, "summary keeps both rooms")
+		assert_true(summary.has("services"), "summary exposes service records")
+		assert_true(summary.services is Array, "service records use an array")
 		assert_equal(summary.dealer.id, &"dealer_mirror_lady", "summary keeps Mirror Lady")
 		assert_equal(summary.rng_state, area.run_rng.snapshot_state(), "summary keeps RNG")
 

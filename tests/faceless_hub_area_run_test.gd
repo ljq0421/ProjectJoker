@@ -80,6 +80,8 @@ func _test_all_route_combinations_complete() -> void:
 		assert_equal(snapshot.area_id, &"faceless_hub", "snapshot identifies faceless hub")
 		assert_equal(snapshot.rooms.size(), 2, "snapshot keeps two rooms")
 		assert_equal(snapshot.dealer.id, &"dealer_faceless_master", "snapshot keeps dealer")
+		assert_true(snapshot.has("services"), "snapshot exposes service records")
+		assert_true(snapshot.services is Array, "service records use an array")
 
 func _complete_normal_encounter(area: AreaRunSession) -> void:
 	area.encounter_session.target_total = 0

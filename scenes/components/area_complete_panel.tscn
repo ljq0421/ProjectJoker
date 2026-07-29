@@ -181,10 +181,16 @@ text = "情报交换记录"
 theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
 theme_override_font_sizes/font_size = 18
 
-[node name="PurchaseHistoryLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 160)
+[node name="PurchaseHistoryScroll" type="ScrollContainer" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn"]
 layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="PurchaseHistoryLabel" type="Label" parent="SafeArea/CompleteLedger/LedgerColumn/Columns/HistoryColumnPanel/HistoryColumn/PurchaseHistoryScroll"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 text = ""
 autowrap_mode = 2
