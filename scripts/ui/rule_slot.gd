@@ -17,13 +17,22 @@ func bind_slot(
 	die: DieState,
 	die_scene: PackedScene,
 	p_selected_die_id: StringName,
-	engraving_catalog: EngravingCatalog = null
+	engraving_catalog: EngravingCatalog = null,
+	position_hint: String = ""
 ) -> void:
 	index = p_index
 	selected_die_id = p_selected_die_id
 	die_id = &"" if die == null else die.id
+	var index_label := get_node_or_null("%SlotIndex") as Label
+	if index_label != null:
+		index_label.text = (
+			position_hint
+			if not position_hint.is_empty()
+			else "位 %d" % (index + 1)
+		)
 	for child in get_children():
-		child.queue_free()
+		if child is DieToken:
+			child.queue_free()
 	if die == null:
 		text = "＋"
 		tooltip_text = "骰位 %d：空" % (index + 1)
@@ -32,6 +41,7 @@ func bind_slot(
 	tooltip_text = "骰位 %d：骰子 %s" % [index + 1, die.id]
 	var token: DieToken = die_scene.instantiate()
 	token.custom_minimum_size = Vector2(54, 54)
+	token.position = Vector2(5, 24)
 	add_child(token)
 	token.bind_die_with_engravings(
 		die,

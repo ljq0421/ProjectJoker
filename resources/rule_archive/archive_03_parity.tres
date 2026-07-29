@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="RuleArchiveDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_archive_definition.gd" id="1_archive"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="3_rule"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="4_even"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_odd.tres" id="5_odd"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_same_parity.tres" id="6_same"]
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("3_rule")
+id = &"left"
+display_name = "全部偶数"
+template = ExtResource("4_even")
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("3_rule")
+id = &"middle"
+display_name = "全部奇数"
+template = ExtResource("5_odd")
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("3_rule")
+id = &"right"
+display_name = "奇偶一致"
+template = ExtResource("6_same")
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="Encounter"]
+script = ExtResource("2_encounter")
+id = &"archive_encounter_03"
+rules = Array[ExtResource("3_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+
+[resource]
+script = ExtResource("1_archive")
+id = &"archive_03"
+display_name = "03 · 奇偶归类"
+group_label = "全偶 / 全奇 / 同奇偶"
+summary = "把公开骰面按奇偶分类，比较严格奇偶条件和同类条件的覆盖范围。"
+explanation = "全偶台只接收偶数；全奇台只接收奇数；同奇偶台允许全偶或全奇，但不能混合。"
+encounter = SubResource("Encounter")
+hand_ids = Array[StringName]([&"starter_nudge_down_1", &"starter_nudge_up_1", &"starter_map_1", &"starter_repeat_1"])

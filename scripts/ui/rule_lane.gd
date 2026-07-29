@@ -65,7 +65,8 @@ func bind_lane(
 			die,
 			die_scene,
 			selected_die_id,
-			engraving_catalog
+			engraving_catalog,
+			_position_hint(rule, slot_index)
 		)
 		slot.slot_activated.connect(
 			func(index: int) -> void:
@@ -116,3 +117,14 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	die_drop_requested.emit(data.get("die_id"), table_id)
+
+func _position_hint(rule: RuleDefinition, slot_index: int) -> String:
+	var hint := "位 %d" % (slot_index + 1)
+	if (
+		rule.template != null
+		and rule.template.condition_kind
+			== RuleTableTemplate.ConditionKind.SLOT_TARGETS
+		and slot_index < rule.slot_targets.size()
+	):
+		hint += " = %d" % rule.slot_targets[slot_index]
+	return hint

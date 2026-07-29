@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="RuleArchiveDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_archive_definition.gd" id="1_archive"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="3_rule"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_strict_descending.tres" id="4_descending"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_mirrored.tres" id="5_mirrored"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_slot_targets.tres" id="6_targets"]
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("3_rule")
+id = &"left"
+display_name = "严格降序"
+template = ExtResource("4_descending")
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("3_rule")
+id = &"middle"
+display_name = "镜像排列"
+template = ExtResource("5_mirrored")
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("3_rule")
+id = &"right"
+display_name = "指定槽位 1 / 2"
+template = ExtResource("6_targets")
+slot_count = 2
+slot_targets = Array[int]([1, 2])
+coefficient = 3
+
+[sub_resource type="Resource" id="Encounter"]
+script = ExtResource("2_encounter")
+id = &"archive_encounter_05"
+rules = Array[ExtResource("3_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+
+[resource]
+script = ExtResource("1_archive")
+id = &"archive_05"
+display_name = "05 · 槽位秩序"
+group_label = "降序 / 镜像 / 指定位置"
+summary = "使用显式骰位完成严格降序、左右镜像和逐槽目标，练习指定放置与交换。"
+explanation = "每个槽位都有固定编号。降序台要求左大右小；镜像台要求两侧相同；指定槽位台要求 1 号槽为 1、2 号槽为 2。"
+encounter = SubResource("Encounter")
+dice_values = PackedInt32Array(1, 1, 2, 2, 3, 3)
+hand_ids = Array[StringName]([&"starter_nudge_down_1", &"starter_nudge_up_1", &"starter_map_1", &"starter_repeat_1"])

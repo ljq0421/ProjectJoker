@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="RuleArchiveDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_archive_definition.gd" id="1_archive"]
+[ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
+[ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="3_rule"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_echo_table.tres" id="4_echo"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_bridge_table.tres" id="5_bridge"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_reverse_table.tres" id="6_reverse"]
+
+[sub_resource type="Resource" id="Rule_left"]
+script = ExtResource("3_rule")
+id = &"left"
+display_name = "回声台"
+template = ExtResource("4_echo")
+slot_count = 2
+coefficient = 1
+
+[sub_resource type="Resource" id="Rule_middle"]
+script = ExtResource("3_rule")
+id = &"middle"
+display_name = "桥接台"
+template = ExtResource("5_bridge")
+slot_count = 2
+coefficient = 1
+
+[sub_resource type="Resource" id="Rule_right"]
+script = ExtResource("3_rule")
+id = &"right"
+display_name = "反向台"
+template = ExtResource("6_reverse")
+slot_count = 2
+coefficient = 1
+
+[sub_resource type="Resource" id="Encounter"]
+script = ExtResource("2_encounter")
+id = &"archive_encounter_06"
+rules = Array[ExtResource("3_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
+
+[resource]
+script = ExtResource("1_archive")
+id = &"archive_06"
+display_name = "06 · 空间扭曲"
+group_label = "回声 / 桥接 / 反向"
+summary = "三张台填满即通过；先公开确定最终方向，再依次展示回声与桥接的非递归来源。"
+explanation = "反向台通过后先翻转最终方向。回声台在自身基础分后复制一次。桥接台固定在中轨，并在全部基础台结束后向最终方向的下一台传递一次本台基础分。"
+encounter = SubResource("Encounter")
+hand_ids = Array[StringName]([&"starter_nudge_down_1", &"starter_nudge_up_1", &"starter_map_1", &"starter_repeat_1"])

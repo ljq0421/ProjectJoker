@@ -116,6 +116,13 @@ func bind_verification(engraving: EngravingDefinition) -> void:
 	%DealerRule.text = engraving.rule_text
 	%DealerHint.text = "所选骰子的刻印面已公开强制朝上；把它分配到有效规则台。"
 
+func bind_archive(definition: RuleArchiveDefinition) -> void:
+	dealer_definition = null
+	%DealerEyebrow.text = "规则档案 / RULE ARCHIVE"
+	%DealerName.text = definition.display_name
+	%DealerRule.text = definition.explanation
+	%DealerHint.text = definition.summary
+
 func show_external_error(message: String) -> void:
 	session.last_error = message
 	error_label.text = message

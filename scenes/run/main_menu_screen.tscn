@@ -168,6 +168,12 @@ text = "想先熟悉基础结算？"
 theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
 theme_override_font_sizes/font_size = 16
 
+[node name="RuleArchiveButton" type="Button" parent="SafeArea/Content/PracticeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "规则档案室"
+tooltip_text = "进入六组固定单轮练习，查看全部十八种规则台"
+
 [node name="PracticeButton" type="Button" parent="SafeArea/Content/PracticeRow"]
 unique_name_in_owner = true
 layout_mode = 2

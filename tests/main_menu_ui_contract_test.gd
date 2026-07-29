@@ -16,6 +16,7 @@ func run() -> void:
 		"GoldCorridorButton",
 		"MirrorHallButton",
 		"FacelessHubButton",
+		"RuleArchiveButton",
 	]:
 		var button := menu.get_node_or_null("%" + node_name) as Button
 		assert_true(button != null, "main menu should expose %s" % node_name)
