@@ -134,9 +134,10 @@ func _validate_shop_pool(
 	errors: Array[String],
 	card_catalog: CardCatalog
 ) -> void:
-	if shop_offer_ids.size() < 3:
-		errors.append("area %s shop pool must contain at least three cards" % id)
+	if shop_offer_ids.size() < 6:
+		errors.append("area %s shop pool must contain at least six cards" % id)
 	var seen: Dictionary = {}
+	var outside_deck := 0
 	for card_id in shop_offer_ids:
 		if card_catalog.find_card(card_id) == null:
 			errors.append("area %s shop pool contains unknown card: %s" % [id, card_id])
@@ -144,6 +145,12 @@ func _validate_shop_pool(
 			errors.append("area %s shop pool contains duplicate card: %s" % [id, card_id])
 		else:
 			seen[card_id] = true
+		if card_id not in starting_deck_ids:
+			outside_deck += 1
+	if outside_deck < 6:
+		errors.append(
+			"area %s market must contain at least six cards outside the starting deck" % id
+		)
 
 func _validate_engraving_pool(
 	errors: Array[String],

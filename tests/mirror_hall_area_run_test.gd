@@ -86,12 +86,10 @@ func _test_shop_shortage_is_atomic() -> void:
 	var invalid_shop := AreaCatalog.new().mirror_hall().duplicate(true) as AreaDefinition
 	invalid_shop.shop_offer_ids = invalid_shop.starting_deck_ids.slice(0, 3)
 	var area := AreaRunSession.new(SEED, invalid_shop)
-	assert_true(area.start().accepted, "shortage fixture should start")
-	assert_true(area.select_route(area.current_route_ids()[0]).accepted, "fixture selects")
-	_complete_current_encounter(area)
-	var before := _snapshot(area)
-	assert_false(area.open_shop().accepted, "owned-only pool should reject shop")
-	assert_equal(_snapshot(area), before, "shop shortage should preserve state and RNG")
+	assert_false(area.start().accepted, "market with fewer than six off-deck cards should reject")
+	assert_equal(area.phase, AreaRunSession.Phase.NOT_STARTED, "shortage keeps initial phase")
+	assert_true(area.run_rng == null, "shortage should not create or consume RNG")
+	assert_true(area.market_ids.is_empty(), "shortage should not commit a market")
 
 func _test_mismatched_report_is_atomic() -> void:
 	var area := _new_mirror_run()

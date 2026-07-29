@@ -2,11 +2,69 @@ extends "res://tests/test_case.gd"
 
 func run() -> void:
 	_test_two_room_shop_loop()
+	_test_area_market_and_future_intel()
 	_test_same_seed_replays_route_shop_and_dealer_start()
 	_test_all_route_combinations_complete()
 	_test_failures_end_the_area()
 	_test_restart_replays_from_seed()
 	_test_same_seed_replays_full_completion()
+
+func _test_area_market_and_future_intel() -> void:
+	var area := AreaRunSession.new(20260729)
+	assert_true(area.start().accepted, "shop-service area should start")
+	assert_equal(area.market_ids.size(), 18, "gold market should contain eighteen cards")
+	assert_equal(_unique_count(area.market_ids), 18, "gold market should be unique")
+	for card_id in area.deck_ids:
+		assert_true(card_id in area.market_ids, "entry deck should belong to market")
+
+	assert_true(area.select_route(area.current_route_ids()[0]).accepted, "first route selects")
+	_complete_current_encounter(area)
+	assert_true(area.open_shop().accepted, "first formal shop opens")
+	var route_intel: ShopIntelSnapshot = area.current_shop_intel()
+	assert_true(route_intel != null, "first shop should expose an intel snapshot")
+	assert_equal(
+		route_intel.kind,
+		ShopIntelSnapshot.Kind.ROUTE_PAIR,
+		"first shop should precompute route intel"
+	)
+	assert_equal(
+		route_intel.validate(area.area_definition, area.dealer_catalog),
+		"",
+		"precomputed route intel should validate"
+	)
+	assert_true(area.shop_session.purchase_intel().accepted, "route intel purchase succeeds")
+	assert_true(area.shop_session.refresh_offers().accepted, "first shop refresh succeeds")
+	var rng_before_leave := area.run_rng.snapshot_state()
+	var expected_routes: Array[StringName] = route_intel.route_ids.duplicate()
+	assert_true(area.leave_shop().accepted, "first shop settles")
+	assert_equal(area.current_route_ids(), expected_routes, "actual routes should match intel")
+	assert_equal(
+		area.run_rng.snapshot_state(),
+		rng_before_leave,
+		"first leave should not reshuffle the precomputed routes"
+	)
+	assert_equal(area.shop_service_history.size(), 2, "first services should transfer")
+
+	assert_true(area.select_route(area.current_route_ids()[0]).accepted, "second route selects")
+	_complete_current_encounter(area)
+	assert_true(area.open_shop().accepted, "second formal shop opens")
+	var dealer_intel: ShopIntelSnapshot = area.current_shop_intel()
+	assert_equal(
+		dealer_intel.kind,
+		ShopIntelSnapshot.Kind.DEALER,
+		"second shop should precompute dealer intel"
+	)
+	assert_equal(dealer_intel.dealer_id, &"dealer_iron_abacus", "intel identifies dealer")
+	assert_equal(dealer_intel.dealer_target, 150, "intel identifies dealer target")
+	assert_true(area.shop_session.purchase_intel().accepted, "dealer intel purchase succeeds")
+	assert_true(area.leave_shop().accepted, "second shop settles")
+	assert_equal(area.shop_service_history.size(), 3, "dealer intel should transfer")
+	assert_equal(area.phase, AreaRunSession.Phase.DEALER, "second leave starts dealer")
+	assert_equal(
+		area.encounter_session.setup.resolution_context.dealer.id,
+		dealer_intel.dealer_id,
+		"actual dealer should match intel"
+	)
 
 func _test_two_room_shop_loop() -> void:
 	var area := AreaRunSession.new(20260726)
@@ -370,12 +428,26 @@ func _snapshot(area: AreaRunSession) -> Dictionary:
 		"tickets": area.intel_tickets,
 		"profiles": _profile_signature(area.die_profiles),
 		"history": _history_signature(area.shop_purchase_history),
+		"services": _service_signature(area.shop_service_history),
+		"market": area.market_ids.duplicate(),
+		"pending_routes": area.pending_route_ids.duplicate(),
 		"engraving_offers": area.engraving_offer_ids.duplicate(),
 		"selected_engraving": area.selected_engraving_id,
 		"installed_die": area.installed_die_id,
 		"installed_face": area.installed_face,
 		"failure_origin": area.failure_origin,
 	}
+
+func _service_signature(history: Array[ShopServiceRecord]) -> Array:
+	var signature: Array = []
+	for record in history:
+		signature.append([
+			record.shop_index,
+			record.service_type,
+			record.price,
+			record.intel_kind,
+		])
+	return signature
 
 func _assert_failed_without_boundary_retry(
 	area: AreaRunSession,

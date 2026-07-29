@@ -27,11 +27,14 @@ var route_ids: Array[StringName] = []
 var selected_room_ids: Array[StringName] = []
 var completed_rooms: Array[Dictionary] = []
 var deck_ids: Array[StringName] = []
+var market_ids: Array[StringName] = []
+var pending_route_ids: Array[StringName] = []
 var intel_tickets := 0
 var die_profiles: Array[DieState] = []
 var encounter_session: ThreeRoundEncounterSession
 var shop_session: ShopSession
 var shop_purchase_history: Array[ShopPurchaseRecord] = []
+var shop_service_history: Array[ShopServiceRecord] = []
 var engraving_offer_ids: Array[StringName] = []
 var selected_engraving_id: StringName = &""
 var installed_die_id: StringName = &""
@@ -88,6 +91,10 @@ func start() -> OperationResult:
 	var deck_error := _deck_error(next_deck)
 	if not deck_error.is_empty():
 		return _fail(deck_error)
+	var next_market := _build_market(next_deck, area_definition.shop_offer_ids)
+	var market_error := _market_error(next_market, next_deck)
+	if not market_error.is_empty():
+		return _fail(market_error)
 	var next_profiles := _blank_profiles()
 	var next_rng := RunRng.new(seed_value)
 	var next_routes: Array[StringName] = []
@@ -96,6 +103,7 @@ func start() -> OperationResult:
 	run_rng = next_rng
 	route_ids.assign(next_routes)
 	deck_ids.assign(next_deck)
+	market_ids.assign(next_market)
 	intel_tickets = area_definition.starting_intel_tickets
 	die_profiles = next_profiles
 	room_index = 0
@@ -183,24 +191,56 @@ func open_shop() -> OperationResult:
 		or encounter_session.status != ThreeRoundEncounterSession.Status.SUCCEEDED
 	):
 		return _fail("只有成功完成普通房后才能进入商店")
-	var available: Array[StringName] = []
-	for card_id in area_definition.shop_offer_ids:
-		if card_id not in deck_ids:
-			available.append(card_id)
-	if available.size() < 3:
-		return _fail("当前牌组之外的商店牌不足三张")
-	var shuffled := run_rng.shuffle(available)
-	var offers: Array[StringName] = []
-	offers.assign(shuffled.slice(0, 3))
-	shop_session = ShopSession.new(
+	var market_error := _market_error(market_ids, deck_ids)
+	if not market_error.is_empty():
+		return _fail(market_error)
+	var rng_before := run_rng.snapshot_state()
+	var priority: Array[StringName] = []
+	priority.assign(run_rng.shuffle(market_ids))
+	var next_pending_routes: Array[StringName] = []
+	var intel: ShopIntelSnapshot
+	if room_index == 0:
+		var second_ids := area_definition.second_route_ids
+		var route_error := _route_error(second_ids)
+		if not route_error.is_empty():
+			run_rng.restore_state(rng_before)
+			return _fail(route_error)
+		next_pending_routes.assign(run_rng.shuffle(second_ids))
+		intel = ShopIntelSnapshot.routes(next_pending_routes)
+	elif room_index == 1:
+		intel = ShopIntelSnapshot.dealer(
+			area_definition.dealer_id,
+			area_definition.dealer_target
+		)
+	else:
+		run_rng.restore_state(rng_before)
+		return _fail("普通房序号无效")
+	var intel_error := intel.validate(area_definition, dealer_catalog)
+	if not intel_error.is_empty():
+		run_rng.restore_state(rng_before)
+		return _fail(intel_error)
+	var next_shop := ShopSession.new(
 		card_catalog,
 		deck_ids,
-		offers,
-		intel_tickets
+		priority,
+		intel_tickets,
+		intel,
+		room_index,
+		true
 	)
+	if not next_shop.initialization_error.is_empty():
+		run_rng.restore_state(rng_before)
+		return _fail(next_shop.initialization_error)
+	shop_session = next_shop
+	pending_route_ids.assign(next_pending_routes)
 	phase = Phase.SHOP
 	last_error = ""
 	return OperationResult.new(true)
+
+func current_shop_intel() -> ShopIntelSnapshot:
+	if phase != Phase.SHOP or shop_session == null:
+		return null
+	return shop_session.intel_snapshot
 
 func leave_shop() -> OperationResult:
 	if phase != Phase.SHOP or shop_session == null:
@@ -214,25 +254,33 @@ func leave_shop() -> OperationResult:
 		return _fail("商店结算后的情报券不能为负数")
 	var next_history := _clone_purchase_history(shop_purchase_history)
 	next_history.append_array(_clone_purchase_history(shop_session.purchase_records))
+	var next_service_history := _clone_service_history(shop_service_history)
+	next_service_history.append_array(
+		_clone_service_history(shop_session.service_records)
+	)
 
 	if room_index == 0:
-		var second_ids := area_definition.second_route_ids
-		var route_error := _route_error(second_ids)
+		var route_error := _route_error(pending_route_ids)
 		if not route_error.is_empty():
 			return _fail(route_error)
-		var next_routes: Array[StringName] = []
-		next_routes.assign(run_rng.shuffle(second_ids))
 		deck_ids.assign(next_deck)
 		intel_tickets = next_tickets
 		shop_purchase_history = next_history
-		route_ids.assign(next_routes)
+		shop_service_history = next_service_history
+		route_ids.assign(pending_route_ids)
+		pending_route_ids.clear()
 		room_index = 1
 		shop_session = null
 		phase = Phase.ROUTE_CHOICE
 		last_error = ""
 		return OperationResult.new(true)
 	if room_index == 1:
-		return _create_dealer(next_deck, next_tickets, next_history)
+		return _create_dealer(
+			next_deck,
+			next_tickets,
+			next_history,
+			next_service_history
+		)
 	return _fail("普通房序号无效")
 
 func select_engraving(engraving_id: StringName) -> OperationResult:
@@ -278,6 +326,14 @@ func completion_snapshot() -> Dictionary:
 			"replaced_id": record.replaced_id,
 			"price": record.price,
 		})
+	var services: Array[Dictionary] = []
+	for record in shop_service_history:
+		services.append({
+			"shop_index": record.shop_index,
+			"service_type": record.service_type,
+			"price": record.price,
+			"intel_kind": record.intel_kind,
+		})
 	return {
 		"area_id": area_definition.id,
 		"rng_state": run_rng.snapshot_state(),
@@ -288,6 +344,7 @@ func completion_snapshot() -> Dictionary:
 			"cumulative_total": encounter_session.cumulative_total,
 		},
 		"purchases": purchases,
+		"services": services,
 		"deck_ids": deck_ids.duplicate(),
 		"intel_tickets": intel_tickets,
 		"engraving_id": selected_engraving_id,
@@ -333,7 +390,8 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 func _create_dealer(
 	next_deck: Array[StringName],
 	next_tickets: int,
-	next_history: Array[ShopPurchaseRecord]
+	next_history: Array[ShopPurchaseRecord],
+	next_service_history: Array[ShopServiceRecord]
 ) -> OperationResult:
 	var rng_before := run_rng.snapshot_state()
 	var setup := EncounterRunSetup.new()
@@ -361,6 +419,7 @@ func _create_dealer(
 	deck_ids.assign(next_deck)
 	intel_tickets = next_tickets
 	shop_purchase_history = next_history
+	shop_service_history = next_service_history
 	encounter_session = next
 	shop_session = null
 	phase = Phase.DEALER
@@ -389,6 +448,38 @@ func _deck_error(ids: Array[StringName]) -> String:
 		if seen.has(card_id):
 			return "区域牌组包含重复卡牌：%s" % card_id
 		seen[card_id] = true
+	return ""
+
+func _build_market(
+	entry_deck_ids: Array[StringName],
+	shop_ids: Array[StringName]
+) -> Array[StringName]:
+	var result: Array[StringName] = entry_deck_ids.duplicate()
+	for card_id in shop_ids:
+		if card_id not in result:
+			result.append(card_id)
+	return result
+
+func _market_error(
+	ids: Array[StringName],
+	current_deck_ids: Array[StringName]
+) -> String:
+	var seen: Dictionary = {}
+	for card_id in ids:
+		if card_catalog.find_card(card_id) == null:
+			return "地区市场包含未知卡牌：%s" % card_id
+		if seen.has(card_id):
+			return "地区市场包含重复卡牌：%s" % card_id
+		seen[card_id] = true
+	for card_id in current_deck_ids:
+		if card_id not in ids:
+			return "当前牌组包含不属于地区市场的卡牌：%s" % card_id
+	var outside_count := 0
+	for card_id in ids:
+		if card_id not in current_deck_ids:
+			outside_count += 1
+	if outside_count < 6:
+		return "当前牌组之外的地区市场牌不足六张"
 	return ""
 
 func _blank_profiles() -> Array[DieState]:
@@ -437,6 +528,14 @@ func _clone_purchase_history(
 		copies.append(record.clone())
 	return copies
 
+func _clone_service_history(
+	history: Array[ShopServiceRecord]
+) -> Array[ShopServiceRecord]:
+	var copies: Array[ShopServiceRecord] = []
+	for record in history:
+		copies.append(record.clone())
+	return copies
+
 func _reset_owned_state() -> void:
 	phase = Phase.NOT_STARTED
 	run_rng = null
@@ -445,11 +544,14 @@ func _reset_owned_state() -> void:
 	selected_room_ids.clear()
 	completed_rooms.clear()
 	deck_ids.clear()
+	market_ids.clear()
+	pending_route_ids.clear()
 	intel_tickets = 0
 	die_profiles.clear()
 	encounter_session = null
 	shop_session = null
 	shop_purchase_history.clear()
+	shop_service_history.clear()
 	engraving_offer_ids.clear()
 	selected_engraving_id = &""
 	installed_die_id = &""

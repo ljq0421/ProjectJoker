@@ -9,6 +9,7 @@ func run() -> void:
 func _test_fixed_build_starts() -> void:
 	var area := _new_run()
 	assert_true(area.start().accepted, "faceless area should start")
+	assert_equal(area.market_ids.size(), 28, "faceless market should contain twenty-eight cards")
 	assert_equal(area.intel_tickets, 8, "fixed build starts with eight intel")
 	assert_equal(area.deck_ids, area.area_definition.starting_deck_ids, "deck is fixed")
 	var d3 := area.die_profiles.filter(
@@ -33,6 +34,24 @@ func _test_all_route_combinations_complete() -> void:
 			_complete_normal_encounter(area)
 			assert_true(area.open_shop().accepted, "shop opens after room")
 			assert_equal(area.shop_session.offer_ids.size(), 3, "shop exposes three cards")
+			if area.room_index == 0:
+				assert_equal(
+					area.current_shop_intel().kind,
+					ShopIntelSnapshot.Kind.ROUTE_PAIR,
+					"first shop exposes route intel"
+				)
+			else:
+				var dealer_intel: ShopIntelSnapshot = area.current_shop_intel()
+				assert_equal(
+					dealer_intel.kind,
+					ShopIntelSnapshot.Kind.DEALER,
+					"second shop exposes dealer intel"
+				)
+				assert_equal(
+					dealer_intel.dealer_id,
+					&"dealer_faceless_master",
+					"faceless dealer intel identifies the owner"
+				)
 			assert_true(area.leave_shop().accepted, "shop can be left without gambling")
 
 		assert_equal(area.phase, AreaRunSession.Phase.DEALER, "second shop starts dealer")

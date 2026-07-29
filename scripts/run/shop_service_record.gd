@@ -21,3 +21,6 @@ func _init(
 	service_type = p_service_type
 	price = p_price
 	intel_kind = p_intel_kind
+
+func clone() -> ShopServiceRecord:
+	return ShopServiceRecord.new(shop_index, service_type, price, intel_kind)
