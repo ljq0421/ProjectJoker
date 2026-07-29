@@ -21,30 +21,46 @@ func _run() -> void:
 	)
 	var d1 := _find_die(&"d1")
 	var left: Control = screen.get_node("%LeftLane")
-	await _drag(d1, left)
+	await _drag(d1, _find_slot(left, 0))
 	_assert_true(
-		screen.session.controller.state.assignments.get(&"left", []) == [&"d1"],
-		"real drag should assign d1 to left"
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d1", &""],
+		"real drag should assign d1 to the chosen left slot"
 	)
 
 	var tray: Control = screen.get_node("%DiceTray")
 	var tray_drop_point := tray.get_global_rect().position + Vector2(12.0, tray.size.y * 0.5)
 	await _drag_to_point(_find_die(&"d1"), tray_drop_point)
 	_assert_true(
-		screen.session.controller.state.assignments.get(&"left", []).is_empty(),
+		screen.session.controller.state.assigned_die_ids(&"left").is_empty(),
 		"dropping an assigned die on the tray should unassign it"
 	)
 	await _click(screen.get_node("%UndoButton"))
 	_assert_true(
-		screen.session.controller.state.assignments.get(&"left", []) == [&"d1"],
+		screen.session.controller.state.assigned_die_ids(&"left") == [&"d1"],
 		"undo should restore a die returned to the tray"
 	)
 
 	await _click(_find_die(&"d6"))
 	await _click_lane(left)
 	_assert_true(
-		screen.session.controller.state.assignments.get(&"left", []) == [&"d1", &"d6"],
+		screen.session.controller.state.assigned_die_ids(&"left")
+		== [&"d1", &"d6"],
 		"click fallback should assign d6 to left"
+	)
+
+	await _click(_find_die(&"d1"))
+	await _click(_find_slot(left, 1))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d6", &"d1"],
+		"clicking an occupied slot with an assigned die selected should swap"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d1", &"d6"],
+		"one undo should reverse the whole slot swap"
 	)
 
 	await _click(_find_die(&"d2"))
@@ -135,6 +151,12 @@ func _find_die(id: StringName) -> DieToken:
 func _find_card(index: int) -> CardToken:
 	for node in screen.find_children("*", "Button", true, false):
 		if node is CardToken and not node.is_queued_for_deletion() and node.card_index == index:
+			return node
+	return null
+
+func _find_slot(lane: Control, slot_index: int) -> RuleSlot:
+	for node in lane.find_children("*", "Button", true, false):
+		if node is RuleSlot and node.index == slot_index:
 			return node
 	return null
 

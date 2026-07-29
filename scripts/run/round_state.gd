@@ -1,6 +1,8 @@
 class_name RoundState
 extends RefCounted
 
+const EMPTY_SLOT: StringName = &""
+
 var dice: Array[DieState] = []
 var assignments: Dictionary = {}
 var played_cards: Array = []
@@ -21,6 +23,43 @@ func find_die(die_id: StringName) -> DieState:
 		if die.id == die_id:
 			return die
 	return null
+
+func slot_values(table_id: StringName, slot_count: int = -1) -> Array:
+	var values: Array = assignments.get(table_id, []).duplicate()
+	if slot_count < 0:
+		return values
+	if values.size() > slot_count:
+		values.resize(slot_count)
+	while values.size() < slot_count:
+		values.append(EMPTY_SLOT)
+	return values
+
+func assigned_die_ids(table_id: StringName) -> Array:
+	var result: Array = []
+	for die_id in assignments.get(table_id, []):
+		if die_id != EMPTY_SLOT:
+			result.append(die_id)
+	return result
+
+func find_assignment(die_id: StringName) -> Dictionary:
+	for table_id in assignments:
+		var table_slots: Array = assignments[table_id]
+		var slot_index := table_slots.find(die_id)
+		if slot_index >= 0:
+			return {
+				"table_id": table_id,
+				"slot_index": slot_index,
+			}
+	return {}
+
+func is_assigned(die_id: StringName) -> bool:
+	return not find_assignment(die_id).is_empty()
+
+func occupied_slot_count(table_id: StringName) -> int:
+	return assigned_die_ids(table_id).size()
+
+func has_occupied_slot(table_id: StringName) -> bool:
+	return occupied_slot_count(table_id) > 0
 
 func clone() -> RoundState:
 	var copy := RoundState.new()

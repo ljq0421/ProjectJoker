@@ -99,7 +99,7 @@ func _test_controller_previews_and_rejects_incomplete_distribution() -> void:
 	assert_false(rejected.valid, "incomplete distribution should reject commit")
 	assert_false(controller.committed, "rejected commit should not lock controller")
 	assert_equal(
-		controller.state.assignments[&"left"],
+		controller.state.assigned_die_ids(&"left"),
 		[&"d1"],
 		"rejected commit should preserve current assignments"
 	)

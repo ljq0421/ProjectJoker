@@ -201,6 +201,24 @@ func activate_table(table_id: StringName) -> bool:
 		return _accept(controller.play_card(PlayedCard.new(card, table_id)), true)
 	return _fail("请先选择骰子或手法牌")
 
+func activate_slot(table_id: StringName, slot_index: int) -> bool:
+	if selection.kind == InteractionState.Kind.CARD:
+		return activate_table(table_id)
+	if selection.kind != InteractionState.Kind.DIE:
+		return _fail("请先选择一颗骰子")
+	var rule := _find_rule(table_id)
+	if rule == null:
+		return _fail("规则轨不存在")
+	return _accept(
+		controller.assign_die_to_slot(
+			selection.die_id,
+			table_id,
+			slot_index,
+			controller.effective_slot_count(table_id)
+		),
+		true
+	)
+
 func activate_gap(left_id: StringName, right_id: StringName) -> bool:
 	if selection.kind != InteractionState.Kind.CARD:
 		return _fail("请先选择桌间手法牌")
@@ -220,6 +238,24 @@ func assign_dropped_die(die_id: StringName, table_id: StringName) -> bool:
 		controller.assign_die(
 			die_id,
 			table_id,
+			controller.effective_slot_count(table_id)
+		),
+		false
+	)
+
+func assign_dropped_die_to_slot(
+	die_id: StringName,
+	table_id: StringName,
+	slot_index: int
+) -> bool:
+	var rule := _find_rule(table_id)
+	if rule == null:
+		return _fail("规则轨不存在")
+	return _accept(
+		controller.assign_die_to_slot(
+			die_id,
+			table_id,
+			slot_index,
 			controller.effective_slot_count(table_id)
 		),
 		false

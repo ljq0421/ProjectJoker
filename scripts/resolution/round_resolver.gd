@@ -148,7 +148,7 @@ func resolve(
 	var pending_bridges: Dictionary = {}
 	for rule_index in range(ordered_rules.size()):
 		var rule: RuleDefinition = ordered_rules[rule_index]
-		var assigned_ids: Array = state.assignments.get(rule.id, [])
+		var assigned_ids: Array = state.assigned_die_ids(rule.id)
 		var values: Array[int] = []
 		for die_id in assigned_ids:
 			if not die_values.has(die_id):
@@ -293,7 +293,7 @@ func resolve(
 	if normalized_context.dealer != null:
 		var assigned: Dictionary = {}
 		for table_id in state.assignments:
-			for die_id in state.assignments[table_id]:
+			for die_id in state.assigned_die_ids(table_id):
 				assigned[die_id] = true
 		report.assigned_dice = assigned.size()
 		report.unassigned_dice = maxi(state.dice.size() - assigned.size(), 0)
@@ -327,12 +327,11 @@ func _append_intel_outcomes(
 ) -> void:
 	var assigned_die_ids: Dictionary = {}
 	for table_id in state.assignments:
-		for die_id in state.assignments[table_id]:
+		for die_id in state.assigned_die_ids(table_id):
 			assigned_die_ids[die_id] = true
 	var all_tables_occupied := true
 	for rule in encounter.rules:
-		var assigned: Array = state.assignments.get(rule.id, [])
-		if assigned.is_empty():
+		if not state.has_occupied_slot(rule.id):
 			all_tables_occupied = false
 			break
 

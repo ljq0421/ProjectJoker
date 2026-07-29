@@ -2,8 +2,16 @@ class_name RuleLane
 extends PanelContainer
 
 signal lane_activated(table_id: StringName)
+signal slot_activated(table_id: StringName, slot_index: int)
 signal die_activated(die_id: StringName)
 signal die_drop_requested(die_id: StringName, table_id: StringName)
+signal die_drop_to_slot_requested(
+	die_id: StringName,
+	table_id: StringName,
+	slot_index: int
+)
+
+const SLOT_SCENE = preload("res://scenes/components/rule_slot.tscn")
 
 @onready var title_label: Label = %Title
 @onready var condition_label: Label = %Condition
@@ -44,24 +52,33 @@ func bind_lane(
 		condition_label.text += "\n条件变化：%s" % condition_summary
 	for child in slots.get_children():
 		child.queue_free()
-	for die in assigned_dice:
-		var token: DieToken = die_scene.instantiate()
-		slots.add_child(token)
-		token.bind_die_with_engravings(
-			die,
-			die.id == selected_die_id,
-			engraving_catalog,
-			true
+	for slot_index in range(slot_count):
+		var slot: RuleSlot = SLOT_SCENE.instantiate()
+		slots.add_child(slot)
+		var die: DieState = (
+			assigned_dice[slot_index]
+			if slot_index < assigned_dice.size()
+			else null
 		)
-		token.die_activated.connect(func(id: StringName) -> void: die_activated.emit(id))
-	for empty_index in range(slot_count - assigned_dice.size()):
-		var empty := Label.new()
-		empty.text = "＋"
-		empty.custom_minimum_size = Vector2(54, 54)
-		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slots.add_child(empty)
+		slot.bind_slot(
+			slot_index,
+			die,
+			die_scene,
+			selected_die_id,
+			engraving_catalog
+		)
+		slot.slot_activated.connect(
+			func(index: int) -> void:
+				slot_activated.emit(table_id, index)
+		)
+		slot.die_activated.connect(
+			func(id: StringName) -> void:
+				die_activated.emit(id)
+		)
+		slot.die_drop_requested.connect(
+			func(id: StringName, index: int) -> void:
+				die_drop_to_slot_requested.emit(id, table_id, index)
+		)
 
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
@@ -76,19 +93,23 @@ func set_target_state(active: bool, legal: bool) -> void:
 
 func set_die_target_highlight(value: bool) -> void:
 	for child in slots.get_children():
-		if child is DieToken:
-			child.set_legal_target(value)
+		if child is RuleSlot:
+			for nested in child.get_children():
+				if nested is DieToken:
+					nested.set_legal_target(value)
 
 func set_die_card_target_state(
 	active: bool,
 	legal_target: Callable
 ) -> void:
 	for child in slots.get_children():
-		if child is DieToken:
-			child.set_target_state(
-				active,
-				legal_target.call(child.die_id) if active else false
-			)
+		if child is RuleSlot:
+			for nested in child.get_children():
+				if nested is DieToken:
+					nested.set_target_state(
+						active,
+						legal_target.call(nested.die_id) if active else false
+					)
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	return data is Dictionary and data.get("kind") == "die"

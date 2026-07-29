@@ -52,8 +52,7 @@ func evaluate_commit(
 			var missing_tables: Array[String] = []
 			for rule_index in encounter.rules.size():
 				var rule := encounter.rules[rule_index]
-				var assigned_dice: Array = state.assignments.get(rule.id, [])
-				if assigned_dice.is_empty():
+				if not state.has_occupied_slot(rule.id):
 					missing_tables.append(_table_copy(rule.id, rule_index))
 			if not missing_tables.is_empty():
 				return OperationResult.new(
@@ -71,8 +70,7 @@ func coverage_copy(
 ) -> String:
 	var occupied_count := 0
 	for rule in encounter.rules:
-		var assigned_dice: Array = state.assignments.get(rule.id, [])
-		if not assigned_dice.is_empty():
+		if state.has_occupied_slot(rule.id):
 			occupied_count += 1
 	return "已覆盖 %d/%d 张规则台" % [
 		occupied_count,

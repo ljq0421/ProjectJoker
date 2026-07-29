@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/rule_slot.gd" id="1"]
+
+[node name="RuleSlot" type="Button"]
+custom_minimum_size = Vector2(58, 62)
+focus_mode = 1
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 28
+script = ExtResource("1")

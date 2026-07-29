@@ -65,7 +65,6 @@ func _request_context_hint(checkpoint_id: StringName) -> void:
 
 func _request_guide_after_layout(checkpoint_id: StringName) -> void:
 	await get_tree().process_frame
-	await get_tree().process_frame
 	_request_guide(checkpoint_id)
 
 func _close_context_hint() -> void:

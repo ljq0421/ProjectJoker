@@ -34,6 +34,22 @@ func assign_die(die_id: StringName, table_id: StringName, slot_limit: int) -> Ac
 		return ActionResult.new(false, "本轮已经结算", state)
 	return _accept(RoundActions.assign_die(state, die_id, table_id, slot_limit))
 
+func assign_die_to_slot(
+	die_id: StringName,
+	table_id: StringName,
+	slot_index: int,
+	slot_limit: int
+) -> ActionResult:
+	if committed:
+		return ActionResult.new(false, "本轮已经结算", state)
+	return _accept(RoundActions.assign_die_to_slot(
+		state,
+		die_id,
+		table_id,
+		slot_index,
+		slot_limit
+	))
+
 func unassign_die(die_id: StringName) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "本轮已经结算", state)

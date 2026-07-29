@@ -47,8 +47,12 @@ func _ready() -> void:
 	)
 	for lane in lanes:
 		lane.lane_activated.connect(_on_lane_activated)
+		lane.slot_activated.connect(_on_slot_activated)
 		lane.die_activated.connect(_on_die_activated)
 		lane.die_drop_requested.connect(_on_die_drop_requested)
+		lane.die_drop_to_slot_requested.connect(
+			_on_die_drop_to_slot_requested
+		)
 	dice_tray.die_return_requested.connect(_on_die_return_requested)
 	%LeftGap.pressed.connect(func() -> void: _on_gap_activated(&"left", &"middle"))
 	%RightGap.pressed.connect(func() -> void: _on_gap_activated(&"middle", &"right"))
@@ -128,15 +132,20 @@ func refresh_from_session() -> void:
 	for lane_index in range(lanes.size()):
 		var rule := session.controller.encounter.rules[lane_index]
 		var assigned: Array = []
-		for die_id in state.assignments.get(rule.id, []):
-			assigned.append(state.find_die(die_id))
+		var effective_slots := session.controller.effective_slot_count(rule.id)
+		for die_id in state.slot_values(rule.id, effective_slots):
+			assigned.append(
+				null
+				if die_id == RoundState.EMPTY_SLOT
+				else state.find_die(die_id)
+			)
 		lanes[lane_index].bind_lane(
 			rule,
 			assigned,
 			DIE_SCENE,
 			session.selection.die_id,
 			engraving_catalog,
-			session.controller.effective_slot_count(rule.id),
+			effective_slots,
 			session.controller.condition_summary(rule.id)
 		)
 		var table_target_active := (
@@ -331,10 +340,7 @@ func _selected_card_target_type() -> int:
 	return session.hand[session.selection.card_index].target_type
 
 func _is_assigned(die_id: StringName) -> bool:
-	for table_id in session.controller.state.assignments:
-		if die_id in session.controller.state.assignments[table_id]:
-			return true
-	return false
+	return session.controller.state.is_assigned(die_id)
 
 func _on_die_activated(die_id: StringName) -> void:
 	var action := &"select_die"
@@ -429,6 +435,30 @@ func _on_lane_activated(table_id: StringName) -> void:
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
+func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
+	var action := &"click_assign"
+	var payload := {
+		"table_id": table_id,
+		"slot_index": slot_index,
+	}
+	if session.selection.kind == InteractionState.Kind.DIE:
+		payload["die_id"] = session.selection.die_id
+	elif session.selection.kind == InteractionState.Kind.CARD:
+		action = &"card_table"
+		payload["card_index"] = session.selection.card_index
+	if not _tutorial_allows(action, payload):
+		return
+	var accepted := session.activate_slot(table_id, slot_index)
+	if accepted:
+		_record_tutorial_action(action, payload)
+		SfxAccess.play(
+			self,
+			&"card_play" if action == &"card_table" else &"die_place"
+		)
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
+	refresh_from_session()
+
 func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	var payload := {"die_id": die_id, "table_id": table_id}
 	if not _tutorial_allows(&"drag_assign", payload):
@@ -441,6 +471,29 @@ func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
 
+func _on_die_drop_to_slot_requested(
+	die_id: StringName,
+	table_id: StringName,
+	slot_index: int
+) -> void:
+	var payload := {
+		"die_id": die_id,
+		"table_id": table_id,
+		"slot_index": slot_index,
+	}
+	if not _tutorial_allows(&"drag_assign", payload):
+		return
+	var accepted := session.assign_dropped_die_to_slot(
+		die_id,
+		table_id,
+		slot_index
+	)
+	if accepted:
+		_record_tutorial_action(&"drag_assign", payload)
+		SfxAccess.play(self, &"die_place")
+	elif not session.last_error.is_empty():
+		SfxAccess.play(self, &"error")
+	refresh_from_session()
 func _on_die_return_requested(die_id: StringName) -> void:
 	var payload := {"die_id": die_id}
 	if not _tutorial_allows(&"return_die", payload):

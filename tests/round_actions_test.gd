@@ -22,8 +22,16 @@ func run() -> void:
 
 	var first_assignment = RoundActionsScript.assign_die(state, &"d1", &"left", 2)
 	var moved_assignment = RoundActionsScript.assign_die(first_assignment.next_state, &"d1", &"right", 1)
-	assert_equal(moved_assignment.next_state.assignments[&"left"].size(), 0, "moving should clear old table")
-	assert_equal(moved_assignment.next_state.assignments[&"right"], [&"d1"], "die should exist in one table")
+	assert_equal(
+		moved_assignment.next_state.assigned_die_ids(&"left"),
+		[],
+		"moving should clear old table"
+	)
+	assert_equal(
+		moved_assignment.next_state.assigned_die_ids(&"right"),
+		[&"d1"],
+		"die should exist in one table"
+	)
 
 	var full_table = RoundActionsScript.assign_die(moved_assignment.next_state, &"d2", &"right", 1)
 	assert_false(full_table.accepted, "assignment should reject a full table")

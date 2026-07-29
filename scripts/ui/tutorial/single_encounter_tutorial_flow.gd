@@ -214,10 +214,10 @@ func _blocked_instruction() -> String:
 	return "请按高亮目标操作。"
 
 func _contains(table_id: StringName, die_id: StringName, session: SingleEncounterSession) -> bool:
-	return die_id in session.controller.state.assignments.get(table_id, [])
+	return die_id in session.controller.state.assigned_die_ids(table_id)
 
 func _has_exact(table_id: StringName, ids: Array, session: SingleEncounterSession) -> bool:
-	var assigned: Array = session.controller.state.assignments.get(table_id, [])
+	var assigned: Array = session.controller.state.assigned_die_ids(table_id)
 	return assigned.size() == ids.size() and ids.all(
 		func(id: StringName) -> bool: return id in assigned
 	)

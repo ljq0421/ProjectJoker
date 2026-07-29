@@ -408,10 +408,7 @@ func _is_die_id(die_id: StringName) -> bool:
 	return die_id in [&"d1", &"d2", &"d3", &"d4", &"d5", &"d6"]
 
 func _is_assigned(state: RoundState, die_id: StringName) -> bool:
-	for table_id in state.assignments:
-		if die_id in state.assignments[table_id]:
-			return true
-	return false
+	return state.is_assigned(die_id)
 
 func _reset_owned_state() -> void:
 	phase = Phase.NOT_STARTED

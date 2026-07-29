@@ -14,13 +14,13 @@ func run() -> void:
 	assert_true(controller.assign_die(&"d1", &"left", 2).accepted, "assign d1")
 	assert_true(controller.unassign_die(&"d1").accepted, "tray return should unassign d1")
 	assert_equal(
-		controller.state.assignments[&"left"],
+		controller.state.assigned_die_ids(&"left"),
 		[],
 		"tray return should clear the lane"
 	)
 	assert_true(controller.undo(), "tray return should be undoable")
 	assert_equal(
-		controller.state.assignments[&"left"],
+		controller.state.assigned_die_ids(&"left"),
 		[&"d1"],
 		"undo should restore the lane assignment"
 	)

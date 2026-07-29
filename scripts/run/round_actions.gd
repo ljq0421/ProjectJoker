@@ -34,31 +34,68 @@ static func assign_die(
 	table_id: StringName,
 	slot_limit: int
 ) -> ActionResult:
+	var slots := state.slot_values(table_id, slot_limit)
+	var target_index := slots.find(RoundState.EMPTY_SLOT)
+	var current := state.find_assignment(die_id)
+	if (
+		target_index < 0
+		and not current.is_empty()
+		and current.get("table_id") == table_id
+	):
+		return ActionResult.new(true, "", state.clone())
+	if target_index < 0:
+		return ActionResult.new(false, "规则轨已经放满", state)
+	return assign_die_to_slot(
+		state,
+		die_id,
+		table_id,
+		target_index,
+		slot_limit
+	)
+
+static func assign_die_to_slot(
+	state: RoundState,
+	die_id: StringName,
+	table_id: StringName,
+	slot_index: int,
+	slot_limit: int
+) -> ActionResult:
 	if state.find_die(die_id) == null:
 		return ActionResult.new(false, "骰子不存在", state)
 	if table_id == &"":
 		return ActionResult.new(false, "请选择规则轨", state)
-
-	var occupied: Array = state.assignments.get(table_id, [])
-	if die_id not in occupied and occupied.size() >= slot_limit:
-		return ActionResult.new(false, "规则轨已经放满", state)
+	if slot_limit <= 0 or slot_index < 0 or slot_index >= slot_limit:
+		return ActionResult.new(false, "骰位不存在", state)
 
 	var next_state := state.clone()
-	for assigned_table_id in next_state.assignments:
-		next_state.assignments[assigned_table_id].erase(die_id)
-	if not next_state.assignments.has(table_id):
-		next_state.assignments[table_id] = []
-	if die_id not in next_state.assignments[table_id]:
-		next_state.assignments[table_id].append(die_id)
+	next_state.assignments[table_id] = next_state.slot_values(
+		table_id,
+		slot_limit
+	)
+	var target_slots: Array = next_state.assignments[table_id]
+	var target_die_id: StringName = target_slots[slot_index]
+	var source := next_state.find_assignment(die_id)
+	if source.is_empty():
+		if target_die_id != RoundState.EMPTY_SLOT:
+			return ActionResult.new(false, "空闲骰子不能覆盖已占用骰位", state)
+		target_slots[slot_index] = die_id
+		return ActionResult.new(true, "", next_state)
+
+	var source_table_id: StringName = source.get("table_id")
+	var source_slot_index: int = source.get("slot_index")
+	if source_table_id == table_id and source_slot_index == slot_index:
+		return ActionResult.new(true, "", next_state)
+
+	var source_slots: Array = next_state.assignments[source_table_id]
+	source_slots[source_slot_index] = target_die_id
+	target_slots[slot_index] = die_id
 	return ActionResult.new(true, "", next_state)
 
 static func unassign_die(state: RoundState, die_id: StringName) -> ActionResult:
 	var next_state := state.clone()
-	var removed := false
-	for table_id in next_state.assignments:
-		if die_id in next_state.assignments[table_id]:
-			next_state.assignments[table_id].erase(die_id)
-			removed = true
-	if not removed:
+	var source := next_state.find_assignment(die_id)
+	if source.is_empty():
 		return ActionResult.new(false, "骰子尚未分配", state)
+	var source_slots: Array = next_state.assignments[source.get("table_id")]
+	source_slots[source.get("slot_index")] = RoundState.EMPTY_SLOT
 	return ActionResult.new(true, "", next_state)
