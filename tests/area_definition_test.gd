@@ -6,6 +6,14 @@ func run() -> void:
 	if area == null:
 		return
 	assert_equal(area.id, &"gold_corridor", "gold area ID should be stable")
+	assert_false(
+		area.expedition_entry_title.strip_edges().is_empty(),
+		"expedition entry title should exist"
+	)
+	assert_false(
+		area.expedition_entry_text.strip_edges().is_empty(),
+		"expedition entry narrative should exist"
+	)
 	assert_equal(area.display_name, "金线回廊", "gold area name should be stable")
 	assert_equal(area.starting_deck_ids.size(), 12, "gold deck stays twelve")
 	assert_equal(area.first_route_ids.size(), 2, "first route stays two")

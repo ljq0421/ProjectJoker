@@ -102,6 +102,73 @@ func _check_layout(window_size: Vector2i, scale_percent: int) -> void:
 			window_size,
 			scale_percent
 		)
+	var narrative: Control = load(
+		"res://scenes/components/narrative_card.tscn"
+	).instantiate()
+	screen.add_child(narrative)
+	var area := AreaCatalog.new().gold_corridor()
+	narrative.show_area_transition(area, {
+		"deck_ids": area.starting_deck_ids,
+		"intel_tickets": 0,
+		"die_profiles": [],
+	}, {
+		"reduce_flashes": true,
+		"disable_distortion": true,
+	})
+	await process_frame
+	for node_name in [
+		"NarrativeCard",
+		"NarrativeTitle",
+		"NarrativeBody",
+		"NarrativeContextLabel",
+		"NarrativeContinueButton",
+		"NarrativeExitButton",
+	]:
+		var control: Control = narrative.get_node("%%%s" % node_name)
+		_assert_rect_inside(
+			control.get_global_rect(),
+			viewport_rect,
+			node_name,
+			window_size,
+			scale_percent
+		)
+	var expedition_save_path := OS.get_temp_dir().path_join(
+		"project-joker-narrative-layout-%d.cfg" % Time.get_ticks_usec()
+	)
+	root.set_meta("expedition_launch_mode", &"new")
+	root.set_meta("expedition_seed", 20260729)
+	root.set_meta("expedition_save_path", expedition_save_path)
+	var expedition: ExpeditionRunScreen = load(
+		"res://scenes/run/expedition_run_screen.tscn"
+	).instantiate()
+	root.add_child(expedition)
+	await process_frame
+	await process_frame
+	expedition._show_summary()
+	await process_frame
+	for node_name in [
+		"ExpeditionSummaryPanel",
+		"ExpeditionAreaHistoryLabel",
+		"ExpeditionFinalBuildLabel",
+		"ExpeditionEpilogueLabel",
+		"ReturnFromExpeditionButton",
+	]:
+		var control: Control = expedition.get_node("%%%s" % node_name)
+		_assert_rect_inside(
+			control.get_global_rect(),
+			viewport_rect,
+			node_name,
+			window_size,
+			scale_percent
+		)
+	expedition.queue_free()
+	for path in [
+		expedition_save_path,
+		expedition_save_path + ".tmp",
+		expedition_save_path + ".bak",
+	]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
 	screen.queue_free()
 	await process_frame
 

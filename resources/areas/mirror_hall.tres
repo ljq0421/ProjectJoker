@@ -10,6 +10,8 @@
 [resource]
 script = ExtResource("1_area")
 id = &"mirror_hall"
+expedition_entry_title = "第二梦层 · 反照牌厅"
+expedition_entry_text = "铁算盘的账页封存，直线在出口处折回。你带走的牌、情报券与刻印穿过镜面，没有一项被重置。"
 display_name = "反照牌厅"
 first_route_ids = Array[StringName]([&"mirror_room_reverse_drill", &"mirror_room_double_ledger"])
 second_route_ids = Array[StringName]([&"mirror_room_echo_bridge", &"mirror_room_symmetric_page"])

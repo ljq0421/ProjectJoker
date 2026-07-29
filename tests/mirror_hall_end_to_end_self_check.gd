@@ -62,6 +62,14 @@ func _run() -> void:
 		"镜面夫人" in run_screen.get_node("%EncounterScreen").get_node("%DealerName").text,
 		"dealer page should name Mirror Lady"
 	)
+	var narrative := run_screen.get_node("%NarrativeCard")
+	_assert_true(narrative.is_open(), "dealer entry should show Mirror Lady opening")
+	_assert_true(
+		"右边落下的答案" in narrative.get_node("%NarrativeBody").text,
+		"dealer opening should expose the confirmed Mirror Lady line"
+	)
+	await _click(narrative.get_node("%NarrativeContinueButton"))
+	await _settle()
 	await _complete_three_rounds()
 
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")

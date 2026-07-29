@@ -233,6 +233,16 @@ func _verify_real_checkpoint_path() -> void:
 	_assert_false(overlay.is_open(), "second shop should not open a shop guide")
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
 	await _settle()
+	_assert_false(
+		overlay.is_open(),
+		"dealer guide should wait until the opening is confirmed"
+	)
+	await _click(
+		run_screen.get_node("%NarrativeCard").get_node(
+			"%NarrativeContinueButton"
+		)
+	)
+	await _settle()
 	_assert_checkpoint_open(overlay, &"dealer", "dealer")
 	var before_dealer := _area_snapshot()
 	await _press_key(KEY_ESCAPE)
@@ -384,6 +394,10 @@ func _verify_dealer_write_failure_preserves_session() -> void:
 	run_screen._on_shop_requested()
 	await _settle()
 	run_screen._on_shop_leave_requested()
+	await _settle()
+	run_screen.get_node("%NarrativeCard").get_node(
+		"%NarrativeContinueButton"
+	).emit_signal("pressed")
 	await _settle()
 	_assert_checkpoint_open(overlay, &"dealer", "dealer write failure")
 	var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")

@@ -7,6 +7,7 @@ const EffectSpecScript = preload("res://scripts/cards/effect_spec.gd")
 const FinalRestrictionDefinitionScript = preload(
 	"res://scripts/run/final_restriction_definition.gd"
 )
+const DealerDefinitionScript = preload("res://scripts/dealers/dealer_definition.gd")
 
 func run() -> void:
 	var valid_rule := RuleDefinitionScript.new()
@@ -67,4 +68,18 @@ func run() -> void:
 			func(error: String) -> bool: return "positive card limit" in error
 		),
 		"restriction validation should delegate to the resource contract"
+	)
+
+	var dealer := DealerDefinitionScript.new()
+	dealer.id = &"silent_dealer"
+	dealer.display_name = "沉默庄家"
+	dealer.rule_text = "公开规则"
+	dealer.fixed_reward = 6
+	dealer.penalty_per_unassigned_die = 1
+	dealer.tags = PackedStringArray(["庄家"])
+	assert_true(
+		validator.validate_dealers([dealer]).any(
+			func(error: String) -> bool: return "has no opening text" in error
+		),
+		"dealers without opening narrative should be rejected"
 	)

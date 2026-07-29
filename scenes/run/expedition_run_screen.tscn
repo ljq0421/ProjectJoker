@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/expedition_run_screen.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/components/narrative_card.tscn" id="3_narrative"]
 
 [sub_resource type="StyleBoxFlat" id="SummaryStyle"]
 content_margin_left = 36.0
@@ -113,6 +114,15 @@ text = ""
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 20
 
+[node name="ExpeditionEpilogueLabel" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 19
+
 [node name="ReturnFromExpeditionButton" type="Button" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 58)
@@ -173,6 +183,11 @@ autowrap_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 theme_override_font_sizes/font_size = 20
+
+[node name="NarrativeCard" parent="." instance=ExtResource("3_narrative")]
+unique_name_in_owner = true
+layout_mode = 1
+z_index = 80
 
 [node name="ReturnFromErrorButton" type="Button" parent="ExpeditionErrorPanel/Center/Panel/Content"]
 unique_name_in_owner = true

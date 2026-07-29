@@ -10,12 +10,55 @@ func run() -> void:
 	assert_true(dealer != null, "Iron Abacus should load")
 	if dealer != null:
 		assert_equal(dealer.id, &"dealer_iron_abacus", "dealer ID should be stable")
+		assert_equal(
+			dealer.opening_text,
+			"六颗骰子，三张规则台，一笔不能含糊的账。把每颗骰子放到你愿意负责的位置——空着的，照样记在账上。",
+			"Iron Abacus opening should match the narrative contract"
+		)
 		assert_equal(dealer.display_name, "铁算盘", "dealer name should be stable")
 		assert_equal(dealer.fixed_reward, 12, "dealer full reward should be twelve")
 		assert_equal(
 			dealer.penalty_per_unassigned_die,
 			2,
 			"dealer should lose two per unassigned die"
+		)
+
+	var expected_openings := {
+		&"dealer_iron_abacus": "六颗骰子，三张规则台，一笔不能含糊的账。把每颗骰子放到你愿意负责的位置——空着的，照样记在账上。",
+		&"dealer_mirror_lady": "你在右边落下的答案，会从左边看回来。别问哪一面是真的；先证明你看得懂它们为何相同。",
+		&"dealer_faceless_master": "名字会变，次序会变，限制也会在你选择后才有意义。但没有一条规则藏在面具后面——三轮都在这里。",
+	}
+	for dealer_definition in dealers.all_dealers():
+		assert_equal(
+			dealer_definition.opening_text,
+			expected_openings[dealer_definition.id],
+			"each dealer should expose the confirmed opening"
+		)
+
+	var expected_area_narratives := {
+		&"gold_corridor": [
+			"第一梦层 · 金线回廊",
+			"梦层入口合拢，金线把地面分成可核验的路径。这里不收下注，只承认你能解释的选择。",
+		],
+		&"mirror_hall": [
+			"第二梦层 · 反照牌厅",
+			"铁算盘的账页封存，直线在出口处折回。你带走的牌、情报券与刻印穿过镜面，没有一项被重置。",
+		],
+		&"faceless_hub": [
+			"第三梦层 · 无面中枢",
+			"镜面碎成无名的索引，倒影失去主人。你保留全部构筑，下一位庄家则把三轮规则提前摊开。",
+		],
+	}
+	for area in AreaCatalog.new().all_areas():
+		assert_equal(
+			area.expedition_entry_title,
+			expected_area_narratives[area.id][0],
+			"area transition title should match the narrative contract"
+		)
+		assert_equal(
+			area.expedition_entry_text,
+			expected_area_narratives[area.id][1],
+			"area transition text should match the narrative contract"
 		)
 
 	var expected := PackedStringArray([

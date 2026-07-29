@@ -1,0 +1,146 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/narrative_card.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="CardStyle"]
+content_margin_left = 48.0
+content_margin_top = 40.0
+content_margin_right = 48.0
+content_margin_bottom = 40.0
+bg_color = Color(0.025, 0.032, 0.105, 0.99)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.705, 0.37, 0.95)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[node name="NarrativeOverlay" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.006, 0.009, 0.035, 0.94)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 48.0
+offset_right = -64.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="SafeArea"]
+layout_mode = 2
+
+[node name="NarrativeCard" type="PanelContainer" parent="SafeArea/Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1040, 620)
+layout_mode = 2
+theme_override_styles/panel = SubResource("CardStyle")
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Center/NarrativeCard"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="NarrativeKindLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "连续远征 · 区域转换"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="NarrativeTitle" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "第一梦层 · 金线回廊"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 40
+
+[node name="NarrativeSpeaker" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "铁算盘"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 25
+
+[node name="Divider" type="ColorRect" parent="SafeArea/Center/NarrativeCard/Content"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.85, 0.705, 0.37, 0.7)
+
+[node name="NarrativeBody" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 25
+
+[node name="NarrativeContextLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="NarrativeRuleLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/Center/NarrativeCard/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="NarrativeExitButton" type="Button" parent="SafeArea/Center/NarrativeCard/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "保存并返回入口"
+
+[node name="NarrativeContinueButton" type="Button" parent="SafeArea/Center/NarrativeCard/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "进入区域"

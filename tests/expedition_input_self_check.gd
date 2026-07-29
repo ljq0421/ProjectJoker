@@ -31,12 +31,45 @@ func _run() -> void:
 	await _settle(6)
 	var host := current_scene as ExpeditionRunScreen
 	_assert(host != null, "start click should open expedition host")
-	var area := host.current_area_screen if host != null else null
-	_assert(area is GoldCorridorRunScreen, "new expedition should mount gold corridor")
 	_assert(
 		ExpeditionSaveStore.new(_save_path).has_save(),
-		"new expedition should persist its route boundary"
+		"new expedition should persist before its transition card"
 	)
+	_assert(
+		host != null and host.narrative_card.is_open(),
+		"new expedition should begin with the Gold Corridor transition"
+	)
+	_assert(
+		"手牌 12 张" in host.narrative_card.get_node("%NarrativeContextLabel").text,
+		"first transition should show the effective starting deck"
+	)
+	_assert(
+		host != null and host.current_area_screen == null,
+		"transition should block area mounting"
+	)
+	await _click(host.narrative_card.get_node("%NarrativeExitButton") as Button)
+	await _settle(5)
+	menu = current_scene as MainMenuScreen
+	_assert(menu != null, "transition safe exit should return to menu")
+	if menu == null:
+		_finish()
+		return
+	_assert(
+		not (menu.get_node("%ContinueExpeditionButton") as Button).disabled,
+		"transition safe exit should preserve the empty checkpoint"
+	)
+	root.set_meta("gold_corridor_guide_config_path", _guide_path)
+	await _click(menu.get_node("%ContinueExpeditionButton") as Button)
+	await _settle(5)
+	host = current_scene as ExpeditionRunScreen
+	_assert(
+		host != null and host.narrative_card.is_open(),
+		"empty-checkpoint restore should re-show the transition"
+	)
+	await _click(host.narrative_card.get_node("%NarrativeContinueButton") as Button)
+	await _settle(6)
+	var area := host.current_area_screen if host != null else null
+	_assert(area is GoldCorridorRunScreen, "transition confirmation should mount gold corridor")
 	if area == null:
 		_finish()
 		return
@@ -68,6 +101,10 @@ func _run() -> void:
 	host = current_scene as ExpeditionRunScreen
 	area = host.current_area_screen if host != null else null
 	_assert(area is GoldCorridorRunScreen, "continue should remount gold corridor")
+	_assert(
+		host != null and not host.narrative_card.is_open(),
+		"non-empty checkpoint restore should not repeat the area transition"
+	)
 	if area != null:
 		_assert(
 			area.area_session.phase == AreaRunSession.Phase.NORMAL_ROOM,

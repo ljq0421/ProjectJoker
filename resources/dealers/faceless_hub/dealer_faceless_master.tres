@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_dealer")
 id = &"dealer_faceless_master"
+opening_text = "名字会变，次序会变，限制也会在你选择后才有意义。但没有一条规则藏在面具后面——三轮都在这里。"
 display_name = "无面主人"
 rule_text = "三轮规则与方向从开战起全部公开；第二轮后选择第三轮限制。每轮固定奖励 12，每有一颗骰子未分配减少 2。"
 fixed_reward = 12

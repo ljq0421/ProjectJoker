@@ -50,6 +50,18 @@ func _run() -> void:
 	screen.area_session.encounter_session.target_total = 1
 	screen.bind_current_encounter()
 	await _settle()
+	_assert(
+		screen.get_node("%NarrativeCard").is_open(),
+		"dealer opening should precede the schedule guide"
+	)
+	_assert(
+		not screen.guide_overlay.is_open(),
+		"schedule guide should wait behind the opening"
+	)
+	screen.get_node("%NarrativeCard").get_node(
+		"%NarrativeContinueButton"
+	).emit_signal("pressed")
+	await _settle()
 	_assert_card(screen, &"schedule")
 	var schedule_snapshot := _business_snapshot(screen)
 	screen.guide_overlay.get_node("%GuideAcknowledgeButton").emit_signal(

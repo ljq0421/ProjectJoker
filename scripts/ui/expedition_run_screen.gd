@@ -15,8 +15,10 @@ const AREA_SCENES := {
 @onready var seed_label: Label = %ExpeditionSeedLabel
 @onready var area_history_label: Label = %ExpeditionAreaHistoryLabel
 @onready var final_build_label: Label = %ExpeditionFinalBuildLabel
+@onready var epilogue_label: Label = %ExpeditionEpilogueLabel
 @onready var return_button: Button = %ReturnFromExpeditionButton
 @onready var return_from_error_button: Button = %ReturnFromErrorButton
+@onready var narrative_card: Control = %NarrativeCard
 
 var expedition := ExpeditionSession.new()
 var store: ExpeditionSaveStore
@@ -27,6 +29,8 @@ var _pending_completion: Dictionary = {}
 func _ready() -> void:
 	return_button.pressed.connect(_on_return_from_summary)
 	return_from_error_button.pressed.connect(_on_safe_exit_requested)
+	narrative_card.confirmed.connect(_mount_current_area)
+	narrative_card.exit_requested.connect(_on_safe_exit_requested)
 	error_panel.visible = false
 	summary_panel.visible = false
 	var root_window := get_tree().root
@@ -62,10 +66,17 @@ func _ready() -> void:
 			return
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
 		_show_summary()
+	elif expedition.area_checkpoint.is_empty():
+		var boundary_save := store.save(expedition.to_snapshot())
+		if not boundary_save.accepted:
+			_show_error(boundary_save.reason)
+			return
+		_show_area_transition()
 	else:
 		_mount_current_area()
 
 func _mount_current_area() -> void:
+	narrative_card.close()
 	var area_id := expedition.current_area_id()
 	if not AREA_SCENES.has(area_id):
 		_show_error("远征当前区域不存在：%s" % area_id)
@@ -132,14 +143,16 @@ func _on_continue_requested() -> void:
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
 		_show_summary()
 	else:
-		_mount_current_area()
+		_show_area_transition()
 
 func _on_safe_exit_requested() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
 func _show_summary() -> void:
+	narrative_card.close()
 	for child in area_host.get_children():
 		child.queue_free()
+	current_area_screen = null
 	summary_panel.visible = true
 	seed_label.text = "远征种子｜%d" % expedition.seed_value
 	var area_lines: Array[String] = []
@@ -170,6 +183,10 @@ func _show_summary() -> void:
 			"\n".join(engraving_lines) if not engraving_lines.is_empty() else "无",
 		]
 	)
+	epilogue_label.text = (
+		"三位庄家的规则都已留下可复核的轨迹。你没有靠运气赢走筹码；"
+		+ "你证明了公开规则可以被理解、预演并拆解。"
+	)
 
 func _on_return_from_summary() -> void:
 	var result := store.clear()
@@ -179,6 +196,7 @@ func _on_return_from_summary() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
 func _show_error(message: String) -> void:
+	narrative_card.close()
 	error_label.text = message
 	error_panel.visible = true
 	error_panel.move_to_front()
@@ -198,3 +216,23 @@ func _area_definition(area_id: StringName) -> AreaDefinition:
 func _area_name(area_id: StringName) -> String:
 	var definition := _area_definition(area_id)
 	return String(area_id) if definition == null else definition.display_name
+
+func _show_area_transition() -> void:
+	summary_panel.visible = false
+	for child in area_host.get_children():
+		child.queue_free()
+	current_area_screen = null
+	var area := _area_definition(expedition.current_area_id())
+	if not narrative_card.show_area_transition(
+		area,
+		expedition.current_entry_state(),
+		_accessibility_snapshot()
+	):
+		_show_error("远征区域叙事无法显示")
+
+func _accessibility_snapshot() -> Dictionary:
+	var service := get_tree().root.get_node_or_null("SettingsService")
+	if service == null or not service.has_method("settings_snapshot"):
+		return {}
+	var settings: Dictionary = service.settings_snapshot()
+	return settings.get("accessibility", {}).duplicate(true)

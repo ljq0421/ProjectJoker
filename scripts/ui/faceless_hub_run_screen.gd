@@ -65,7 +65,10 @@ func _after_encounter_bound() -> void:
 
 func _after_dealer_bound() -> void:
 	_bind_schedule()
-	call_deferred("_request_guide_after_layout", &"schedule")
+
+func _request_context_hint(checkpoint_id: StringName) -> void:
+	if checkpoint_id == &"dealer":
+		call_deferred("_request_guide_after_layout", &"schedule")
 
 func _after_round_report_accepted() -> void:
 	if area_session.phase == AreaRunSession.Phase.DEALER:

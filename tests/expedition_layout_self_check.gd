@@ -12,7 +12,6 @@ func _run() -> void:
 	).instantiate()
 	root.add_child(menu)
 	await process_frame
-	await process_frame
 	_assert_rect_inside(menu.get_node("%StartExpeditionButton"), Rect2(Vector2.ZERO, root.size))
 	_assert_rect_inside(menu.get_node("%ContinueExpeditionButton"), Rect2(Vector2.ZERO, root.size))
 	_assert_rect_inside(menu.get_node("%AbandonExpeditionButton"), Rect2(Vector2.ZERO, root.size))
@@ -31,10 +30,42 @@ func _run() -> void:
 		"ExpeditionSeedLabel",
 		"ExpeditionAreaHistoryLabel",
 		"ExpeditionFinalBuildLabel",
+		"ExpeditionEpilogueLabel",
 		"ReturnFromExpeditionButton",
 	]:
 		_assert_rect_inside(
 			host.get_node("%" + node_name),
+			Rect2(Vector2.ZERO, root.size)
+		)
+	var narrative := host.get_node("%NarrativeCard") as Control
+	var area := AreaCatalog.new().gold_corridor()
+	narrative.show_area_transition(area, {
+		"deck_ids": area.starting_deck_ids,
+		"intel_tickets": 0,
+		"die_profiles": [],
+	}, {
+		"reduce_flashes": true,
+		"disable_distortion": true,
+	})
+	await process_frame
+	_assert(
+		narrative.get_node("%NarrativeCard").get_meta("flash_suppressed", false),
+		"reduced flashes should suppress narrative brightness motion"
+	)
+	_assert(
+		narrative.get_node("%NarrativeCard").get_meta("motion_suppressed", false),
+		"disabled distortion should suppress narrative movement"
+	)
+	for node_name in [
+		"NarrativeCard",
+		"NarrativeTitle",
+		"NarrativeBody",
+		"NarrativeContextLabel",
+		"NarrativeContinueButton",
+		"NarrativeExitButton",
+	]:
+		_assert_rect_inside(
+			narrative.get_node("%" + node_name),
 			Rect2(Vector2.ZERO, root.size)
 		)
 	host.free()

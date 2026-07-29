@@ -16,6 +16,7 @@ signal expedition_exit_requested
 @onready var reward_panel: EngravingRewardPanel = %EngravingRewardPanel
 @onready var complete_panel: AreaCompletePanel = %AreaCompletePanel
 @onready var intel_panel: ShopIntelPanel = %ShopIntelPanel
+@onready var narrative_card: Control = %NarrativeCard
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
 
@@ -26,6 +27,7 @@ var _configured_entry_state: Dictionary = {}
 var _configured_checkpoint: Dictionary = {}
 var _expedition_mode := false
 var _expedition_has_next_area := false
+var _dealer_opening_shown := false
 
 func _ready() -> void:
 	move_child(navigation_bar, get_child_count() - 1)
@@ -47,6 +49,7 @@ func _ready() -> void:
 	complete_panel.continue_requested.connect(
 		func() -> void: expedition_continue_requested.emit()
 	)
+	narrative_card.confirmed.connect(_on_dealer_opening_confirmed)
 	summary_panel.get_node("%ReturnTeachingButton").text = "返回入口"
 	reward_panel.get_node("%InstallEngravingButton").text = "安装刻印并封存区域"
 	start_run()
@@ -209,6 +212,16 @@ func bind_current_encounter() -> void:
 	_after_encounter_bound()
 	if area_session.phase == AreaRunSession.Phase.DEALER:
 		_after_dealer_bound()
+		if not _dealer_opening_shown:
+			_close_context_hint()
+			var dealer := area_session.dealer_catalog.find_dealer(
+				area_session.area_definition.dealer_id
+			)
+			if narrative_card.show_dealer_opening(
+				dealer,
+				_accessibility_snapshot()
+			):
+				return
 		call_deferred("_request_context_hint", &"dealer")
 
 func _area_copy() -> String:
@@ -437,6 +450,22 @@ func _request_context_hint(_checkpoint_id: StringName) -> void:
 
 func _close_context_hint() -> void:
 	pass
+
+func _on_dealer_opening_confirmed() -> void:
+	if (
+		area_session == null
+		or area_session.phase != AreaRunSession.Phase.DEALER
+	):
+		return
+	_dealer_opening_shown = true
+	call_deferred("_request_context_hint", &"dealer")
+
+func _accessibility_snapshot() -> Dictionary:
+	var service := get_tree().root.get_node_or_null("SettingsService")
+	if service == null or not service.has_method("settings_snapshot"):
+		return {}
+	var settings: Dictionary = service.settings_snapshot()
+	return settings.get("accessibility", {}).duplicate(true)
 
 func _show_restored_completion() -> void:
 	var summary: Dictionary = _configured_checkpoint.get("completion", {})

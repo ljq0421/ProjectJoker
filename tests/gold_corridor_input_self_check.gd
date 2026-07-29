@@ -41,6 +41,10 @@ func _run() -> void:
 	var route_panel: RouteChoicePanel = run_screen.get_node("%RouteChoicePanel")
 	var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 	_assert_true(route_panel.visible, "first route choice should open immediately")
+	_assert_true(
+		not run_screen.get_node("%NarrativeCard").is_open(),
+		"standalone area entry should not show an expedition transition"
+	)
 	var route_order := run_screen.area_session.current_route_ids()
 	var phase_before_block := run_screen.area_session.phase
 	await _click_at_point(encounter.get_node("%ConfirmButton").get_global_rect().get_center())
@@ -70,6 +74,7 @@ func _run() -> void:
 	run_screen.area_session.encounter_session.target_total = 0
 	await _complete_three_rounds()
 	await _enter_shop_and_purchase()
+	run_screen.guide_auto_start = true
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
 	await _settle()
 
@@ -77,6 +82,36 @@ func _run() -> void:
 		run_screen.area_session.phase == AreaRunSession.Phase.DEALER,
 		"second shop should enter Iron Abacus"
 	)
+	var narrative := run_screen.get_node("%NarrativeCard")
+	var dealer_guide := run_screen.get_node("%GoldCorridorGuideOverlay")
+	_assert_true(narrative.is_open(), "dealer entry should show Iron Abacus opening")
+	_assert_true(
+		not dealer_guide.is_open(),
+		"dealer guide should wait until the opening is confirmed"
+	)
+	await _click_at_point(
+		encounter.get_node("%ConfirmButton").get_global_rect().get_center()
+	)
+	_assert_true(
+		not encounter.session.controller.committed,
+		"dealer opening should block the encounter behind it"
+	)
+	_assert_true(
+		"六颗骰子" in narrative.get_node("%NarrativeBody").text,
+		"dealer opening should expose the confirmed Iron Abacus line"
+	)
+	await _click(narrative.get_node("%NarrativeContinueButton"))
+	await _settle()
+	_assert_true(
+		not narrative.is_open(),
+		"real confirmation should close the dealer opening"
+	)
+	_assert_true(
+		dealer_guide.is_open(),
+		"dealer guide should open after the narrative confirmation"
+	)
+	dealer_guide.close_card()
+	run_screen.guide_auto_start = false
 	run_screen.area_session.encounter_session.target_total = 0
 	await _complete_three_rounds()
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")

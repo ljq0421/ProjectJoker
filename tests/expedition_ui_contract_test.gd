@@ -35,6 +35,8 @@ func _test_expedition_host_and_summary_structure() -> void:
 		"ExpeditionSummaryPanel",
 		"ExpeditionSeedLabel",
 		"ExpeditionAreaHistoryLabel",
+		"ExpeditionEpilogueLabel",
+		"NarrativeCard",
 		"ReturnFromExpeditionButton",
 	]:
 		assert_true(

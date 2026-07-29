@@ -300,6 +300,8 @@ func validate_dealers(dealers: Array) -> Array[String]:
 			errors.append("dealer %s has no display name" % dealer.id)
 		if dealer.rule_text.strip_edges().is_empty():
 			errors.append("dealer %s has no rule text" % dealer.id)
+		if dealer.opening_text.strip_edges().is_empty():
+			errors.append("dealer %s has no opening text" % dealer.id)
 		if dealer.fixed_reward <= 0:
 			errors.append("dealer %s reward must be positive" % dealer.id)
 		if dealer.penalty_per_unassigned_die <= 0:

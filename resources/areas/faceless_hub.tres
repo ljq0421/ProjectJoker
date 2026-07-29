@@ -10,6 +10,8 @@
 [resource]
 script = ExtResource("1_area")
 id = &"faceless_hub"
+expedition_entry_title = "第三梦层 · 无面中枢"
+expedition_entry_text = "镜面碎成无名的索引，倒影失去主人。你保留全部构筑，下一位庄家则把三轮规则提前摊开。"
 display_name = "无面中枢"
 first_route_ids = Array[StringName]([&"faceless_room_crossed_archive", &"faceless_room_reverse_index"])
 second_route_ids = Array[StringName]([&"faceless_room_single_hand_agenda", &"faceless_room_three_seat_protocol"])

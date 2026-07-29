@@ -3,6 +3,8 @@ extends Resource
 
 @export var id: StringName
 @export var display_name: String
+@export var expedition_entry_title: String
+@export_multiline var expedition_entry_text: String
 
 var _first_route_ids: Array[StringName] = []
 @export var first_route_ids: Array[StringName]:
@@ -47,6 +49,10 @@ func validate(
 		errors.append("area ID is empty")
 	if display_name.strip_edges().is_empty():
 		errors.append("area %s has no display name" % id)
+	if expedition_entry_title.strip_edges().is_empty():
+		errors.append("area %s has no expedition entry title" % id)
+	if expedition_entry_text.strip_edges().is_empty():
+		errors.append("area %s has no expedition entry text" % id)
 	if card_catalog == null or dealer_catalog == null or engraving_catalog == null:
 		errors.append("area %s validation catalogs are unavailable" % id)
 		return errors

@@ -66,6 +66,19 @@ func _run() -> void:
 	screen.bind_current_encounter()
 	await process_frame
 	await process_frame
+	_assert(
+		screen.get_node("%NarrativeCard").is_open(),
+		"dealer opening should precede the dealer guide"
+	)
+	_assert(
+		not screen.get_node("%MirrorHallGuideOverlay").is_open(),
+		"dealer guide should wait behind the opening"
+	)
+	screen.get_node("%NarrativeCard").get_node(
+		"%NarrativeContinueButton"
+	).emit_signal("pressed")
+	await process_frame
+	await process_frame
 	_assert_card(screen, &"dealer")
 	var before_dealer := _business_snapshot(screen)
 	var escape := InputEventKey.new()

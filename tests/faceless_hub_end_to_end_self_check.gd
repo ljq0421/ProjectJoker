@@ -34,6 +34,34 @@ func _run() -> void:
 		screen.area_session.phase == AreaRunSession.Phase.DEALER,
 		"two rooms and shops should reach Faceless Master"
 	)
+	var narrative := screen.get_node("%NarrativeCard")
+	_assert(narrative.is_open(), "dealer entry should show Faceless Master opening")
+	_assert(
+		"三轮都在这里" in narrative.get_node("%NarrativeBody").text,
+		"dealer opening should expose the confirmed Faceless Master line"
+	)
+	var restored: FacelessHubRunScreen = load(
+		"res://scenes/run/faceless_hub_run_screen.tscn"
+	).instantiate()
+	restored.guide_auto_start = false
+	restored.configure_for_expedition(
+		AreaCatalog.new().faceless_hub(),
+		FacelessHubRunScreen.FACELESS_SEED,
+		{},
+		screen.area_session.checkpoint_snapshot(),
+		false
+	)
+	root.add_child(restored)
+	await _settle()
+	_assert(
+		restored.area_session.phase == AreaRunSession.Phase.DEALER
+			and restored.get_node("%NarrativeCard").is_open(),
+		"dealer-entry checkpoint restore should re-show the opening"
+	)
+	restored.queue_free()
+	await _settle()
+	narrative.get_node("%NarrativeContinueButton").emit_signal("pressed")
+	await _settle()
 	screen.area_session.encounter_session.target_total = 0
 	await _commit_round(screen)
 	screen._on_next_round_requested()

@@ -10,6 +10,8 @@
 [resource]
 script = ExtResource("1_area")
 id = &"gold_corridor"
+expedition_entry_title = "第一梦层 · 金线回廊"
+expedition_entry_text = "梦层入口合拢，金线把地面分成可核验的路径。这里不收下注，只承认你能解释的选择。"
 display_name = "金线回廊"
 first_route_ids = Array[StringName]([&"gold_room_precise_steps", &"gold_room_even_split"])
 second_route_ids = Array[StringName]([&"gold_room_narrow_ledger", &"gold_room_parallel_proof"])

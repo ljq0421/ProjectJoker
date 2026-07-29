@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_dealer")
 id = &"dealer_mirror_lady"
+opening_text = "你在右边落下的答案，会从左边看回来。别问哪一面是真的；先证明你看得懂它们为何相同。"
 display_name = "镜面夫人"
 rule_text = "固定从右向左结算；每轮第一张合格桌间牌生成弱化镜像副本。每轮固定奖励 12，每有一颗骰子未分配减少 2。"
 fixed_reward = 12

@@ -39,6 +39,7 @@ func run() -> void:
 			"AreaCompletePanel",
 			"ShopIntelPanel",
 			"SettingsLayer",
+			"NarrativeCard",
 			"HomeButton",
 			]:
 			assert_true(

@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_ly7lj")
 id = &"dealer_iron_abacus"
+opening_text = "六颗骰子，三张规则台，一笔不能含糊的账。把每颗骰子放到你愿意负责的位置——空着的，照样记在账上。"
 display_name = "铁算盘"
 rule_text = "每轮固定奖励 12；每有一颗骰子未分配，奖励减少 2，最低为 0。"
 fixed_reward = 12
