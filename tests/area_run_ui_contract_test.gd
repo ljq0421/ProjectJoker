@@ -37,6 +37,7 @@ func run() -> void:
 			"RoundSummaryPanel",
 			"EngravingRewardPanel",
 			"AreaCompletePanel",
+			"ShopIntelPanel",
 			"SettingsLayer",
 			"HomeButton",
 			]:
@@ -55,4 +56,21 @@ func run() -> void:
 				shop.get_node_or_null("%" + node_name) != null,
 				"%s shop should own %s" % [path, node_name]
 			)
+		var intel := screen.get_node("%ShopIntelPanel")
+		for node_name in [
+			"RouteMode",
+			"DealerMode",
+			"CloseIntelButton",
+			"IntelErrorLabel",
+		]:
+			assert_true(
+				intel.get_node_or_null("%" + node_name) != null,
+				"%s intel panel should own %s" % [path, node_name]
+			)
+		assert_false(intel.visible, "%s intel panel should begin hidden" % path)
+		assert_equal(
+			intel.mouse_filter,
+			Control.MOUSE_FILTER_IGNORE,
+			"%s hidden intel panel should release input" % path
+		)
 		screen.free()

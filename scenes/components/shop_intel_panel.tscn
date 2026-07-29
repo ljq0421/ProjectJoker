@@ -1,0 +1,411 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop/shop_intel_panel.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="LedgerStyle"]
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+bg_color = Color(0.025, 0.032, 0.105, 0.99)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.905, 0.845, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="PageStyle"]
+content_margin_left = 18.0
+content_margin_top = 16.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+bg_color = Color(0.047, 0.058, 0.16, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.705, 0.37, 0.72)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="RoundStyle"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.035, 0.045, 0.13, 0.98)
+border_width_left = 3
+border_color = Color(0.85, 0.705, 0.37, 0.82)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+
+[node name="ShopIntelPanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="IntelDimmer" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.006, 0.009, 0.035, 0.94)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 24.0
+offset_right = -28.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="IntelLedger" type="PanelContainer" parent="SafeArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("LedgerStyle")
+
+[node name="LedgerColumn" type="VBoxContainer" parent="SafeArea/IntelLedger"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn"]
+layout_mode = 2
+
+[node name="HeaderCopy" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="IntelTitle" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/Header/HeaderCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "商店情报"
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="IntelSubtitle" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/Header/HeaderCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="CloseIntelButton" type="Button" parent="SafeArea/IntelLedger/LedgerColumn/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "关闭情报"
+
+[node name="HeaderRule" type="ColorRect" parent="SafeArea/IntelLedger/LedgerColumn"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.45, 0.905, 0.845, 0.65)
+
+[node name="RouteMode" type="HBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="RouteIntelPages" type="HBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="LeftPage" type="PanelContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("PageStyle")
+
+[node name="LeftColumn" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="LeftIntelName" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "左侧路线"
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="LeftIntelBody" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="LeftStats" type="HBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+layout_mode = 2
+
+[node name="LeftIntelGoal" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn/LeftStats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "三轮目标：0"
+
+[node name="LeftIntelReward" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn/LeftStats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "成功奖励：0 张情报券"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+
+[node name="LeftIntelTags" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "房间特征｜"
+
+[node name="LeftIntelSynergy" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "牌组呼应｜"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+
+[node name="LeftIntelRuleOne" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="LeftIntelRuleTwo" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="LeftIntelRuleThree" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/LeftPage/LeftColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="RightPage" type="PanelContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("PageStyle")
+
+[node name="RightColumn" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="RightIntelName" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "右侧路线"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="RightIntelBody" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="RightStats" type="HBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+layout_mode = 2
+
+[node name="RightIntelGoal" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn/RightStats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "三轮目标：0"
+
+[node name="RightIntelReward" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn/RightStats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "成功奖励：0 张情报券"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+
+[node name="RightIntelTags" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "房间特征｜"
+
+[node name="RightIntelSynergy" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "牌组呼应｜"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+
+[node name="RightIntelRuleOne" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="RightIntelRuleTwo" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="RightIntelRuleThree" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/RouteMode/RouteIntelPages/RightPage/RightColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="DealerMode" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DealerIntelScroll" type="ScrollContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DealerColumn" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="DealerIntelName" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "庄家"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 28
+
+[node name="DealerIntelTarget" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 20
+
+[node name="DealerIntelMechanism" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+
+[node name="DealerIntelSchedule" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "三轮公开日程"
+theme_override_font_sizes/font_size = 22
+
+[node name="DealerRoundOne" type="PanelContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("RoundStyle")
+
+[node name="Column" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundOne"]
+layout_mode = 2
+
+[node name="DealerRoundOneTitle" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundOne/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "第 1 轮"
+theme_override_font_sizes/font_size = 20
+
+[node name="DealerRoundOneDirection" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundOne/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+
+[node name="DealerRoundOneRules" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundOne/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="DealerRoundTwo" type="PanelContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("RoundStyle")
+
+[node name="Column" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundTwo"]
+layout_mode = 2
+
+[node name="DealerRoundTwoTitle" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundTwo/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "第 2 轮"
+theme_override_font_sizes/font_size = 20
+
+[node name="DealerRoundTwoDirection" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundTwo/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+
+[node name="DealerRoundTwoRules" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundTwo/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="DealerRoundThree" type="PanelContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("RoundStyle")
+
+[node name="Column" type="VBoxContainer" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundThree"]
+layout_mode = 2
+
+[node name="DealerRoundThreeTitle" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundThree/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "第 3 轮"
+theme_override_font_sizes/font_size = 20
+
+[node name="DealerRoundThreeDirection" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundThree/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+
+[node name="DealerRoundThreeRules" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn/DealerRoundThree/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="DealerIntelRestrictions" type="Label" parent="SafeArea/IntelLedger/LedgerColumn/DealerMode/DealerIntelScroll/DealerColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="IntelErrorLabel" type="Label" parent="SafeArea/IntelLedger/LedgerColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.44, 0.52, 1)

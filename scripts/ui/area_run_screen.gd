@@ -9,6 +9,7 @@ extends Control
 @onready var route_panel: RouteChoicePanel = %RouteChoicePanel
 @onready var reward_panel: EngravingRewardPanel = %EngravingRewardPanel
 @onready var complete_panel: AreaCompletePanel = %AreaCompletePanel
+@onready var intel_panel: ShopIntelPanel = %ShopIntelPanel
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
 
@@ -26,6 +27,7 @@ func _ready() -> void:
 	summary_panel.retry_requested.connect(_on_restart_requested)
 	summary_panel.return_requested.connect(_on_return_requested)
 	shop_screen.leave_requested.connect(_on_shop_leave_requested)
+	shop_screen.intel_view_requested.connect(_on_shop_intel_view_requested)
 	route_panel.route_selected.connect(_on_route_selected)
 	reward_panel.engraving_selected.connect(_on_engraving_selected)
 	reward_panel.install_requested.connect(_on_install_requested)
@@ -66,6 +68,7 @@ func start_run() -> void:
 	_show_route_choice()
 
 func _show_route_choice() -> void:
+	intel_panel.close()
 	shop_screen.visible = false
 	reward_panel.close()
 	complete_panel.close()
@@ -104,6 +107,7 @@ func bind_current_encounter() -> void:
 		encounter_screen.show_external_error("当前阶段没有可绑定的遭遇")
 		return
 	route_panel.close()
+	intel_panel.close()
 	shop_screen.visible = false
 	reward_panel.close()
 	complete_panel.close()
@@ -191,6 +195,7 @@ func _on_next_round_requested() -> void:
 
 func _on_shop_requested() -> void:
 	_close_context_hint()
+	intel_panel.close()
 	var result := area_session.open_shop()
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
@@ -201,8 +206,27 @@ func _on_shop_requested() -> void:
 	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_context_hint", &"shop")
 
+func _on_shop_intel_view_requested(snapshot: ShopIntelSnapshot) -> void:
+	if area_session == null or area_session.shop_session == null:
+		shop_screen.get_node("%ShopErrorLabel").text = "当前没有可查看情报的商店"
+		SfxAccess.play(self, &"error")
+		return
+	var bound := intel_panel.bind_snapshot(
+		snapshot,
+		area_session.area_definition,
+		area_session.shop_session.deck_ids,
+		area_session.card_catalog,
+		area_session.dealer_catalog
+	)
+	if bound:
+		SfxAccess.play(self, &"panel_open")
+	else:
+		shop_screen.get_node("%ShopErrorLabel").text = "商店情报无法显示"
+		SfxAccess.play(self, &"error")
+
 func _on_shop_leave_requested() -> void:
 	_close_context_hint()
+	intel_panel.close()
 	var result := area_session.leave_shop()
 	if not result.accepted:
 		shop_screen.get_node("%ShopErrorLabel").text = result.reason
@@ -250,6 +274,7 @@ func _on_install_requested(
 
 func _on_restart_requested() -> void:
 	_close_context_hint()
+	intel_panel.close()
 	var result := area_session.restart()
 	if not result.accepted:
 		summary_panel.get_node("%SummaryDetail").text = result.reason
@@ -258,6 +283,7 @@ func _on_restart_requested() -> void:
 
 func _on_return_requested() -> void:
 	_close_context_hint()
+	intel_panel.close()
 	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
 
@@ -266,6 +292,7 @@ func _on_home_pressed() -> void:
 
 func _show_start_error(message: String) -> void:
 	_close_context_hint()
+	intel_panel.close()
 	route_panel.close()
 	shop_screen.visible = false
 	reward_panel.close()
