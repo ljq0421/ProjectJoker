@@ -120,29 +120,38 @@ layout_mode = 2
 text = ""
 theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
 
-[node name="Actions" type="HBoxContainer" parent="SafeArea/RootColumn/Footer"]
+[node name="Actions" type="GridContainer" parent="SafeArea/RootColumn/Footer"]
 layout_mode = 2
-alignment = 2
-theme_override_constants/separation = 10
+columns = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
 
 [node name="ConfirmReplacementButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 48)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "确认替换（1 情报券）"
 
 [node name="RefreshOffersButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 48)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "整批刷新（1 情报券）"
 
 [node name="PurchaseIntelButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 48)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "购买路线情报（1 情报券）"
 
 [node name="LeaveShopButton" type="Button" parent="SafeArea/RootColumn/Footer/Actions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 48)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "离开商店"
 
 [node name="RefreshConfirmationDialog" type="ConfirmationDialog" parent="."]

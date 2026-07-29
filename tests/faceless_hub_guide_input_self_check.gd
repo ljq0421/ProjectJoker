@@ -39,10 +39,12 @@ func _run() -> void:
 	)
 
 	var history: Array[ShopPurchaseRecord] = []
+	var service_history: Array[ShopServiceRecord] = []
 	var dealer_result := screen.area_session._create_dealer(
 		screen.area_session.deck_ids,
 		screen.area_session.intel_tickets,
-		history
+		history,
+		service_history
 	)
 	_assert(dealer_result.accepted, "dealer fixture should start")
 	screen.area_session.encounter_session.target_total = 1

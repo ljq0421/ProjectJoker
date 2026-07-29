@@ -22,10 +22,12 @@ func _run() -> void:
 	var start_result := area_session.start()
 	_assert(start_result.accepted, "faceless session should start")
 	var history: Array[ShopPurchaseRecord] = []
+	var service_history: Array[ShopServiceRecord] = []
 	var dealer_result := area_session._create_dealer(
 		area_session.deck_ids,
 		area_session.intel_tickets,
-		history
+		history,
+		service_history
 	)
 	_assert(dealer_result.accepted, "faceless dealer should be creatable")
 	screen.area_session = area_session

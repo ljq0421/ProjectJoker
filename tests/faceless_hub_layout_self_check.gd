@@ -37,11 +37,13 @@ func _run() -> void:
 		)
 
 	var history: Array[ShopPurchaseRecord] = []
+	var service_history: Array[ShopServiceRecord] = []
 	_assert(
 		screen.area_session._create_dealer(
 			screen.area_session.deck_ids,
 			screen.area_session.intel_tickets,
-			history
+			history,
+			service_history
 		).accepted,
 		"dealer layout fixture should start"
 	)

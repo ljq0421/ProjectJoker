@@ -103,6 +103,20 @@ func _run() -> void:
 		complete.get_node("%PurchaseHistoryLabel").text.count("→") == 2,
 		"completion should show two purchases"
 	)
+	var transaction_text: String = complete.get_node("%PurchaseHistoryLabel").text
+	_assert_true(
+		transaction_text.count("整批刷新") == 2,
+		"completion should show both paid refreshes"
+	)
+	_assert_true(
+		"路线情报" in transaction_text and "庄家情报" in transaction_text,
+		"completion should show both purchased intel services"
+	)
+	_assert_equal(
+		complete.get_node("%FinalResourceLabel").text,
+		"剩余情报券｜%d" % run_screen.area_session.completion_snapshot().intel_tickets,
+		"completion balance should equal the domain snapshot"
+	)
 	_assert_true(
 		complete.get_node("%FinalDeckLabel").text.split("　").size() >= 10,
 		"completion should show the twelve-card deck"
@@ -168,10 +182,34 @@ func _complete_three_rounds(force_success: bool = true) -> void:
 
 func _enter_shop_and_purchase() -> void:
 	var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
+	run_screen.area_session.intel_tickets = maxi(
+		run_screen.area_session.intel_tickets,
+		3
+	)
 	await _click(summary.get_node("%EnterShopButton"))
 	await _settle()
 	var shop: ShopScreen = run_screen.get_node("%ShopScreen")
 	_assert_true(shop.visible, "successful room should open shop")
+	await _click(shop.get_node("%RefreshOffersButton"))
+	await _settle()
+	await _click(
+		shop.get_node("%RefreshConfirmationDialog").get_ok_button()
+	)
+	await _settle()
+	_assert_true(
+		run_screen.area_session.shop_session.refresh_used,
+		"formal shop refresh should accept a real confirmation click"
+	)
+	await _click(shop.get_node("%PurchaseIntelButton"))
+	await _settle()
+	_assert_true(
+		run_screen.get_node("%ShopIntelPanel").visible,
+		"paid intel should open its blocking overlay"
+	)
+	await _click(
+		run_screen.get_node("%ShopIntelPanel").get_node("%CloseIntelButton")
+	)
+	await _settle()
 	var offer := _find_shop_card(&"offer")
 	var deck_card := _find_shop_card(&"deck")
 	_assert_true(offer != null and deck_card != null, "shop should expose offer and deck")
@@ -238,7 +276,24 @@ func _click(control: Control) -> void:
 	_assert_true(control != null, "click target should exist")
 	if control == null:
 		return
-	await _click_at_point(control.get_global_rect().get_center())
+	var viewport := control.get_viewport()
+	var point := control.get_global_rect().get_center()
+	if viewport is Window and viewport != root:
+		point += Vector2((viewport as Window).position)
+		viewport = root
+	await _move_pointer(point)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = point
+	viewport.push_input(press, true)
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = point
+	viewport.push_input(release, true)
+	await process_frame
 
 func _click_at_point(point: Vector2) -> void:
 	await _move_pointer(point)
