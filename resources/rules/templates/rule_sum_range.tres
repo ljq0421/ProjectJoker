@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_sum_range"
+display_name = "区间总和"
+description = "已分配骰子的总和必须处于公开闭区间。"
+condition_kind = 4
+compatible_condition_modifiers = Array[int]([3])
+

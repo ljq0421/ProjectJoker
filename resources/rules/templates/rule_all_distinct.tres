@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_all_distinct"
+display_name = "全部不同"
+description = "所有已分配骰子的点数必须互不相同。"
+category = 1
+condition_kind = 6
+minimum_slot_count = 2
+compatible_condition_modifiers = Array[int]([3])
+

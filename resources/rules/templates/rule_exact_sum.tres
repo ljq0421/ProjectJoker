@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_exact_sum"
+display_name = "精确总和"
+description = "已分配骰子的总和必须等于公开目标。"
+condition_kind = 1
+compatible_condition_modifiers = Array[int]([0, 3])
+

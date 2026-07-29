@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_reverse_table"
+display_name = "反向台"
+description = "填满即通过，并在计分事件开始前翻转本轮结算方向。"
+category = 3
+condition_kind = 0
+post_pass_effect = 2
+

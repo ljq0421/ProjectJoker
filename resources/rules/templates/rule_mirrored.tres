@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_mirrored"
+display_name = "镜像排列"
+description = "首尾、次首尾等对应槽位点数必须相同。"
+category = 2
+condition_kind = 14
+minimum_slot_count = 2
+compatible_condition_modifiers = Array[int]([3])
+

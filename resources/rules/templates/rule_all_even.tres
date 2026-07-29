@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_all_even"
+display_name = "全偶"
+description = "所有已分配骰子的点数必须为偶数。"
+category = 1
+condition_kind = 7
+compatible_condition_modifiers = Array[int]([1, 3])
+

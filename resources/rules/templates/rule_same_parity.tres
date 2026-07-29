@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_same_parity"
+display_name = "同奇偶"
+description = "所有已分配骰子的奇偶性必须一致。"
+category = 1
+condition_kind = 9
+minimum_slot_count = 2
+compatible_condition_modifiers = Array[int]([3])
+

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_strict_ascending"
+display_name = "严格升序"
+description = "骰子按槽位从左到右必须严格递增。"
+category = 2
+condition_kind = 12
+minimum_slot_count = 2
+compatible_condition_modifiers = Array[int]([3])
+

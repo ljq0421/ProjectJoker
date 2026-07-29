@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_echo_table"
+display_name = "回声台"
+description = "填满即通过，并在基础结算后重复一次本台基础得分。"
+category = 3
+condition_kind = 0
+post_pass_effect = 1
+

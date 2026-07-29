@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RuleTableTemplate" format=3]
+
+[ext_resource type="Script" path="res://scripts/rules/rule_table_template.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"rule_consecutive"
+display_name = "连续数列"
+description = "点数排序后必须逐项相差一。"
+category = 1
+condition_kind = 10
+minimum_slot_count = 2
+compatible_condition_modifiers = Array[int]([2, 3])
+
