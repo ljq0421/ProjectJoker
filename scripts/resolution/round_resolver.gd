@@ -131,6 +131,46 @@ func resolve(
 			_gap_id(played_card)
 		))
 
+	var precomputed_results: Dictionary = {}
+	var reverse_table_rules: Array[RuleDefinition] = []
+	for rule in encounter.rules:
+		var precomputed_assigned_ids: Array = state.assigned_die_ids(rule.id)
+		var precomputed_values: Array[int] = []
+		for die_id in precomputed_assigned_ids:
+			if not die_values.has(die_id):
+				return _invalid("规则轨包含未知骰子")
+			precomputed_values.append(die_values[die_id])
+		var requested_modifier: int = coefficient_modifiers.get(rule.id, 0)
+		var minimum_modifier: int = 1 - rule.coefficient
+		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
+		var precomputed_result := _evaluator.evaluate(
+			rule,
+			precomputed_values,
+			effective_modifier,
+			_engraving_resolver.parity_overrides(
+				state,
+				precomputed_assigned_ids,
+				rule.id,
+				normalized_context
+			),
+			CardRules.condition_modifiers(state, rule.id),
+			CardRules.effective_slot_count(state, encounter, rule.id),
+			_engraving_resolver.sequence_overrides(
+				state,
+				precomputed_assigned_ids,
+				normalized_context
+			)
+		)
+		precomputed_results[rule.id] = precomputed_result
+		if (
+			rule.template != null
+			and rule.template.post_pass_effect
+				== RuleTableTemplate.PostPassEffect.REVERSE_DIRECTION
+		):
+			reverse_table_rules.append(rule)
+			if precomputed_result.valid:
+				reverse_order = not reverse_order
+
 	var ordered_rules := encounter.rules.duplicate()
 	if reverse_order:
 		ordered_rules.reverse()
@@ -144,10 +184,31 @@ func resolve(
 	)
 	report.ordered_rule_ids.assign(ordered_rule_ids)
 
+	for rule in reverse_table_rules:
+		var reverse_result: RuleResult = precomputed_results[rule.id]
+		report.events.append(ResolutionEvent.new(
+			rule.template.id,
+			(
+				"%s：已通过，最终结算方向已翻转" % rule.display_name
+				if reverse_result.valid
+				else "%s：未填满，结算方向不变" % rule.display_name
+			),
+			0,
+			report.total,
+			reverse_result.valid
+		))
+
 	var resolved_table_totals: Dictionary = {}
 	var pending_bridges: Dictionary = {}
+	var bridge_rules: Array[RuleDefinition] = []
 	for rule_index in range(ordered_rules.size()):
 		var rule: RuleDefinition = ordered_rules[rule_index]
+		if (
+			rule.template != null
+			and rule.template.post_pass_effect
+				== RuleTableTemplate.PostPassEffect.BRIDGE_FORWARD
+		):
+			bridge_rules.append(rule)
 		var assigned_ids: Array = state.assigned_die_ids(rule.id)
 		var values: Array[int] = []
 		for die_id in assigned_ids:
@@ -176,6 +237,18 @@ func resolve(
 		)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))
+			if (
+				rule.template != null
+				and rule.template.post_pass_effect
+					== RuleTableTemplate.PostPassEffect.ECHO_SELF
+			):
+				report.events.append(ResolutionEvent.new(
+					rule.template.id,
+					"%s：未通过，回声未触发" % rule.display_name,
+					0,
+					report.total,
+					false
+				))
 			for pending in pending_bridges.get(rule.id, []):
 				_append_outcome(report, EngravingOutcome.new(
 					pending.source_id,
@@ -214,6 +287,18 @@ func resolve(
 			report.events.append(ResolutionEvent.new(
 				rule.id,
 				label,
+				result.total,
+				report.total
+			))
+		if (
+			rule.template != null
+			and rule.template.post_pass_effect
+				== RuleTableTemplate.PostPassEffect.ECHO_SELF
+		):
+			report.total += result.total
+			report.events.append(ResolutionEvent.new(
+				rule.template.id,
+				"%s：回声重复本台基础得分" % rule.display_name,
 				result.total,
 				report.total
 			))
@@ -282,6 +367,42 @@ func resolve(
 					link.source_slot_id,
 					link.mirror_slot_id
 				))
+
+	for bridge_rule in bridge_rules:
+		var bridge_result: RuleResult = precomputed_results[bridge_rule.id]
+		var bridge_index := ordered_rule_ids.find(bridge_rule.id)
+		var target_id: StringName = (
+			ordered_rule_ids[bridge_index + 1]
+			if bridge_index >= 0 and bridge_index + 1 < ordered_rule_ids.size()
+			else &""
+		)
+		var applied := (
+			bridge_result.valid
+			and target_id != &""
+			and passed_rule_ids.has(target_id)
+		)
+		var delta := bridge_result.total if applied else 0
+		report.total += delta
+		var reason := ""
+		if not bridge_result.valid:
+			reason = "本台未通过"
+		elif target_id == &"":
+			reason = "最终方向上没有相邻目标台"
+		else:
+			reason = "目标台 %s 未通过" % target_id
+		report.events.append(ResolutionEvent.new(
+			bridge_rule.template.id,
+			(
+				"%s：向 %s 传递本台基础得分"
+				% [bridge_rule.display_name, target_id]
+				if applied
+				else "%s：桥接未触发，%s"
+					% [bridge_rule.display_name, reason]
+			),
+			delta,
+			report.total,
+			applied
+		))
 
 	_append_intel_outcomes(
 		report,

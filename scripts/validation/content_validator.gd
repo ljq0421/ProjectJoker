@@ -18,6 +18,18 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 		if rule.coefficient < 1:
 			errors.append("rule %s coefficient must be positive" % rule.id)
 		errors.append_array(_validate_rule_parameters(rule))
+	for rule_index in range(rules.size()):
+		var rule: RuleDefinition = rules[rule_index]
+		if (
+			rule.template != null
+			and rule.template.post_pass_effect
+				== RuleTableTemplate.PostPassEffect.BRIDGE_FORWARD
+			and (rules.size() != 3 or rule_index != 1)
+		):
+			errors.append(
+				"rule %s bridge template must occupy the middle track"
+				% rule.id
+			)
 
 	var seen_card_ids := {}
 	for card in cards:
