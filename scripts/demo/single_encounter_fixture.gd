@@ -1,6 +1,16 @@
 class_name SingleEncounterFixture
 extends RefCounted
 
+const EXACT_SUM_TEMPLATE = preload(
+	"res://resources/rules/templates/rule_exact_sum.tres"
+)
+const ALL_EVEN_TEMPLATE = preload(
+	"res://resources/rules/templates/rule_all_even.tres"
+)
+const CONSECUTIVE_TEMPLATE = preload(
+	"res://resources/rules/templates/rule_consecutive.tres"
+)
+
 static func make_state() -> RoundState:
 	var state := RoundState.new()
 	for value in range(1, 7):
@@ -88,6 +98,13 @@ static func _rule(
 	rule.id = id
 	rule.display_name = display_name
 	rule.condition_type = condition_type
+	match condition_type:
+		RuleDefinition.ConditionType.EXACT_SUM:
+			rule.template = EXACT_SUM_TEMPLATE
+		RuleDefinition.ConditionType.ALL_EVEN:
+			rule.template = ALL_EVEN_TEMPLATE
+		RuleDefinition.ConditionType.CONSECUTIVE:
+			rule.template = CONSECUTIVE_TEMPLATE
 	rule.slot_count = slot_count
 	rule.coefficient = coefficient
 	rule.target_value = target_value

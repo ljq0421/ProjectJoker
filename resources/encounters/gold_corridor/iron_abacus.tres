@@ -2,10 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="1_encounter"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="2_rule"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="3_exact"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="4_even"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_consecutive.tres" id="5_consecutive"]
 
 [sub_resource type="Resource" id="Rule_left"]
 script = ExtResource("2_rule")
 id = &"left"
+template = ExtResource("3_exact")
 display_name = "精确为 7"
 slot_count = 2
 target_value = 7
@@ -14,6 +18,7 @@ coefficient = 2
 [sub_resource type="Resource" id="Rule_middle"]
 script = ExtResource("2_rule")
 id = &"middle"
+template = ExtResource("5_consecutive")
 display_name = "连续三数"
 condition_type = 2
 slot_count = 3
@@ -22,6 +27,7 @@ coefficient = 2
 [sub_resource type="Resource" id="Rule_right"]
 script = ExtResource("2_rule")
 id = &"right"
+template = ExtResource("4_even")
 display_name = "单枚偶数"
 condition_type = 1
 slot_count = 1

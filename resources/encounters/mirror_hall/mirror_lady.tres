@@ -3,6 +3,9 @@
 [ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="1_encounter"]
 [ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="2_profile"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="3_rule"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="4_exact"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="5_even"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_consecutive.tres" id="6_consecutive"]
 
 [sub_resource type="Resource" id="Profile"]
 script = ExtResource("2_profile")
@@ -13,6 +16,7 @@ mirror_limit_per_round = 1
 [sub_resource type="Resource" id="Rule_left"]
 script = ExtResource("3_rule")
 id = &"left"
+template = ExtResource("4_exact")
 display_name = "精确为 9"
 slot_count = 2
 target_value = 9
@@ -21,6 +25,7 @@ coefficient = 4
 [sub_resource type="Resource" id="Rule_middle"]
 script = ExtResource("3_rule")
 id = &"middle"
+template = ExtResource("6_consecutive")
 display_name = "连续三数"
 condition_type = 2
 slot_count = 3
@@ -29,6 +34,7 @@ coefficient = 4
 [sub_resource type="Resource" id="Rule_right"]
 script = ExtResource("3_rule")
 id = &"right"
+template = ExtResource("5_even")
 display_name = "两枚全偶"
 condition_type = 1
 slot_count = 2
