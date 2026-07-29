@@ -17,14 +17,7 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 			errors.append("rule %s slot count is outside 1..6" % rule.id)
 		if rule.coefficient < 1:
 			errors.append("rule %s coefficient must be positive" % rule.id)
-		if (
-			rule.condition_type == RuleDefinition.ConditionType.EXACT_SUM
-			and (
-				rule.target_value < rule.slot_count
-				or rule.target_value > rule.slot_count * 6
-			)
-		):
-			errors.append("rule %s exact-sum target is unreachable" % rule.id)
+		errors.append_array(_validate_rule_parameters(rule))
 
 	var seen_card_ids := {}
 	for card in cards:
@@ -220,6 +213,62 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 								"card %s mirror link amount must equal one"
 								% card.id
 							)
+	return errors
+
+func _validate_rule_parameters(rule: RuleDefinition) -> Array[String]:
+	var errors: Array[String] = []
+	if rule.template == null:
+		if (
+			rule.condition_type == RuleDefinition.ConditionType.EXACT_SUM
+			and (
+				rule.target_value < rule.slot_count
+				or rule.target_value > rule.slot_count * 6
+			)
+		):
+			errors.append("rule %s exact-sum target is unreachable" % rule.id)
+		return errors
+
+	errors.append_array(rule.template.validate())
+	if (
+		rule.slot_count < rule.template.minimum_slot_count
+		or rule.slot_count > rule.template.maximum_slot_count
+	):
+		errors.append(
+			"rule %s slot count is outside template range %d..%d"
+			% [
+				rule.id,
+				rule.template.minimum_slot_count,
+				rule.template.maximum_slot_count,
+			]
+		)
+	var reachable_min := rule.slot_count
+	var reachable_max := rule.slot_count * 6
+	match rule.template.condition_kind:
+		RuleTableTemplate.ConditionKind.EXACT_SUM, RuleTableTemplate.ConditionKind.MINIMUM_SUM, RuleTableTemplate.ConditionKind.MAXIMUM_SUM:
+			if (
+				rule.target_value < reachable_min
+				or rule.target_value > reachable_max
+			):
+				errors.append("rule %s sum target is unreachable" % rule.id)
+		RuleTableTemplate.ConditionKind.SUM_RANGE:
+			if rule.minimum_value > rule.maximum_value:
+				errors.append("rule %s sum range is inverted" % rule.id)
+			if (
+				rule.minimum_value < reachable_min
+				or rule.maximum_value > reachable_max
+			):
+				errors.append("rule %s sum range is unreachable" % rule.id)
+		RuleTableTemplate.ConditionKind.FIXED_DIFFERENCE:
+			if rule.difference < 2 or rule.difference > 5:
+				errors.append("rule %s fixed difference is outside 2..5" % rule.id)
+			elif (rule.slot_count - 1) * rule.difference > 5:
+				errors.append("rule %s fixed difference has no legal dice sample" % rule.id)
+		RuleTableTemplate.ConditionKind.SLOT_TARGETS:
+			if rule.slot_targets.size() != rule.slot_count:
+				errors.append("rule %s slot targets do not match slot count" % rule.id)
+			for target in rule.slot_targets:
+				if target < 1 or target > 6:
+					errors.append("rule %s slot target is outside 1..6" % rule.id)
 	return errors
 
 func validate_dealers(dealers: Array) -> Array[String]:

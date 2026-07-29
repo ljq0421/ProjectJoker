@@ -141,6 +141,14 @@ static func _validate_effect_guards(
 					)
 					+ effect.amount
 				)
+				if (
+					rule.template != null
+					and next_slot_count > rule.template.maximum_slot_count
+				):
+					return (
+						"规则模板最多允许 %d 个骰位"
+						% rule.template.maximum_slot_count
+					)
 				if next_slot_count > 6:
 					return "加严后单张规则台不能超过六个骰位"
 				var next_total := effect.amount
@@ -207,6 +215,8 @@ static func _modifier_matches_rule(
 	modifier: EffectSpec.ConditionModifier,
 	rule: RuleDefinition
 ) -> bool:
+	if rule.template != null:
+		return rule.template.supports_condition_modifier(modifier)
 	match modifier:
 		EffectSpec.ConditionModifier.EXACT_TOLERANCE:
 			return rule.condition_type == RuleDefinition.ConditionType.EXACT_SUM
