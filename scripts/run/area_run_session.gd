@@ -5,6 +5,7 @@ enum Phase {
 	NOT_STARTED,
 	ROUTE_CHOICE,
 	NORMAL_ROOM,
+	AFTER_NORMAL_ROOM,
 	SHOP,
 	DEALER,
 	ENGRAVING_REWARD,
@@ -41,6 +42,8 @@ var installed_die_id: StringName = &""
 var installed_face := 0
 var failure_origin: Phase = Phase.NOT_STARTED
 var last_error := ""
+var _entry_state: Dictionary = {}
+var _encounter_entry_checkpoint: Dictionary = {}
 
 func _init(
 	p_seed_value: int = DEFAULT_SEED,
@@ -87,16 +90,26 @@ func start() -> OperationResult:
 	var route_error := _route_error(first_ids)
 	if not route_error.is_empty():
 		return _fail(route_error)
-	var next_deck := area_definition.starting_deck_ids.duplicate()
+	var next_deck: Array[StringName] = []
+	if _entry_state.is_empty():
+		next_deck.assign(area_definition.starting_deck_ids)
+	else:
+		next_deck.assign(_entry_state["deck_ids"])
 	var deck_error := _deck_error(next_deck)
 	if not deck_error.is_empty():
 		return _fail(deck_error)
-	var next_market := _build_market(next_deck, area_definition.shop_offer_ids)
+	var next_market := _build_market(next_deck, _entry_market_offer_ids())
 	var market_error := _market_error(next_market, next_deck)
 	if not market_error.is_empty():
 		return _fail(market_error)
-	var next_profiles := _blank_profiles()
+	var next_profiles := (
+		_blank_profiles()
+		if _entry_state.is_empty()
+		else _profiles_from_snapshots(_entry_state["die_profiles"])
+	)
 	var next_rng := RunRng.new(seed_value)
+	if not _entry_state.is_empty():
+		next_rng.restore_state(_entry_state["rng_state"])
 	var next_routes: Array[StringName] = []
 	next_routes.assign(next_rng.shuffle(first_ids))
 
@@ -104,10 +117,24 @@ func start() -> OperationResult:
 	route_ids.assign(next_routes)
 	deck_ids.assign(next_deck)
 	market_ids.assign(next_market)
-	intel_tickets = area_definition.starting_intel_tickets
+	intel_tickets = (
+		area_definition.starting_intel_tickets
+		if _entry_state.is_empty()
+		else _entry_state["intel_tickets"]
+	)
 	die_profiles = next_profiles
 	room_index = 0
 	phase = Phase.ROUTE_CHOICE
+	last_error = ""
+	return OperationResult.new(true)
+
+func configure_entry_state(state: Dictionary) -> OperationResult:
+	if phase != Phase.NOT_STARTED:
+		return _fail("区域开始后不能修改跨区入口状态")
+	var error := _entry_state_error(state)
+	if not error.is_empty():
+		return _fail(error)
+	_entry_state = state.duplicate(true)
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -124,7 +151,13 @@ func select_route(room_id: StringName) -> OperationResult:
 	var room := area_definition.find_room(room_id)
 	if room == null:
 		return _fail("所选房间定义不存在")
-	return _create_normal_room(room)
+	var entry_checkpoint := _state_snapshot()
+	entry_checkpoint["entry_kind"] = &"normal_room"
+	entry_checkpoint["entry_room_id"] = room_id
+	var result := _create_normal_room(room)
+	if result.accepted:
+		_encounter_entry_checkpoint = entry_checkpoint
+	return result
 
 func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 	if phase != Phase.NORMAL_ROOM and phase != Phase.DEALER:
@@ -148,6 +181,7 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 			"cumulative_total": encounter_session.cumulative_total,
 		})
 		intel_tickets += encounter_session.intel_tickets
+		phase = Phase.AFTER_NORMAL_ROOM
 	elif (
 		active_phase == Phase.DEALER
 		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
@@ -186,9 +220,7 @@ func choose_dealer_restriction(
 
 func open_shop() -> OperationResult:
 	if (
-		phase != Phase.NORMAL_ROOM
-		or encounter_session == null
-		or encounter_session.status != ThreeRoundEncounterSession.Status.SUCCEEDED
+		phase != Phase.AFTER_NORMAL_ROOM
 	):
 		return _fail("只有成功完成普通房后才能进入商店")
 	var market_error := _market_error(market_ids, deck_ids)
@@ -275,12 +307,17 @@ func leave_shop() -> OperationResult:
 		last_error = ""
 		return OperationResult.new(true)
 	if room_index == 1:
-		return _create_dealer(
+		var entry_checkpoint := _state_snapshot()
+		entry_checkpoint["entry_kind"] = &"dealer"
+		var result := _create_dealer(
 			next_deck,
 			next_tickets,
 			next_history,
 			next_service_history
 		)
+		if result.accepted:
+			_encounter_entry_checkpoint = entry_checkpoint
+		return result
 	return _fail("普通房序号无效")
 
 func select_engraving(engraving_id: StringName) -> OperationResult:
@@ -352,6 +389,29 @@ func completion_snapshot() -> Dictionary:
 		"face": installed_face,
 		"die_profiles": _profile_snapshots(),
 	}
+
+func checkpoint_snapshot() -> Dictionary:
+	if (
+		phase in [Phase.NORMAL_ROOM, Phase.DEALER]
+		and not _encounter_entry_checkpoint.is_empty()
+	):
+		return _encounter_entry_checkpoint.duplicate(true)
+	return _state_snapshot()
+
+func restore_checkpoint(snapshot: Dictionary) -> OperationResult:
+	var candidate := AreaRunSession.new(
+		seed_value,
+		area_definition,
+		card_catalog,
+		dealer_catalog,
+		engraving_catalog
+	)
+	var result := candidate._restore_checkpoint_in_place(snapshot)
+	if not result.accepted:
+		return _fail(result.reason)
+	_copy_runtime_from(candidate)
+	last_error = ""
+	return OperationResult.new(true)
 
 func restart() -> OperationResult:
 	if phase == Phase.NOT_STARTED:
@@ -460,6 +520,21 @@ func _build_market(
 			result.append(card_id)
 	return result
 
+func _entry_market_offer_ids() -> Array[StringName]:
+	var result: Array[StringName] = area_definition.shop_offer_ids.duplicate()
+	if _entry_state.is_empty():
+		return result
+	var regional_ids: Array[StringName] = []
+	match area_definition.id:
+		&"mirror_hall":
+			regional_ids = card_catalog.mirror_hall_card_ids()
+		&"faceless_hub":
+			regional_ids = card_catalog.faceless_hub_card_ids()
+	for card_id in regional_ids:
+		if card_id not in result:
+			result.append(card_id)
+	return result
+
 func _market_error(
 	ids: Array[StringName],
 	current_deck_ids: Array[StringName]
@@ -536,6 +611,265 @@ func _clone_service_history(
 		copies.append(record.clone())
 	return copies
 
+func _restore_checkpoint_in_place(snapshot: Dictionary) -> OperationResult:
+	if not snapshot is Dictionary:
+		return _fail("区域检查点格式无效")
+	var entry_kind: StringName = snapshot.get("entry_kind", &"")
+	var base := snapshot.duplicate(true)
+	base.erase("entry_kind")
+	base.erase("entry_room_id")
+	var result := _restore_base_snapshot(base)
+	if not result.accepted:
+		return result
+	if entry_kind == &"":
+		return OperationResult.new(true)
+	if entry_kind == &"normal_room":
+		var room_id: StringName = snapshot.get("entry_room_id", &"")
+		return select_route(room_id)
+	if entry_kind == &"dealer":
+		return leave_shop()
+	return _fail("区域检查点包含未知房间入口类型")
+
+func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
+	for key in [
+		"area_id",
+		"phase",
+		"rng_state",
+		"room_index",
+		"route_ids",
+		"selected_room_ids",
+		"completed_rooms",
+		"deck_ids",
+		"market_ids",
+		"pending_route_ids",
+		"intel_tickets",
+		"die_profiles",
+		"purchases",
+		"services",
+		"engraving_offer_ids",
+		"selected_engraving_id",
+		"installed_die_id",
+		"installed_face",
+	]:
+		if not snapshot.has(key):
+			return _fail("区域检查点缺少字段：%s" % key)
+	if snapshot["area_id"] != area_definition.id:
+		return _fail("区域检查点与地区定义不匹配")
+	if not snapshot["phase"] is int or snapshot["phase"] not in [
+		Phase.ROUTE_CHOICE,
+		Phase.AFTER_NORMAL_ROOM,
+		Phase.SHOP,
+		Phase.ENGRAVING_REWARD,
+		Phase.ENGRAVING_INSTALL,
+		Phase.COMPLETE,
+	]:
+		return _fail("区域检查点阶段无效")
+	if not snapshot["rng_state"] is int:
+		return _fail("区域检查点随机状态无效")
+	if not snapshot["deck_ids"] is Array:
+		return _fail("区域检查点牌组格式无效")
+	var next_deck: Array[StringName] = []
+	next_deck.assign(snapshot["deck_ids"])
+	var deck_error := _deck_error(next_deck)
+	if not deck_error.is_empty():
+		return _fail(deck_error)
+	if not snapshot["die_profiles"] is Array:
+		return _fail("区域检查点骰子配置格式无效")
+	var next_profiles := _profiles_from_snapshots(snapshot["die_profiles"])
+	var profiles_error := _profiles_error(next_profiles)
+	if not profiles_error.is_empty():
+		return _fail(profiles_error)
+	if not snapshot["intel_tickets"] is int or snapshot["intel_tickets"] < 0:
+		return _fail("区域检查点情报券无效")
+	if not snapshot["room_index"] is int or snapshot["room_index"] not in [0, 1]:
+		return _fail("区域检查点房间序号无效")
+
+	var next_shop: ShopSession
+	if snapshot["phase"] == Phase.SHOP:
+		if not snapshot.has("shop"):
+			return _fail("商店检查点缺少商店状态")
+		var restored_shop := ShopSession.from_snapshot(
+			card_catalog,
+			snapshot["shop"]
+		)
+		if not restored_shop.accepted:
+			return _fail(restored_shop.reason)
+		next_shop = restored_shop.session
+
+	run_rng = RunRng.new(seed_value)
+	run_rng.restore_state(snapshot["rng_state"])
+	phase = snapshot["phase"]
+	room_index = snapshot["room_index"]
+	route_ids.assign(snapshot["route_ids"])
+	selected_room_ids.assign(snapshot["selected_room_ids"])
+	completed_rooms.assign(snapshot["completed_rooms"].duplicate(true))
+	deck_ids = next_deck
+	market_ids.assign(snapshot["market_ids"])
+	pending_route_ids.assign(snapshot["pending_route_ids"])
+	intel_tickets = snapshot["intel_tickets"]
+	die_profiles = next_profiles
+	shop_purchase_history = _purchase_history_from_snapshots(snapshot["purchases"])
+	shop_service_history = _service_history_from_snapshots(snapshot["services"])
+	engraving_offer_ids.assign(snapshot["engraving_offer_ids"])
+	selected_engraving_id = snapshot["selected_engraving_id"]
+	installed_die_id = snapshot["installed_die_id"]
+	installed_face = snapshot["installed_face"]
+	encounter_session = null
+	shop_session = next_shop
+	failure_origin = Phase.NOT_STARTED
+	_encounter_entry_checkpoint = {}
+	return OperationResult.new(true)
+
+func _state_snapshot() -> Dictionary:
+	var purchases: Array[Dictionary] = []
+	for record in shop_purchase_history:
+		purchases.append({
+			"offer_id": record.offer_id,
+			"replaced_id": record.replaced_id,
+			"price": record.price,
+		})
+	var services: Array[Dictionary] = []
+	for record in shop_service_history:
+		services.append({
+			"shop_index": record.shop_index,
+			"service_type": record.service_type,
+			"price": record.price,
+			"intel_kind": record.intel_kind,
+		})
+	var snapshot := {
+		"area_id": area_definition.id,
+		"phase": phase,
+		"rng_state": run_rng.snapshot_state() if run_rng != null else 0,
+		"room_index": room_index,
+		"route_ids": route_ids.duplicate(),
+		"selected_room_ids": selected_room_ids.duplicate(),
+		"completed_rooms": completed_rooms.duplicate(true),
+		"deck_ids": deck_ids.duplicate(),
+		"market_ids": market_ids.duplicate(),
+		"pending_route_ids": pending_route_ids.duplicate(),
+		"intel_tickets": intel_tickets,
+		"die_profiles": _profile_snapshots(),
+		"purchases": purchases,
+		"services": services,
+		"engraving_offer_ids": engraving_offer_ids.duplicate(),
+		"selected_engraving_id": selected_engraving_id,
+		"installed_die_id": installed_die_id,
+		"installed_face": installed_face,
+	}
+	if phase == Phase.SHOP and shop_session != null:
+		snapshot["shop"] = shop_session.to_snapshot()
+	return snapshot
+
+func _copy_runtime_from(other: AreaRunSession) -> void:
+	phase = other.phase
+	run_rng = other.run_rng
+	room_index = other.room_index
+	route_ids = other.route_ids
+	selected_room_ids = other.selected_room_ids
+	completed_rooms = other.completed_rooms
+	deck_ids = other.deck_ids
+	market_ids = other.market_ids
+	pending_route_ids = other.pending_route_ids
+	intel_tickets = other.intel_tickets
+	die_profiles = other.die_profiles
+	encounter_session = other.encounter_session
+	shop_session = other.shop_session
+	shop_purchase_history = other.shop_purchase_history
+	shop_service_history = other.shop_service_history
+	engraving_offer_ids = other.engraving_offer_ids
+	selected_engraving_id = other.selected_engraving_id
+	installed_die_id = other.installed_die_id
+	installed_face = other.installed_face
+	failure_origin = other.failure_origin
+	_entry_state = other._entry_state
+	_encounter_entry_checkpoint = other._encounter_entry_checkpoint
+
+func _entry_state_error(state: Dictionary) -> String:
+	for key in ["deck_ids", "intel_tickets", "die_profiles", "rng_state"]:
+		if not state.has(key):
+			return "跨区入口状态缺少字段：%s" % key
+	var ids: Array[StringName] = []
+	if not state["deck_ids"] is Array:
+		return "跨区入口牌组格式无效"
+	ids.assign(state["deck_ids"])
+	var deck_error := _deck_error(ids)
+	if not deck_error.is_empty():
+		return deck_error
+	if not state["intel_tickets"] is int or state["intel_tickets"] < 0:
+		return "跨区入口情报券无效"
+	if not state["rng_state"] is int:
+		return "跨区入口随机状态无效"
+	if not state["die_profiles"] is Array:
+		return "跨区入口骰子配置无效"
+	return _profiles_error(_profiles_from_snapshots(state["die_profiles"]))
+
+func _profiles_from_snapshots(snapshots: Array) -> Array[DieState]:
+	var profiles: Array[DieState] = []
+	for entry in snapshots:
+		if entry is DieState:
+			profiles.append(entry.clone())
+			continue
+		if not entry is Dictionary:
+			return []
+		for key in ["id", "rolled_value", "engraving_id", "engraved_face"]:
+			if not entry.has(key):
+				return []
+		profiles.append(DieState.new(
+			entry["id"],
+			entry["rolled_value"],
+			entry["engraving_id"],
+			entry["engraved_face"]
+		))
+	return profiles
+
+func _profiles_error(profiles: Array[DieState]) -> String:
+	if profiles.size() != 6:
+		return "骰子配置必须包含 d1 到 d6 六颗骰子"
+	var seen: Dictionary = {}
+	for profile in profiles:
+		if (
+			profile == null
+			or profile.id not in [&"d1", &"d2", &"d3", &"d4", &"d5", &"d6"]
+			or seen.has(profile.id)
+		):
+			return "骰子配置包含未知或重复骰子"
+		seen[profile.id] = true
+		if profile.engraving_id == &"":
+			if profile.engraved_face != 0:
+				return "未刻印骰子的刻印面必须为 0"
+		elif (
+			engraving_catalog.find_engraving(profile.engraving_id) == null
+			or profile.engraved_face < 1
+			or profile.engraved_face > 6
+		):
+			return "骰子配置包含未知刻印或非法刻印面"
+	return ""
+
+func _purchase_history_from_snapshots(entries: Array) -> Array[ShopPurchaseRecord]:
+	var result: Array[ShopPurchaseRecord] = []
+	for entry in entries:
+		if not entry is Dictionary:
+			return []
+		result.append(ShopPurchaseRecord.new(
+			entry.get("offer_id", &""),
+			entry.get("replaced_id", &""),
+			entry.get("price", -1)
+		))
+	return result
+
+func _service_history_from_snapshots(entries: Array) -> Array[ShopServiceRecord]:
+	var result: Array[ShopServiceRecord] = []
+	for entry in entries:
+		if not entry is Dictionary:
+			return []
+		result.append(ShopServiceRecord.new(
+			entry.get("shop_index", -1),
+			entry.get("service_type", -1),
+			entry.get("price", -1),
+			entry.get("intel_kind", -1)
+		))
+	return result
+
 func _reset_owned_state() -> void:
 	phase = Phase.NOT_STARTED
 	run_rng = null
@@ -558,6 +892,7 @@ func _reset_owned_state() -> void:
 	installed_face = 0
 	failure_origin = Phase.NOT_STARTED
 	last_error = ""
+	_encounter_entry_checkpoint = {}
 
 func _fail(reason: String) -> OperationResult:
 	last_error = reason

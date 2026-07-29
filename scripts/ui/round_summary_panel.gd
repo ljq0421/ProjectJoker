@@ -60,6 +60,18 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	retry_button.text = "同种子重试"
 	return_button.visible = true
 
+func show_room_checkpoint(room_summary: Dictionary) -> void:
+	visible = true
+	SfxAccess.play(self, &"panel_open")
+	_hide_actions()
+	title_label.text = "解析目标达成"
+	detail_label.text = "累计解析：%d / %d\n房间已封存，可进入商店。" % [
+		room_summary.get("cumulative_total", 0),
+		room_summary.get("target_total", 0),
+	]
+	shop_button.visible = true
+	return_button.visible = true
+
 func show_dealer_ready(deck_ids: Array[StringName], intel_tickets: int) -> void:
 	visible = true
 	SfxAccess.play(self, &"panel_open")

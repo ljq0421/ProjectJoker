@@ -1,6 +1,12 @@
 class_name AreaRunScreen
 extends Control
 
+signal expedition_checkpoint_reached(snapshot: Dictionary)
+signal expedition_failed(reason: String)
+signal expedition_area_completed(summary: Dictionary)
+signal expedition_continue_requested
+signal expedition_exit_requested
+
 @export var run_seed: int = 0
 
 @onready var encounter_screen: SingleEncounterScreen = %EncounterScreen
@@ -16,6 +22,10 @@ extends Control
 var area_session: AreaRunSession
 var _configured_area: AreaDefinition
 var _configured_seed := 0
+var _configured_entry_state: Dictionary = {}
+var _configured_checkpoint: Dictionary = {}
+var _expedition_mode := false
+var _expedition_has_next_area := false
 
 func _ready() -> void:
 	move_child(navigation_bar, get_child_count() - 1)
@@ -27,12 +37,16 @@ func _ready() -> void:
 	summary_panel.retry_requested.connect(_on_restart_requested)
 	summary_panel.return_requested.connect(_on_return_requested)
 	shop_screen.leave_requested.connect(_on_shop_leave_requested)
+	shop_screen.state_changed.connect(_on_shop_state_changed)
 	shop_screen.intel_view_requested.connect(_on_shop_intel_view_requested)
 	route_panel.route_selected.connect(_on_route_selected)
 	reward_panel.engraving_selected.connect(_on_engraving_selected)
 	reward_panel.install_requested.connect(_on_install_requested)
 	complete_panel.restart_requested.connect(_on_restart_requested)
 	complete_panel.return_requested.connect(_on_return_requested)
+	complete_panel.continue_requested.connect(
+		func() -> void: expedition_continue_requested.emit()
+	)
 	summary_panel.get_node("%ReturnTeachingButton").text = "返回入口"
 	reward_panel.get_node("%InstallEngravingButton").text = "安装刻印并封存区域"
 	start_run()
@@ -40,6 +54,22 @@ func _ready() -> void:
 func configure(area_definition: AreaDefinition, seed: int) -> void:
 	_configured_area = area_definition
 	_configured_seed = seed
+	if is_node_ready():
+		start_run()
+
+func configure_for_expedition(
+	area_definition: AreaDefinition,
+	seed: int,
+	entry_state: Dictionary,
+	checkpoint: Dictionary,
+	has_next_area: bool
+) -> void:
+	_configured_area = area_definition
+	_configured_seed = seed
+	_configured_entry_state = entry_state.duplicate(true)
+	_configured_checkpoint = checkpoint.duplicate(true)
+	_expedition_mode = true
+	_expedition_has_next_area = has_next_area
 	if is_node_ready():
 		start_run()
 
@@ -61,11 +91,60 @@ func start_run() -> void:
 		else (run_seed if run_seed != 0 else build_seed())
 	)
 	area_session = AreaRunSession.new(seed, definition)
-	var result := area_session.start()
+	var result: OperationResult
+	if not _configured_checkpoint.is_empty():
+		result = area_session.restore_checkpoint(_configured_checkpoint)
+	elif not _configured_entry_state.is_empty():
+		result = area_session.configure_entry_state(_configured_entry_state)
+		if result.accepted:
+			result = area_session.start()
+	else:
+		result = area_session.start()
 	if not result.accepted:
 		_show_start_error(result.reason)
 		return
-	_show_route_choice()
+	complete_panel.configure_expedition(
+		_expedition_mode,
+		_expedition_has_next_area
+	)
+	_show_current_phase()
+	_emit_expedition_checkpoint()
+
+func _show_current_phase() -> void:
+	match area_session.phase:
+		AreaRunSession.Phase.ROUTE_CHOICE:
+			_show_route_choice()
+		AreaRunSession.Phase.NORMAL_ROOM, AreaRunSession.Phase.DEALER:
+			bind_current_encounter()
+		AreaRunSession.Phase.AFTER_NORMAL_ROOM:
+			encounter_screen.visible = false
+			if area_session.completed_rooms.is_empty():
+				_show_start_error("恢复的普通房结算摘要不存在")
+			else:
+				summary_panel.show_room_checkpoint(
+					area_session.completed_rooms[-1]
+				)
+		AreaRunSession.Phase.SHOP:
+			encounter_screen.visible = false
+			shop_screen.bind_session(
+				area_session.shop_session,
+				area_session.card_catalog
+			)
+		AreaRunSession.Phase.ENGRAVING_REWARD, AreaRunSession.Phase.ENGRAVING_INSTALL:
+			encounter_screen.visible = false
+			reward_panel.bind_reward(
+				area_session.engraving_offer_ids,
+				area_session.die_profiles,
+				area_session.engraving_catalog
+			)
+			if area_session.selected_engraving_id != &"":
+				reward_panel.restore_engraving_selection(
+					area_session.selected_engraving_id
+				)
+		AreaRunSession.Phase.COMPLETE:
+			_show_restored_completion()
+		_:
+			_show_start_error("恢复的区域阶段不受支持")
 
 func _show_route_choice() -> void:
 	intel_panel.close()
@@ -95,6 +174,7 @@ func _on_route_selected(room_id: StringName) -> void:
 	SfxAccess.play(self, &"route_select")
 	route_panel.close()
 	bind_current_encounter()
+	_emit_expedition_checkpoint()
 
 func bind_current_encounter() -> void:
 	if (
@@ -168,6 +248,9 @@ func _on_round_committed(report: ResolutionReport) -> void:
 			area_session.area_definition.display_name,
 			dealer.display_name
 		)
+		if _expedition_mode:
+			summary_panel.get_node("%RetryRunButton").visible = false
+			expedition_failed.emit(area_session.last_error)
 		return
 	if area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:
 		summary_panel.close()
@@ -178,11 +261,14 @@ func _on_round_committed(report: ResolutionReport) -> void:
 			area_session.engraving_catalog
 		)
 		call_deferred("_request_context_hint", &"engraving")
+		_emit_expedition_checkpoint()
 		return
 	if _show_restriction_choice_if_needed():
 		return
 	encounter_screen.set_run_status(_area_copy(), _encounter_goal_copy())
 	summary_panel.show_run_state(area_session.encounter_session)
+	if area_session.phase == AreaRunSession.Phase.AFTER_NORMAL_ROOM:
+		_emit_expedition_checkpoint()
 
 func _on_next_round_requested() -> void:
 	_close_context_hint()
@@ -205,6 +291,7 @@ func _on_shop_requested() -> void:
 	shop_screen.bind_session(area_session.shop_session, area_session.card_catalog)
 	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_context_hint", &"shop")
+	_emit_expedition_checkpoint()
 
 func _on_shop_intel_view_requested(snapshot: ShopIntelSnapshot) -> void:
 	if area_session == null or area_session.shop_session == null:
@@ -240,6 +327,10 @@ func _on_shop_leave_requested() -> void:
 		bind_current_encounter()
 	else:
 		encounter_screen.show_external_error("商店结算后的区域阶段无效")
+	_emit_expedition_checkpoint()
+
+func _on_shop_state_changed() -> void:
+	_emit_expedition_checkpoint()
 
 func _on_engraving_selected(engraving_id: StringName) -> void:
 	var result := area_session.select_engraving(engraving_id)
@@ -247,6 +338,7 @@ func _on_engraving_selected(engraving_id: StringName) -> void:
 		reward_panel.show_error(result.reason)
 	else:
 		SfxAccess.play(self, &"engraving_select")
+		_emit_expedition_checkpoint()
 
 func _on_install_requested(
 	engraving_id: StringName,
@@ -271,6 +363,10 @@ func _on_install_requested(
 	)
 	if not bound:
 		encounter_screen.show_external_error("区域完成摘要无法显示")
+		return
+	_emit_expedition_checkpoint()
+	if _expedition_mode:
+		expedition_area_completed.emit(area_session.completion_snapshot())
 
 func _on_restart_requested() -> void:
 	_close_context_hint()
@@ -285,7 +381,10 @@ func _on_return_requested() -> void:
 	_close_context_hint()
 	intel_panel.close()
 	SfxAccess.play(self, &"page_transition")
-	get_tree().change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
+	if _expedition_mode:
+		expedition_exit_requested.emit()
+	else:
+		get_tree().change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
 
 func _on_home_pressed() -> void:
 	_on_return_requested()
@@ -338,3 +437,31 @@ func _request_context_hint(_checkpoint_id: StringName) -> void:
 
 func _close_context_hint() -> void:
 	pass
+
+func _show_restored_completion() -> void:
+	var summary: Dictionary = _configured_checkpoint.get("completion", {})
+	if summary.is_empty():
+		_show_start_error("恢复的区域完成摘要不存在")
+		return
+	encounter_screen.visible = false
+	complete_panel.bind_summary(
+		summary,
+		area_session.area_definition,
+		area_session.card_catalog,
+		area_session.dealer_catalog,
+		area_session.engraving_catalog
+	)
+
+func _emit_expedition_checkpoint() -> void:
+	if not _expedition_mode or area_session == null:
+		return
+	var snapshot := area_session.checkpoint_snapshot()
+	if area_session.phase == AreaRunSession.Phase.COMPLETE:
+		var completion: Dictionary = _configured_checkpoint.get(
+			"completion",
+			{}
+		).duplicate(true)
+		if completion.is_empty():
+			completion = area_session.completion_snapshot()
+		snapshot["completion"] = completion.duplicate(true)
+	expedition_checkpoint_reached.emit(snapshot)

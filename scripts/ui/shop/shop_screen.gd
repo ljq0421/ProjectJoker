@@ -3,6 +3,7 @@ extends Control
 
 signal leave_requested
 signal intel_view_requested(snapshot: ShopIntelSnapshot)
+signal state_changed
 
 const CARD_SCENE = preload("res://scenes/components/shop_card_token.tscn")
 
@@ -119,6 +120,7 @@ func _on_confirm_pressed() -> void:
 		selected_offer_id = &""
 		selected_deck_id = &""
 		SfxAccess.play(self, &"shop_purchase")
+		state_changed.emit()
 	elif not result.reason.is_empty():
 		SfxAccess.play(self, &"error")
 	_refresh()
@@ -140,6 +142,7 @@ func _on_refresh_confirmed() -> void:
 		selected_offer_id = &""
 		selected_deck_id = &""
 		SfxAccess.play(self, &"shop_purchase")
+		state_changed.emit()
 	elif not result.reason.is_empty():
 		SfxAccess.play(self, &"error")
 	_refresh()
@@ -157,6 +160,7 @@ func _on_intel_pressed() -> void:
 			_refresh()
 			return
 		SfxAccess.play(self, &"shop_purchase")
+		state_changed.emit()
 	error_label.text = ""
 	_refresh()
 	intel_view_requested.emit(shop_session.intel_snapshot)

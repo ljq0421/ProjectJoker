@@ -3,6 +3,7 @@ extends Control
 
 signal restart_requested
 signal return_requested
+signal continue_requested
 
 const REQUIRED_KEYS := [
 	"area_id",
@@ -19,10 +20,24 @@ const REQUIRED_KEYS := [
 	"die_profiles",
 ]
 
+var _expedition_mode := false
+var _has_next_area := false
+
 func _ready() -> void:
-	%RestartAreaButton.pressed.connect(func() -> void: restart_requested.emit())
+	%RestartAreaButton.pressed.connect(_on_primary_pressed)
 	%ReturnEntryButton.pressed.connect(func() -> void: return_requested.emit())
 	close()
+
+func configure_expedition(enabled: bool, has_next_area: bool) -> void:
+	_expedition_mode = enabled
+	_has_next_area = has_next_area
+	if not enabled:
+		return
+	%RestartAreaButton.text = (
+		"进入下一区域"
+		if has_next_area
+		else "查看远征总结"
+	)
 
 func bind_summary(
 	summary: Dictionary,
@@ -67,7 +82,8 @@ func bind_summary(
 	var dealer_definition := dealer_catalog.find_dealer(dealer["id"])
 	%CompleteTitle.text = "%s · 账目封存" % area_definition.display_name
 	%SealMark.text = "%s  /  CLOSED" % String(area_definition.id).to_upper()
-	%RestartAreaButton.text = "重新开始%s" % area_definition.display_name
+	if not _expedition_mode:
+		%RestartAreaButton.text = "重新开始%s" % area_definition.display_name
 	score_lines.append("%s　%d / %d" % [
 		dealer_definition.display_name,
 		dealer["cumulative_total"],
@@ -92,6 +108,12 @@ func bind_summary(
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	SfxAccess.play(self, &"area_complete")
 	return true
+
+func _on_primary_pressed() -> void:
+	if _expedition_mode:
+		continue_requested.emit()
+	else:
+		restart_requested.emit()
 
 func show_error(message: String) -> void:
 	%CompleteErrorLabel.text = message

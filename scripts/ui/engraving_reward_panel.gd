@@ -66,6 +66,10 @@ func show_error(message: String) -> void:
 	%RewardErrorLabel.text = message
 	SfxAccess.play(self, &"error")
 
+func restore_engraving_selection(engraving_id: StringName) -> void:
+	selected_engraving_id = engraving_id
+	_update_selection()
+
 func close() -> void:
 	visible = false
 

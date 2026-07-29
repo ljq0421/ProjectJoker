@@ -1,0 +1,182 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/expedition_run_screen.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="SummaryStyle"]
+content_margin_left = 36.0
+content_margin_top = 32.0
+content_margin_right = 36.0
+content_margin_bottom = 32.0
+bg_color = Color(0.025, 0.032, 0.105, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.705, 0.37, 0.92)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[node name="ExpeditionRunScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="AreaHost" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ExpeditionSummaryPanel" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dimmer" type="ColorRect" parent="ExpeditionSummaryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.006, 0.009, 0.035, 0.96)
+
+[node name="SafeArea" type="MarginContainer" parent="ExpeditionSummaryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = 100.0
+offset_right = -220.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Ledger" type="PanelContainer" parent="ExpeditionSummaryPanel/SafeArea"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SummaryStyle")
+
+[node name="Content" type="VBoxContainer" parent="ExpeditionSummaryPanel/SafeArea/Ledger"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+layout_mode = 2
+text = "三区域远征完成"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 44
+
+[node name="ExpeditionSeedLabel" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "远征种子｜0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="Body" type="HBoxContainer" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 28
+
+[node name="ExpeditionAreaHistoryLabel" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 22
+
+[node name="ExpeditionFinalBuildLabel" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="ReturnFromExpeditionButton" type="Button" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "返回梦层入口"
+
+[node name="ExpeditionErrorPanel" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dimmer" type="ColorRect" parent="ExpeditionErrorPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.01, 0.04, 0.92)
+
+[node name="Center" type="CenterContainer" parent="ExpeditionErrorPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="ExpeditionErrorPanel/Center"]
+custom_minimum_size = Vector2(760, 260)
+layout_mode = 2
+theme_override_styles/panel = SubResource("SummaryStyle")
+
+[node name="Content" type="VBoxContainer" parent="ExpeditionErrorPanel/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="ExpeditionErrorPanel/Center/Panel/Content"]
+layout_mode = 2
+text = "远征记录无法继续"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.44, 0.52, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="ExpeditionErrorLabel" type="Label" parent="ExpeditionErrorPanel/Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="ReturnFromErrorButton" type="Button" parent="ExpeditionErrorPanel/Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 54)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "返回梦层入口"

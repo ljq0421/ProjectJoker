@@ -29,15 +29,15 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 152.0
-offset_top = 96.0
+offset_top = 56.0
 offset_right = -152.0
-offset_bottom = -96.0
+offset_bottom = -56.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Content" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
-theme_override_constants/separation = 28
+theme_override_constants/separation = 18
 
 [node name="Eyebrow" type="Label" parent="SafeArea/Content"]
 layout_mode = 2
@@ -59,6 +59,56 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 20
 
+[node name="ExpeditionPanel" type="PanelContainer" parent="SafeArea/Content"]
+custom_minimum_size = Vector2(0, 118)
+layout_mode = 2
+
+[node name="ExpeditionRow" type="HBoxContainer" parent="SafeArea/Content/ExpeditionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ExpeditionCopy" type="VBoxContainer" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionCopy"]
+layout_mode = 2
+text = "三区域连续远征"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 27
+
+[node name="ExpeditionStatusLabel" type="Label" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "没有进行中的远征"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="ExpeditionActions" type="HBoxContainer" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 10
+
+[node name="AbandonExpeditionButton" type="Button" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 52)
+layout_mode = 2
+text = "放弃远征"
+
+[node name="ContinueExpeditionButton" type="Button" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 52)
+layout_mode = 2
+text = "继续远征"
+
+[node name="StartExpeditionButton" type="Button" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 52)
+layout_mode = 2
+text = "开始新远征"
+
 [node name="Spacer" type="Control" parent="SafeArea/Content"]
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
@@ -71,7 +121,7 @@ theme_override_constants/h_separation = 24
 theme_override_constants/v_separation = 24
 
 [node name="GoldCorridorCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
-custom_minimum_size = Vector2(0, 330)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/GoldCorridorCard"]
@@ -96,11 +146,11 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "进入金钱回廊"
+text = "区域试玩：金钱回廊"
 tooltip_text = "从金钱回廊的第一组路线开始试炼"
 
 [node name="MirrorHallCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
-custom_minimum_size = Vector2(0, 330)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/MirrorHallCard"]
@@ -125,11 +175,11 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "进入反照牌厅"
+text = "区域试玩：反照牌厅"
 tooltip_text = "从反照牌厅的第一组路线开始试炼"
 
 [node name="FacelessHubCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
-custom_minimum_size = Vector2(0, 330)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/FacelessHubCard"]
@@ -154,7 +204,7 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "进入无面中枢"
+text = "区域试玩：无面中枢"
 tooltip_text = "从无面中枢的第一组路线开始试炼"
 
 [node name="PracticeRow" type="HBoxContainer" parent="SafeArea/Content"]
@@ -179,3 +229,17 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "进入基础牌局演练"
 tooltip_text = "进入基础牌局与教学入口"
+
+[node name="AbandonExpeditionDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "放弃当前远征"
+dialog_text = "这会清除当前远征检查点，且无法恢复。"
+ok_button_text = "确认放弃"
+cancel_button_text = "保留远征"
+
+[node name="NewExpeditionDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "开始新远征"
+dialog_text = "开始新远征会覆盖当前检查点。"
+ok_button_text = "覆盖并开始"
+cancel_button_text = "取消"
