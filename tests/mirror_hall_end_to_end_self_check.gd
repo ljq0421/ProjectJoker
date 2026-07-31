@@ -36,14 +36,14 @@ func _run() -> void:
 	await _click(route_panel.get_node("%LeftRouteButton"))
 	await _settle()
 	await _exercise_mirror_undo_and_replay()
-	await _complete_three_rounds()
+	await _complete_encounter_rounds()
 	await _enter_shop_and_purchase()
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
 	await _settle()
 
 	await _click(route_panel.get_node("%RightRouteButton"))
 	await _settle()
-	await _complete_three_rounds()
+	await _complete_encounter_rounds()
 	await _enter_shop_and_purchase()
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
 	await _settle()
@@ -70,20 +70,25 @@ func _run() -> void:
 	)
 	await _click(narrative.get_node("%NarrativeContinueButton"))
 	await _settle()
-	await _complete_three_rounds()
+	await _complete_encounter_rounds()
 
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")
-	_assert_true(reward.visible, "dealer success should open three engraving offers")
+	_assert_true(reward.visible, "dealer success should open the mixed reward choice")
 	_assert_equal(
 		reward.get_node("%OfferRow").get_child_count(),
-		3,
-		"reward should expose exactly three engravings"
+		2,
+		"mixed reward should expose exactly two engraving choices"
 	)
-	var engraving_id: StringName = run_screen.area_session.engraving_offer_ids[0]
-	await _click(_find_engraving_option(engraving_id))
-	await _click(_find_reward_button(&"die_id", &"d1"))
-	await _click(_find_reward_button(&"face", 2))
-	await _click(reward.get_node("%InstallEngravingButton"))
+	_assert_equal(
+		reward.get_node("%RareCardOfferRow").get_child_count(),
+		1,
+		"mixed reward should expose exactly one rare-card choice"
+	)
+	var reward_card_id: StringName = run_screen.area_session.rare_card_offer_ids[0]
+	var replaced_id: StringName = run_screen.area_session.deck_ids[0]
+	await _click(reward.get_node("%RareCardOfferRow").get_child(0))
+	await _click(reward.get_node("%RewardDeckGrid").get_child(0))
+	await _click(reward.get_node("%ConfirmCardRewardButton"))
 	await _settle()
 
 	var snapshot := run_screen.area_session.completion_snapshot()
@@ -94,6 +99,19 @@ func _run() -> void:
 		"completion should retain Mirror Lady"
 	)
 	_assert_equal(snapshot.get("deck_ids", []).size(), 12, "completion should retain twelve cards")
+	_assert_equal(
+		snapshot.get("reward_kind"),
+		&"rare_card",
+		"real reward clicks should complete through the rare-card branch"
+	)
+	_assert_equal(snapshot.get("reward_card_id"), reward_card_id, "summary should retain the rare card")
+	_assert_equal(snapshot.get("replaced_card_id"), replaced_id, "summary should retain the replaced card")
+	_assert_true(reward_card_id in snapshot.get("deck_ids", []), "rare card should enter the deck")
+	_assert_true(replaced_id not in snapshot.get("deck_ids", []), "replaced card should leave the deck")
+	var unique_deck_ids: Dictionary = {}
+	for card_id in snapshot.get("deck_ids", []):
+		unique_deck_ids[card_id] = true
+	_assert_equal(unique_deck_ids.size(), 12, "rare-card replacement should preserve a unique deck")
 	_assert_true(snapshot.get("intel_tickets") is int, "completion should retain resources")
 	_assert_equal(snapshot.get("die_profiles", []).size(), 6, "completion should retain six dice")
 	_assert_true(snapshot.get("rng_state") is int, "completion should retain deterministic RNG")
@@ -138,14 +156,15 @@ func _exercise_mirror_undo_and_replay() -> void:
 		"replaying the same card should restore the same preview events"
 	)
 
-func _complete_three_rounds() -> void:
+func _complete_encounter_rounds() -> void:
 	run_screen.area_session.encounter_session.target_total = 0
-	for round_number in range(1, 4):
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_number in range(1, round_count + 1):
 		var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
 		encounter.resolution_panel.finish_playback()
 		await _settle()
-		if round_number < 3:
+		if round_number < round_count:
 			await _click(
 				run_screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton")
 			)

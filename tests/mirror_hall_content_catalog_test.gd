@@ -76,7 +76,7 @@ func run() -> void:
 		&"mirror_room_reverse_drill": [EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT, 110, 5],
 		&"mirror_room_double_ledger": [EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT, 116, 6],
 		&"mirror_room_echo_bridge": [EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT, 132, 7],
-		&"mirror_room_symmetric_page": [EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT, 140, 8],
+		&"mirror_room_symmetric_page": [EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT, 96, 8],
 	}
 	for room_id in expected_rooms:
 		var room := area.find_room(room_id)

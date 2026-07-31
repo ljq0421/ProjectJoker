@@ -44,6 +44,7 @@ id = &"gold_room_even_split"
 display_name = "偶数分流"
 description = "用偶数关系争取高系数，同时保留精确点数和连续路线。"
 encounter = SubResource("Encounter_main")
+build_identity_id = &"table_chain"
 target_total = 110
 success_intel_reward = 3
 tags = PackedStringArray("奇偶", "关系", "进取")

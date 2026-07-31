@@ -50,13 +50,19 @@ func _bind_route(
 	card_catalog: CardCatalog
 ) -> void:
 	get_node("%sRouteName" % ["%" + prefix]).text = room.display_name
-	get_node("%sRouteDescription" % ["%" + prefix]).text = room.description
-	get_node("%sRouteGoal" % ["%" + prefix]).text = "三轮目标：%d" % room.target_total
+	get_node("%sRouteDescription" % ["%" + prefix]).text = "%s\n%s" % [
+		room.description,
+		RouteBriefFormatter.activity_text(room, card_catalog),
+	]
+	get_node("%sRouteGoal" % ["%" + prefix]).text = RouteBriefFormatter.goal_text(room)
 	get_node("%sRouteReward" % ["%" + prefix]).text = (
 		"成功奖励：%d 张情报券" % room.success_intel_reward
 	)
 	get_node("%sRouteTags" % ["%" + prefix]).text = (
-		"房间特征｜%s" % " · ".join(room.tags)
+		"%s　房间特征｜%s" % [
+			RouteBriefFormatter.identity_text(room, deck_ids, card_catalog),
+			" · ".join(room.tags),
+		]
 	)
 	var matching_names := RouteBriefFormatter.matching_card_names(
 		room,

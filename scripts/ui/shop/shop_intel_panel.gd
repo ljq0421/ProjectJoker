@@ -79,15 +79,21 @@ func _bind_route_page(
 	card_catalog: CardCatalog
 ) -> void:
 	get_node("%sIntelName" % ["%" + prefix]).text = room.display_name
-	get_node("%sIntelBody" % ["%" + prefix]).text = room.description
+	get_node("%sIntelBody" % ["%" + prefix]).text = "%s\n%s" % [
+		room.description,
+		RouteBriefFormatter.activity_text(room, card_catalog),
+	]
 	get_node("%sIntelGoal" % ["%" + prefix]).text = (
-		"三轮目标：%d" % room.target_total
+		RouteBriefFormatter.goal_text(room)
 	)
 	get_node("%sIntelReward" % ["%" + prefix]).text = (
 		"成功奖励：%d 张情报券" % room.success_intel_reward
 	)
 	get_node("%sIntelTags" % ["%" + prefix]).text = (
-		"房间特征｜%s" % " · ".join(room.tags)
+		"%s　房间特征｜%s" % [
+			RouteBriefFormatter.identity_text(room, deck_ids, card_catalog),
+			" · ".join(room.tags),
+		]
 	)
 	get_node("%sIntelSynergy" % ["%" + prefix]).text = (
 		"牌组呼应｜%s" % RouteBriefFormatter.synergy_text(

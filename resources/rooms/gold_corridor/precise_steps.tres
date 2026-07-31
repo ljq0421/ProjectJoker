@@ -44,6 +44,7 @@ id = &"gold_room_precise_steps"
 display_name = "精确步阶"
 description = "以精确点数和连续关系稳步累计，适合校准与重复手法。"
 encounter = SubResource("Encounter_main")
+build_identity_id = &"dice_control"
 target_total = 100
 success_intel_reward = 2
 tags = PackedStringArray("点数", "连续", "稳妥")

@@ -31,6 +31,7 @@ var _second_route_ids: Array[StringName] = []
 @export var dealer_round_schedule: DealerRoundSchedule
 @export var dealer_target := 0
 @export var shop_offer_ids: Array[StringName] = []
+@export var rare_reward_card_ids: Array[StringName] = []
 @export var engraving_offer_ids: Array[StringName] = []
 
 func find_room(room_id: StringName) -> RoomDefinition:
@@ -65,6 +66,7 @@ func validate(
 	_validate_initial_engraving(errors, engraving_catalog)
 	_validate_dealer(errors, dealer_catalog)
 	_validate_shop_pool(errors, card_catalog)
+	_validate_rare_reward_pool(errors, card_catalog)
 	_validate_engraving_pool(errors, engraving_catalog)
 	if starting_intel_tickets < 0:
 		errors.append("area %s starting tickets cannot be negative" % id)
@@ -178,3 +180,21 @@ func _validate_engraving_pool(
 			)
 		else:
 			seen[engraving_id] = true
+
+func _validate_rare_reward_pool(
+	errors: Array[String],
+	card_catalog: CardCatalog
+) -> void:
+	if rare_reward_card_ids.size() < 3:
+		errors.append("area %s rare reward pool must contain at least three cards" % id)
+	var seen: Dictionary = {}
+	for card_id in rare_reward_card_ids:
+		var card := card_catalog.find_card(card_id)
+		if card == null:
+			errors.append("area %s rare reward contains unknown card: %s" % [id, card_id])
+		elif card.rarity != CardDefinition.Rarity.RARE:
+			errors.append("area %s reward card is not rare: %s" % [id, card_id])
+		if seen.has(card_id):
+			errors.append("area %s rare reward repeats card: %s" % [id, card_id])
+		else:
+			seen[card_id] = true

@@ -19,6 +19,7 @@ var catalog: CardCatalog
 var seed_value: int
 var target_total: int
 var setup: EncounterRunSetup
+var round_count: int
 var status: Status = Status.NOT_STARTED
 var current_round: int = 0
 var current_session: SingleEncounterSession
@@ -45,6 +46,7 @@ func _init(
 	seed_value = p_seed_value
 	target_total = p_target_total
 	setup = p_setup if p_setup != null else EncounterRunSetup.new()
+	round_count = setup.round_count
 
 func start() -> OperationResult:
 	if status != Status.NOT_STARTED:
@@ -83,7 +85,7 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 	committed_reports.append(report)
 	cumulative_total += report.total
 	earned_intel_tickets += report.intel_delta
-	if current_round < ROUND_COUNT:
+	if current_round < round_count:
 		if setup.round_schedule != null and current_round == 2:
 			status = Status.AWAITING_RESTRICTION
 		else:
@@ -158,13 +160,12 @@ func choose_final_restriction(
 	return OperationResult.new(true)
 
 func current_round_plan() -> EncounterRoundPlan:
-	if (
-		setup.round_schedule == null
-		or current_round < 1
-		or current_round > setup.round_schedule.round_plans.size()
-	):
+	var plans: Array[EncounterRoundPlan] = setup.round_plans
+	if plans.is_empty() and setup.round_schedule != null:
+		plans = setup.round_schedule.round_plans
+	if current_round < 1 or current_round > plans.size():
 		return null
-	return setup.round_schedule.round_plans[current_round - 1]
+	return plans[current_round - 1]
 
 func public_restriction_options() -> Array[FinalRestrictionDefinition]:
 	if setup.round_schedule == null:
@@ -172,12 +173,16 @@ func public_restriction_options() -> Array[FinalRestrictionDefinition]:
 	return setup.round_schedule.restriction_options()
 
 func active_restriction() -> FinalRestrictionDefinition:
-	if current_round == 3 and selected_final_restriction != null:
+	if current_round == round_count and selected_final_restriction != null:
 		return selected_final_restriction
 	return setup.fixed_restriction
 
 func _begin_round() -> OperationResult:
-	var next_hand_ids := _deck.draw_round()
+	var next_hand_ids: Array[StringName] = (
+		setup.fixed_hand_ids.duplicate()
+		if not setup.fixed_hand_ids.is_empty()
+		else _deck.draw_round()
+	)
 	if next_hand_ids.size() != CardDeck.HAND_SIZE:
 		return _fail("当前轮没有抽到四张手法牌")
 
@@ -238,6 +243,19 @@ func _profile_for(die_id: StringName) -> DieState:
 func _validate_setup() -> String:
 	if setup.success_intel_reward < 0:
 		return "成功情报券奖励不能为负数"
+	if setup.round_count < 1 or setup.round_count > ROUND_COUNT:
+		return "遭遇轮数必须为一到三轮"
+	if setup.round_schedule != null and setup.round_count != ROUND_COUNT:
+		return "庄家公开日程必须保持三轮"
+	if not setup.round_plans.is_empty():
+		if setup.round_schedule != null:
+			return "普通房逐轮计划不能与庄家日程并存"
+		if setup.round_plans.size() != setup.round_count:
+			return "普通房逐轮计划数量必须等于遭遇轮数"
+		for plan in setup.round_plans:
+			var plan_errors := plan.validate()
+			if not plan_errors.is_empty():
+				return "普通房逐轮计划无效：%s" % "；".join(plan_errors)
 	if setup.round_schedule != null:
 		var schedule_errors := setup.round_schedule.validate()
 		if not schedule_errors.is_empty():
@@ -261,6 +279,16 @@ func _validate_setup() -> String:
 		if deck_ids.has(card_id):
 			return "遭遇牌组包含重复卡牌：%s" % card_id
 		deck_ids[card_id] = true
+	if not setup.fixed_hand_ids.is_empty():
+		if setup.fixed_hand_ids.size() != CardDeck.HAND_SIZE:
+			return "固定手牌必须正好包含四张牌"
+		var fixed_ids: Dictionary = {}
+		for card_id in setup.fixed_hand_ids:
+			if catalog.find_card(card_id) == null:
+				return "固定手牌包含未知卡牌：%s" % card_id
+			if fixed_ids.has(card_id):
+				return "固定手牌包含重复卡牌：%s" % card_id
+			fixed_ids[card_id] = true
 
 	if setup.round_schedule == null and setup.encounter != null:
 		var encounter_errors := ContentValidator.new().validate(setup.encounter.rules, [])

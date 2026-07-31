@@ -72,7 +72,8 @@ func _test_all_route_combinations_complete() -> void:
 		assert_equal(session.current_round, 3, "choice creates third round")
 		_commit_current_round(area)
 		assert_equal(area.phase, AreaRunSession.Phase.ENGRAVING_REWARD, "dealer opens reward")
-		assert_equal(area.engraving_offer_ids.size(), 3, "reward offers three engravings")
+		assert_equal(area.engraving_offer_ids.size(), 2, "reward offers two engravings")
+		assert_equal(area.rare_card_offer_ids.size(), 1, "reward offers one rare card")
 		assert_true(area.select_engraving(area.engraving_offer_ids[0]).accepted, "select reward")
 		assert_true(area.install_selected_engraving(&"d1", 2).accepted, "install reward")
 		assert_equal(area.phase, AreaRunSession.Phase.COMPLETE, "faceless run completes")
@@ -85,10 +86,11 @@ func _test_all_route_combinations_complete() -> void:
 
 func _complete_normal_encounter(area: AreaRunSession) -> void:
 	area.encounter_session.target_total = 0
-	for round_index in range(3):
+	var round_total := area.encounter_session.round_count
+	for round_index in range(round_total):
 		_prepare_fixed_restriction(area.encounter_session.current_session.controller)
 		_commit_current_round(area)
-		if round_index < 2:
+		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "advance normal round")
 
 func _prepare_fixed_restriction(controller: RoundController) -> void:

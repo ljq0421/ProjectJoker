@@ -51,6 +51,7 @@ id = &"mirror_room_echo_bridge"
 display_name = "回声桥"
 description = "用相邻传递和弱化重复安排从右向左的高系数轨迹。"
 encounter = SubResource("Encounter")
+build_identity_id = &"table_chain"
 target_total = 132
 success_intel_reward = 7
 tags = PackedStringArray("逆序", "传递", "重复")

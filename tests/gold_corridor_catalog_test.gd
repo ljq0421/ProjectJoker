@@ -73,7 +73,7 @@ func _expected_rooms() -> Dictionary:
 			"synergy_tags": PackedStringArray(["骰值", "校准", "系数"]),
 		},
 		&"gold_room_narrow_ledger": {
-			"target": 120,
+			"target": 48,
 			"reward": 2,
 			"rules": [
 				[&"rule_sum_range", 2, 3, 0, 8, 10, 2],

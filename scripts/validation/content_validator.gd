@@ -1,6 +1,8 @@
 class_name ContentValidator
 extends RefCounted
 
+const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
+
 func validate(rules: Array, cards: Array) -> Array[String]:
 	var errors: Array[String] = []
 	var seen_rule_ids := {}
@@ -397,6 +399,30 @@ func validate_rooms(rooms: Array) -> Array[String]:
 			errors.append("room %s has no display tags" % room.id)
 		if room.synergy_tags.is_empty():
 			errors.append("room %s has no synergy tags" % room.id)
+		if room.build_identity_id not in BuildIdentities.new().all_ids():
+			errors.append("room %s has an unknown build identity" % room.id)
+		if room.round_count < 1 or room.round_count > 3:
+			errors.append("room %s round count is outside 1..3" % room.id)
+		match room.activity_kind:
+			RoomDefinition.ActivityKind.STANDARD:
+				if room.round_count != 3:
+					errors.append("standard room %s must use three rounds" % room.id)
+			RoomDefinition.ActivityKind.SINGLE_ROUND_CONTRACT:
+				if room.round_count != 1:
+					errors.append("single-round room %s must use one round" % room.id)
+			RoomDefinition.ActivityKind.FIXED_HAND_PUZZLE:
+				if room.fixed_hand_ids.size() != CardDeck.HAND_SIZE:
+					errors.append("fixed-hand room %s must expose four cards" % room.id)
+			RoomDefinition.ActivityKind.RULE_MUTATION:
+				if room.round_plans.size() != room.round_count:
+					errors.append(
+						"mutation room %s plan count must match round count" % room.id
+					)
+		for plan in room.round_plans:
+			if plan == null:
+				errors.append("room %s contains a null round plan" % room.id)
+			else:
+				errors.append_array(plan.validate())
 		if room.restriction != null:
 			errors.append_array(validate_restriction(room.restriction))
 		if room.encounter == null:

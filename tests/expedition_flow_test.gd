@@ -67,7 +67,8 @@ func _test_three_real_area_sessions_flow_in_order() -> void:
 
 func _complete_encounter(area: AreaRunSession, choose_restriction: bool) -> void:
 	area.encounter_session.target_total = 0
-	for round_index in range(3):
+	var round_total := area.encounter_session.round_count
+	for round_index in range(round_total):
 		_prepare_distribution_restriction(
 			area.encounter_session.current_session.controller
 		)
@@ -77,7 +78,7 @@ func _complete_encounter(area: AreaRunSession, choose_restriction: bool) -> void
 			area.accept_encounter_report(report).accepted,
 			"area should accept committed report"
 		)
-		if round_index >= 2:
+		if round_index >= round_total - 1:
 			continue
 		if (
 			choose_restriction

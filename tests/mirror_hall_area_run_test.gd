@@ -133,8 +133,9 @@ func _complete_run(
 	)
 	_complete_current_encounter(area)
 	assert_equal(area.phase, AreaRunSession.Phase.ENGRAVING_REWARD, "dealer opens reward")
-	assert_equal(area.engraving_offer_ids.size(), 3, "reward offers three engravings")
-	assert_equal(_unique_count(area.engraving_offer_ids), 3, "reward offers are unique")
+	assert_equal(area.engraving_offer_ids.size(), 2, "reward offers two engravings")
+	assert_equal(_unique_count(area.engraving_offer_ids), 2, "engraving offers are unique")
+	assert_equal(area.rare_card_offer_ids.size(), 1, "reward offers one rare card")
 	for engraving_id in area.engraving_offer_ids:
 		assert_true(
 			engraving_id in area.area_definition.engraving_offer_ids,
@@ -149,10 +150,11 @@ func _complete_run(
 
 func _complete_current_encounter(area: AreaRunSession) -> void:
 	area.encounter_session.target_total = 0
-	for round_index in range(ThreeRoundEncounterSession.ROUND_COUNT):
+	var round_total := area.encounter_session.round_count
+	for round_index in range(round_total):
 		var report := area.encounter_session.current_session.commit()
 		assert_true(area.accept_encounter_report(report).accepted, "report should be accepted")
-		if round_index < ThreeRoundEncounterSession.ROUND_COUNT - 1:
+		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "next round should begin")
 
 func _new_mirror_run() -> AreaRunSession:

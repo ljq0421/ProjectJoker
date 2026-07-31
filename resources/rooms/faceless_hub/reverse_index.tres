@@ -49,6 +49,7 @@ id = &"faceless_room_reverse_index"
 display_name = "反向索引"
 description = "从右向左结算，重新判断桌间传递、重复与高系数规则台的优先级。"
 encounter = SubResource("Encounter")
+build_identity_id = &"dice_control"
 target_total = 145
 success_intel_reward = 8
 tags = PackedStringArray("复合条件", "逆序", "规划")

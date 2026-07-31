@@ -43,6 +43,7 @@ id = &"gold_room_parallel_proof"
 display_name = "并行校核"
 description = "三条等权高系数规则并列，要求在奇偶、点数与连续关系间取舍。"
 encounter = SubResource("Encounter_main")
+build_identity_id = &"table_chain"
 target_total = 135
 success_intel_reward = 3
 tags = PackedStringArray("奇偶", "关系", "进取")

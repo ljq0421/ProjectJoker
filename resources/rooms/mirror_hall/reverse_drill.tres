@@ -50,6 +50,7 @@ id = &"mirror_room_reverse_drill"
 display_name = "逆序校场"
 description = "先读取从右向左的公开方向，再规划三轨与镜像副本的先后。"
 encounter = SubResource("Encounter")
+build_identity_id = &"dice_control"
 target_total = 110
 success_intel_reward = 5
 tags = PackedStringArray("逆序", "镜像", "基础")

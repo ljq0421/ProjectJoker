@@ -36,7 +36,11 @@ var encounter_session: ThreeRoundEncounterSession
 var shop_session: ShopSession
 var shop_purchase_history: Array[ShopPurchaseRecord] = []
 var shop_service_history: Array[ShopServiceRecord] = []
+var rare_card_offer_ids: Array[StringName] = []
 var engraving_offer_ids: Array[StringName] = []
+var selected_reward_kind: StringName = &""
+var selected_reward_card_id: StringName = &""
+var replaced_reward_card_id: StringName = &""
 var selected_engraving_id: StringName = &""
 var installed_die_id: StringName = &""
 var installed_face := 0
@@ -186,11 +190,9 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 		active_phase == Phase.DEALER
 		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	):
-		var shuffled := run_rng.shuffle(area_definition.engraving_offer_ids)
-		engraving_offer_ids.clear()
-		engraving_offer_ids.assign(shuffled.slice(0, 3))
-		selected_engraving_id = &""
-		phase = Phase.ENGRAVING_REWARD
+		var reward_result := _prepare_dealer_rewards()
+		if not reward_result.accepted:
+			return reward_result
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -330,6 +332,59 @@ func select_engraving(engraving_id: StringName) -> OperationResult:
 	last_error = ""
 	return OperationResult.new(true)
 
+func select_rare_card_reward(card_id: StringName) -> OperationResult:
+	if phase != Phase.ENGRAVING_REWARD:
+		return _fail("当前不能选择稀有手法牌")
+	if card_id not in rare_card_offer_ids:
+		return _fail("所选稀有手法牌不在本次候选中")
+	selected_reward_card_id = card_id
+	last_error = ""
+	return OperationResult.new(true)
+
+func select_reward_replacement(card_id: StringName) -> OperationResult:
+	if phase != Phase.ENGRAVING_REWARD:
+		return _fail("当前不能选择待替换手法牌")
+	if card_id not in deck_ids:
+		return _fail("待替换手法牌不在当前牌组中")
+	replaced_reward_card_id = card_id
+	last_error = ""
+	return OperationResult.new(true)
+
+func claim_rare_card_reward(
+	card_id: StringName,
+	replaced_id: StringName
+) -> OperationResult:
+	if phase != Phase.ENGRAVING_REWARD:
+		return _fail("当前不能领取稀有手法牌")
+	if card_id not in rare_card_offer_ids:
+		return _fail("所选稀有手法牌不在本次候选中")
+	if replaced_id not in deck_ids:
+		return _fail("待替换手法牌不在当前牌组中")
+	if card_id in deck_ids:
+		return _fail("稀有手法牌已在当前牌组中")
+	if not select_rare_card_reward(card_id).accepted:
+		return _fail(last_error)
+	if not select_reward_replacement(replaced_id).accepted:
+		return _fail(last_error)
+	var card := card_catalog.find_card(card_id)
+	if card == null or card.rarity != CardDefinition.Rarity.RARE:
+		return _fail("所选奖励不是有效稀有手法牌")
+	var index := deck_ids.find(replaced_id)
+	deck_ids[index] = card_id
+	var deck_error := _deck_error(deck_ids)
+	if not deck_error.is_empty():
+		deck_ids[index] = replaced_id
+		return _fail(deck_error)
+	selected_reward_kind = &"rare_card"
+	selected_reward_card_id = card_id
+	replaced_reward_card_id = replaced_id
+	selected_engraving_id = &""
+	installed_die_id = &""
+	installed_face = 0
+	phase = Phase.COMPLETE
+	last_error = ""
+	return OperationResult.new(true)
+
 func install_selected_engraving(
 	die_id: StringName,
 	face: int
@@ -349,6 +404,9 @@ func install_selected_engraving(
 	die_profiles = result.profiles
 	installed_die_id = die_id
 	installed_face = face
+	selected_reward_kind = &"engraving"
+	selected_reward_card_id = &""
+	replaced_reward_card_id = &""
 	phase = Phase.COMPLETE
 	last_error = ""
 	return OperationResult.new(true)
@@ -384,6 +442,9 @@ func completion_snapshot() -> Dictionary:
 		"services": services,
 		"deck_ids": deck_ids.duplicate(),
 		"intel_tickets": intel_tickets,
+		"reward_kind": selected_reward_kind,
+		"reward_card_id": selected_reward_card_id,
+		"replaced_card_id": replaced_reward_card_id,
 		"engraving_id": selected_engraving_id,
 		"die_id": installed_die_id,
 		"face": installed_face,
@@ -425,6 +486,9 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.run_rng = run_rng
 	setup.deck_ids = deck_ids.duplicate()
 	setup.encounter = room.encounter
+	setup.round_count = room.round_count
+	setup.fixed_hand_ids.assign(room.fixed_hand_ids)
+	setup.round_plans.assign(room.round_plans)
 	setup.fixed_restriction = room.restriction
 	setup.resolution_context = ResolutionContext.new(null, engraving_catalog)
 	setup.success_intel_reward = room.success_intel_reward
@@ -444,6 +508,31 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	selected_room_ids.append(room.id)
 	route_ids.clear()
 	phase = Phase.NORMAL_ROOM
+	last_error = ""
+	return OperationResult.new(true)
+
+func _prepare_dealer_rewards() -> OperationResult:
+	if phase != Phase.DEALER:
+		return _fail("只有庄家成功后才能准备奖励")
+	var rare_candidates: Array[StringName] = []
+	for card_id in area_definition.rare_reward_card_ids:
+		if card_id not in deck_ids:
+			rare_candidates.append(card_id)
+	if rare_candidates.is_empty():
+		return _fail("当前牌组外没有可用的区域稀有手法牌")
+	var shuffled_cards := run_rng.shuffle(rare_candidates)
+	var shuffled_engravings := run_rng.shuffle(area_definition.engraving_offer_ids)
+	if shuffled_engravings.size() < 2:
+		return _fail("区域刻印奖励候选不足两枚")
+	rare_card_offer_ids.assign(shuffled_cards.slice(0, 1))
+	engraving_offer_ids.assign(shuffled_engravings.slice(0, 2))
+	selected_reward_kind = &""
+	selected_reward_card_id = &""
+	replaced_reward_card_id = &""
+	selected_engraving_id = &""
+	installed_die_id = &""
+	installed_face = 0
+	phase = Phase.ENGRAVING_REWARD
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -711,6 +800,10 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	shop_purchase_history = _purchase_history_from_snapshots(snapshot["purchases"])
 	shop_service_history = _service_history_from_snapshots(snapshot["services"])
 	engraving_offer_ids.assign(snapshot["engraving_offer_ids"])
+	rare_card_offer_ids.assign(snapshot.get("rare_card_offer_ids", []))
+	selected_reward_kind = snapshot.get("selected_reward_kind", &"")
+	selected_reward_card_id = snapshot.get("selected_reward_card_id", &"")
+	replaced_reward_card_id = snapshot.get("replaced_reward_card_id", &"")
 	selected_engraving_id = snapshot["selected_engraving_id"]
 	installed_die_id = snapshot["installed_die_id"]
 	installed_face = snapshot["installed_face"]
@@ -751,7 +844,11 @@ func _state_snapshot() -> Dictionary:
 		"die_profiles": _profile_snapshots(),
 		"purchases": purchases,
 		"services": services,
+		"rare_card_offer_ids": rare_card_offer_ids.duplicate(),
 		"engraving_offer_ids": engraving_offer_ids.duplicate(),
+		"selected_reward_kind": selected_reward_kind,
+		"selected_reward_card_id": selected_reward_card_id,
+		"replaced_reward_card_id": replaced_reward_card_id,
 		"selected_engraving_id": selected_engraving_id,
 		"installed_die_id": installed_die_id,
 		"installed_face": installed_face,
@@ -776,7 +873,11 @@ func _copy_runtime_from(other: AreaRunSession) -> void:
 	shop_session = other.shop_session
 	shop_purchase_history = other.shop_purchase_history
 	shop_service_history = other.shop_service_history
+	rare_card_offer_ids = other.rare_card_offer_ids
 	engraving_offer_ids = other.engraving_offer_ids
+	selected_reward_kind = other.selected_reward_kind
+	selected_reward_card_id = other.selected_reward_card_id
+	replaced_reward_card_id = other.replaced_reward_card_id
 	selected_engraving_id = other.selected_engraving_id
 	installed_die_id = other.installed_die_id
 	installed_face = other.installed_face
@@ -886,7 +987,11 @@ func _reset_owned_state() -> void:
 	shop_session = null
 	shop_purchase_history.clear()
 	shop_service_history.clear()
+	rare_card_offer_ids.clear()
 	engraving_offer_ids.clear()
+	selected_reward_kind = &""
+	selected_reward_card_id = &""
+	replaced_reward_card_id = &""
 	selected_engraving_id = &""
 	installed_die_id = &""
 	installed_face = 0

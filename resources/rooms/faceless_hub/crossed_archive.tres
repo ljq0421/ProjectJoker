@@ -49,6 +49,7 @@ id = &"faceless_room_crossed_archive"
 display_name = "交叉档案"
 description = "从左向右读取三种复合条件，再规划骰值、条件宽限和规则台收益。"
 encounter = SubResource("Encounter")
+build_identity_id = &"table_chain"
 target_total = 135
 success_intel_reward = 7
 tags = PackedStringArray("复合条件", "正序", "基础")

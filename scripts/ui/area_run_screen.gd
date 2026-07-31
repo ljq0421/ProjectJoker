@@ -44,6 +44,11 @@ func _ready() -> void:
 	route_panel.route_selected.connect(_on_route_selected)
 	reward_panel.engraving_selected.connect(_on_engraving_selected)
 	reward_panel.install_requested.connect(_on_install_requested)
+	reward_panel.card_reward_requested.connect(_on_card_reward_requested)
+	reward_panel.reward_card_selected.connect(_on_reward_card_selected)
+	reward_panel.replacement_card_selected.connect(
+		_on_reward_replacement_selected
+	)
 	complete_panel.restart_requested.connect(_on_restart_requested)
 	complete_panel.return_requested.connect(_on_return_requested)
 	complete_panel.continue_requested.connect(
@@ -138,7 +143,12 @@ func _show_current_phase() -> void:
 			reward_panel.bind_reward(
 				area_session.engraving_offer_ids,
 				area_session.die_profiles,
-				area_session.engraving_catalog
+				area_session.engraving_catalog,
+				area_session.rare_card_offer_ids,
+				area_session.deck_ids,
+				area_session.card_catalog,
+				area_session.selected_reward_card_id,
+				area_session.replaced_reward_card_id
 			)
 			if area_session.selected_engraving_id != &"":
 				reward_panel.restore_engraving_selection(
@@ -237,10 +247,11 @@ func _area_copy() -> String:
 	return "%s · %s" % [area_name, room.display_name]
 
 func _encounter_goal_copy() -> String:
-	return "累计：%d / %d　轮次 %d / 3　情报券：%d" % [
+	return "累计：%d / %d　轮次 %d / %d　情报券：%d" % [
 		area_session.encounter_session.cumulative_total,
 		area_session.encounter_session.target_total,
 		area_session.encounter_session.current_round,
+		area_session.encounter_session.round_count,
 		area_session.intel_tickets,
 	]
 
@@ -271,7 +282,12 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		reward_panel.bind_reward(
 			area_session.engraving_offer_ids,
 			area_session.die_profiles,
-			area_session.engraving_catalog
+			area_session.engraving_catalog,
+			area_session.rare_card_offer_ids,
+			area_session.deck_ids,
+			area_session.card_catalog,
+			area_session.selected_reward_card_id,
+			area_session.replaced_reward_card_id
 		)
 		call_deferred("_request_context_hint", &"engraving")
 		_emit_expedition_checkpoint()
@@ -366,6 +382,34 @@ func _on_install_requested(
 	if not result.accepted:
 		reward_panel.show_error(result.reason)
 		return
+	_show_area_completion()
+
+func _on_card_reward_requested(
+	card_id: StringName,
+	replaced_id: StringName
+) -> void:
+	_close_context_hint()
+	var result := area_session.claim_rare_card_reward(card_id, replaced_id)
+	if not result.accepted:
+		reward_panel.show_error(result.reason)
+		return
+	_show_area_completion()
+
+func _on_reward_card_selected(card_id: StringName) -> void:
+	var result := area_session.select_rare_card_reward(card_id)
+	if not result.accepted:
+		reward_panel.show_error(result.reason)
+		return
+	_emit_expedition_checkpoint()
+
+func _on_reward_replacement_selected(card_id: StringName) -> void:
+	var result := area_session.select_reward_replacement(card_id)
+	if not result.accepted:
+		reward_panel.show_error(result.reason)
+		return
+	_emit_expedition_checkpoint()
+
+func _show_area_completion() -> void:
 	reward_panel.close()
 	var bound := complete_panel.bind_summary(
 		area_session.completion_snapshot(),

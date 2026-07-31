@@ -8,12 +8,18 @@ func _initialize() -> void:
 func _run() -> void:
 	var area := AreaCatalog.new().faceless_hub()
 	for room in area.rooms:
-		var solution_count := _count_solutions(room.encounter, 2)
-		_assert(
-			solution_count >= 2,
-			"%s should have at least two deterministic scoring assignments"
-				% room.display_name
-		)
+		var encounters: Array[EncounterDefinition] = [room.encounter]
+		if not room.round_plans.is_empty():
+			encounters.clear()
+			for plan in room.round_plans:
+				encounters.append(plan.encounter)
+		for encounter in encounters:
+			var solution_count := _count_solutions(encounter, 2)
+			_assert(
+				solution_count >= 2,
+				"%s should have at least two deterministic scoring assignments"
+					% room.display_name
+			)
 	_verify_restrictions_are_strategically_distinct(area)
 	if _failed:
 		quit(1)

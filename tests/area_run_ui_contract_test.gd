@@ -74,4 +74,16 @@ func run() -> void:
 			Control.MOUSE_FILTER_IGNORE,
 			"%s hidden intel panel should release input" % path
 		)
+		var reward := screen.get_node("%EngravingRewardPanel")
+		for node_name in [
+			"CardRewardModeButton",
+			"EngravingRewardModeButton",
+			"RareCardOfferRow",
+			"RewardDeckGrid",
+			"ConfirmCardRewardButton",
+		]:
+			assert_true(
+				reward.get_node_or_null("%" + node_name) != null,
+				"%s mixed reward should own %s" % [path, node_name]
+			)
 		screen.free()

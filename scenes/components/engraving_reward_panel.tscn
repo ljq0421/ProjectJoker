@@ -45,16 +45,67 @@ theme_override_constants/separation = 14
 [node name="RewardTitle" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "选择一枚基础刻印"
+text = "选择庄家奖励"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 30
 
 [node name="RewardRule" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "从三个确定候选中选择一个，再指定一颗实际骰子和 1–6 的实际骰面。"
+text = "稀有牌会替换当前一张牌并保持 12 张；刻印会安装到一颗未刻印骰子。两类奖励只能选择其一。"
 horizontal_alignment = 1
 autowrap_mode = 2
+
+[node name="RewardModeRow" type="HBoxContainer" parent="Center/Panel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="CardRewardModeButton" type="Button" parent="Center/Panel/Content/RewardModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 46)
+layout_mode = 2
+toggle_mode = true
+text = "稀有手法牌"
+
+[node name="EngravingRewardModeButton" type="Button" parent="Center/Panel/Content/RewardModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 46)
+layout_mode = 2
+toggle_mode = true
+text = "骰面刻印"
+
+[node name="RareCardTitle" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择稀有牌"
+horizontal_alignment = 1
+
+[node name="RareCardOfferRow" type="HBoxContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="RewardDeckTitle" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择一张当前牌进行替换"
+horizontal_alignment = 1
+
+[node name="RewardDeckGrid" type="GridContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 6
+
+[node name="ConfirmCardRewardButton" type="Button" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "替换并封存区域"
+disabled = true
 
 [node name="OfferRow" type="HBoxContainer" parent="Center/Panel/Content"]
 unique_name_in_owner = true
@@ -63,6 +114,7 @@ alignment = 1
 theme_override_constants/separation = 12
 
 [node name="DieTitle" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "选择骰子"
 horizontal_alignment = 1
@@ -74,6 +126,7 @@ alignment = 1
 theme_override_constants/separation = 10
 
 [node name="FaceTitle" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "选择刻印面"
 horizontal_alignment = 1

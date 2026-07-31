@@ -6,7 +6,11 @@ func run() -> void:
 	var migrated_rules: Array[RuleDefinition] = []
 	for area in areas:
 		for room in area.rooms:
-			migrated_rules.append_array(room.encounter.rules)
+			if room.round_plans.is_empty():
+				migrated_rules.append_array(room.encounter.rules)
+			else:
+				for plan in room.round_plans:
+					migrated_rules.append_array(plan.encounter.rules)
 		if area.dealer_encounter != null:
 			migrated_rules.append_array(area.dealer_encounter.rules)
 		if area.dealer_round_schedule != null:
@@ -15,8 +19,8 @@ func run() -> void:
 
 	assert_equal(
 		migrated_rules.size(),
-		51,
-		"the three shipped areas should expose 51 migrated rule instances"
+		54,
+		"the three shipped areas should expose 54 migrated rule instances"
 	)
 	for rule in migrated_rules:
 		assert_true(

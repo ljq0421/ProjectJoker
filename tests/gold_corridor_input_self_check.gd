@@ -117,6 +117,7 @@ func _run() -> void:
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")
 	_assert_true(reward.visible, "dealer success should open engraving reward")
 
+	await _click(reward.get_node("%EngravingRewardModeButton"))
 	var engraving_id: StringName = run_screen.area_session.engraving_offer_ids[0]
 	await _click(_find_engraving_option(engraving_id))
 	await _click(_find_reward_button(&"die_id", &"d1"))
@@ -136,7 +137,9 @@ func _run() -> void:
 	)
 	_assert_true(
 		complete.get_node("%PurchaseHistoryLabel").text.count("→") == 2,
-		"completion should show two purchases"
+		"completion should show two purchases; got: %s" % (
+			complete.get_node("%PurchaseHistoryLabel").text
+		)
 	)
 	var transaction_text: String = complete.get_node("%PurchaseHistoryLabel").text
 	_assert_true(
@@ -149,7 +152,9 @@ func _run() -> void:
 	)
 	_assert_equal(
 		complete.get_node("%FinalResourceLabel").text,
-		"剩余情报券｜%d" % run_screen.area_session.completion_snapshot().intel_tickets,
+		"剩余情报券｜%d" % int(
+			run_screen.area_session.completion_snapshot()["intel_tickets"]
+		),
 		"completion balance should equal the domain snapshot"
 	)
 	_assert_true(
@@ -220,7 +225,7 @@ func _enter_shop_and_purchase() -> void:
 	var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
 	run_screen.area_session.intel_tickets = maxi(
 		run_screen.area_session.intel_tickets,
-		3
+		10
 	)
 	await _click(summary.get_node("%EnterShopButton"))
 	await _settle()
@@ -246,7 +251,7 @@ func _enter_shop_and_purchase() -> void:
 		run_screen.get_node("%ShopIntelPanel").get_node("%CloseIntelButton")
 	)
 	await _settle()
-	var offer := _find_shop_card(&"offer")
+	var offer := _find_shop_offer_not_in_deck()
 	var deck_card := _find_shop_card(&"deck")
 	_assert_true(offer != null and deck_card != null, "shop should expose offer and deck")
 	if offer == null or deck_card == null:
@@ -257,6 +262,13 @@ func _enter_shop_and_purchase() -> void:
 	await _click(deck_card)
 	await _click(shop.get_node("%ConfirmReplacementButton"))
 	await _settle()
+	_assert_equal(
+		shop.shop_session.purchase_records.size(),
+		1,
+		"real shop replacement should be recorded; shop error=%s" % (
+			shop.get_node("%ShopErrorLabel").text
+		)
+	)
 
 func _find_shop_card(role: StringName) -> ShopCardToken:
 	for node in run_screen.find_children("*", "Button", true, false):
@@ -265,6 +277,18 @@ func _find_shop_card(role: StringName) -> ShopCardToken:
 			and not node.is_queued_for_deletion()
 			and not node.disabled
 			and node.role == role
+		):
+			return node
+	return null
+
+func _find_shop_offer_not_in_deck() -> ShopCardToken:
+	for node in run_screen.find_children("*", "Button", true, false):
+		if (
+			node is ShopCardToken
+			and not node.is_queued_for_deletion()
+			and not node.disabled
+			and node.role == &"offer"
+			and node.card_id not in run_screen.area_session.deck_ids
 		):
 			return node
 	return null

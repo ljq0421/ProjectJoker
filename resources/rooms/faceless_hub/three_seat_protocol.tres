@@ -52,6 +52,7 @@ display_name = "三席协议"
 description = "确认时三张规则台都必须有骰子，要求先满足布局覆盖再追求高分。"
 encounter = SubResource("Encounter")
 restriction = ExtResource("5_restriction")
+build_identity_id = &"intel_economy"
 target_total = 165
 success_intel_reward = 10
 tags = PackedStringArray("分配限制", "复合条件", "预演")

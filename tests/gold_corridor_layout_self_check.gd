@@ -110,8 +110,8 @@ func _verify_complete_layout(rendered_size: Vector2i) -> void:
 		)
 	_assert_equal(
 		reward.get_node("%OfferRow").get_child_count(),
-		3,
-		"%s reward should show three engravings" % size_label
+		2,
+		"%s reward should show two engraving choices beside the rare-card choice" % size_label
 	)
 	_assert_equal(
 		reward.get_node("%DieRow").get_child_count(),
@@ -277,7 +277,9 @@ func _verify_room_playability() -> void:
 			hidden_bonus_seen = hidden_bonus_seen or sample["hidden_bonus_seen"]
 			for signature in sample["qualifying_signatures"]:
 				qualifying_signatures[signature] = true
-		var target_difference := room.target_total - best_preview_total * 3
+		var target_difference := (
+			room.target_total - best_preview_total * room.round_count
+		)
 		print(
 			(
 				"PLAYABILITY %s legal=%d calibration=%d card_alternatives=%d "
@@ -298,7 +300,7 @@ func _verify_room_playability() -> void:
 			"%s should have at least two no-card solution signatures" % room.id
 		)
 		_assert_true(
-			best_preview_total * 3 >= room.target_total,
+			best_preview_total * room.round_count >= room.target_total,
 			"%s should be playable without a shop-only card" % room.id
 		)
 		_assert_true(
@@ -360,7 +362,7 @@ func _enumerate_assignments(room: RoomDefinition, values: Array[int]) -> Diction
 		if report.total > best_preview_total:
 			best_preview_total = report.total
 			best_unassigned_dice = report.unassigned_dice
-		if report.total * 3 >= room.target_total:
+		if report.total * room.round_count >= room.target_total:
 			qualifying_signatures["/".join(signature_parts)] = true
 		hidden_bonus_seen = hidden_bonus_seen or (
 			report.dealer_reward != 0 or report.dealer_reward_lost != 0

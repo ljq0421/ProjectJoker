@@ -17,17 +17,23 @@ func run() -> void:
 	for area in areas:
 		var area_template_ids: Dictionary = {}
 		for room in area.rooms:
-			formal_rule_count += room.encounter.rules.size()
-			_collect_templates(
-				room.encounter,
-				formal_template_ids,
-				area_template_ids
-			)
-			assert_true(
-				_multi_table_solution_count(room.encounter, 2) >= 2,
-				"formal room %s should expose two multi-table allocations"
-					% room.id
-			)
+			var encounters: Array[EncounterDefinition] = [room.encounter]
+			if not room.round_plans.is_empty():
+				encounters.clear()
+				for plan in room.round_plans:
+					encounters.append(plan.encounter)
+			for encounter in encounters:
+				formal_rule_count += encounter.rules.size()
+				_collect_templates(
+					encounter,
+					formal_template_ids,
+					area_template_ids
+				)
+				assert_true(
+					_multi_table_solution_count(encounter, 2) >= 2,
+					"formal room %s should expose two multi-table allocations"
+						% room.id
+				)
 		if area.dealer_encounter != null:
 			formal_rule_count += area.dealer_encounter.rules.size()
 			_collect_templates(
@@ -54,8 +60,8 @@ func run() -> void:
 
 	assert_equal(
 		formal_rule_count,
-		51,
-		"formal areas should retain fifty-one rule instances"
+		54,
+		"formal areas should expose fifty-four rule instances"
 	)
 	var expected_ids := PackedStringArray()
 	for template_id in catalog.all_ids():

@@ -8,6 +8,10 @@
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_minimum_sum.tres" id="6_minimum"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_echo_table.tres" id="7_echo"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_all_equal.tres" id="8_equal"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_maximum_sum.tres" id="9_maximum"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_bridge_table.tres" id="10_bridge"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_distinct.tres" id="11_distinct"]
+[ext_resource type="Script" path="res://scripts/run/encounter_round_plan.gd" id="12_plan"]
 
 [sub_resource type="Resource" id="Profile"]
 script = ExtResource("3_profile")
@@ -43,6 +47,51 @@ id = &"faceless_encounter_single_hand_agenda"
 rules = Array[ExtResource("4_rule")]([SubResource("Rule_left"), SubResource("Rule_middle"), SubResource("Rule_right")])
 rule_profile = SubResource("Profile")
 
+[sub_resource type="Resource" id="MutationRule_left"]
+script = ExtResource("4_rule")
+id = &"left"
+template = ExtResource("9_maximum")
+display_name = "突变：至多为 8"
+slot_count = 2
+target_value = 8
+coefficient = 5
+
+[sub_resource type="Resource" id="MutationRule_middle"]
+script = ExtResource("4_rule")
+id = &"middle"
+template = ExtResource("10_bridge")
+display_name = "突变：桥接台"
+slot_count = 2
+coefficient = 2
+
+[sub_resource type="Resource" id="MutationRule_right"]
+script = ExtResource("4_rule")
+id = &"right"
+template = ExtResource("11_distinct")
+display_name = "突变：两枚互异"
+slot_count = 2
+coefficient = 5
+
+[sub_resource type="Resource" id="MutationEncounter"]
+script = ExtResource("2_encounter")
+id = &"faceless_encounter_single_hand_mutation"
+rules = Array[ExtResource("4_rule")]([SubResource("MutationRule_left"), SubResource("MutationRule_middle"), SubResource("MutationRule_right")])
+rule_profile = SubResource("Profile")
+
+[sub_resource type="Resource" id="Plan_first"]
+script = ExtResource("12_plan")
+id = &"single_hand_first"
+display_name = "公开议程"
+encounter = SubResource("Encounter")
+public_summary = "最低总和 / 回声台 / 两枚相同；每轮最多使用一张真实手法牌。"
+
+[sub_resource type="Resource" id="Plan_mutation"]
+script = ExtResource("12_plan")
+id = &"single_hand_mutation"
+display_name = "规则突变"
+encounter = SubResource("MutationEncounter")
+public_summary = "最高总和 / 桥接台 / 两枚互异；限制不变，规则台整体突变。"
+
 [resource]
 script = ExtResource("1_room")
 id = &"faceless_room_single_hand_agenda"
@@ -50,7 +99,11 @@ display_name = "独手议程"
 description = "公开限制每轮最多使用一张真实手法牌，强调单牌对完整布局的价值。"
 encounter = SubResource("Encounter")
 restriction = ExtResource("5_restriction")
-target_total = 155
+activity_kind = 3
+round_count = 2
+round_plans = Array[ExtResource("12_plan")]([SubResource("Plan_first"), SubResource("Plan_mutation")])
+build_identity_id = &"intel_economy"
+target_total = 110
 success_intel_reward = 9
 tags = PackedStringArray("操作限制", "复合条件", "预演")
 synergy_tags = PackedStringArray("单牌", "条件", "刻印")

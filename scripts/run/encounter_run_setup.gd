@@ -5,6 +5,9 @@ var run_rng: RunRng
 var deck_ids: Array[StringName] = []
 var encounter: EncounterDefinition
 var round_schedule: DealerRoundSchedule
+var round_plans: Array[EncounterRoundPlan] = []
+var round_count := 3
+var fixed_hand_ids: Array[StringName] = []
 var fixed_restriction: FinalRestrictionDefinition
 var resolution_context: ResolutionContext
 var success_intel_reward: int = 2

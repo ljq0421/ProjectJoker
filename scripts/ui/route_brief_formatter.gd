@@ -1,6 +1,8 @@
 class_name RouteBriefFormatter
 extends RefCounted
 
+const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
+
 static func rule_text(rule: RuleDefinition) -> String:
 	if rule == null:
 		return "规则资料不可用"
@@ -38,6 +40,40 @@ static func synergy_text(names: Array[String]) -> String:
 	if names.size() > 4:
 		copy += " 等 %d 张" % names.size()
 	return copy
+
+static func goal_text(room: RoomDefinition) -> String:
+	return "%d 轮累计目标：%d" % [room.round_count, room.target_total]
+
+static func activity_text(
+	room: RoomDefinition,
+	card_catalog: CardCatalog
+) -> String:
+	match room.activity_kind:
+		RoomDefinition.ActivityKind.SINGLE_ROUND_CONTRACT:
+			return "活动｜单轮高压契约 · 一次结算决定成败"
+		RoomDefinition.ActivityKind.FIXED_HAND_PUZZLE:
+			var names: Array[String] = []
+			for card_id in room.fixed_hand_ids:
+				var card := card_catalog.find_card(card_id)
+				names.append(card.display_name if card != null else String(card_id))
+			return "活动｜公开固定手牌 · %s" % " / ".join(names)
+		RoomDefinition.ActivityKind.RULE_MUTATION:
+			var summaries: Array[String] = []
+			for plan in room.round_plans:
+				summaries.append("%s：%s" % [plan.display_name, plan.public_summary])
+			return "活动｜逐轮规则突变 · %s" % "；".join(summaries)
+	return "活动｜标准三轮试局"
+
+static func identity_text(
+	room: RoomDefinition,
+	deck_ids: Array[StringName],
+	card_catalog: CardCatalog
+) -> String:
+	var identities := BuildIdentities.new()
+	return "构筑｜%s" % identities.route_identity_copy(
+		room.build_identity_id,
+		identities.deck_counts(deck_ids, card_catalog)
+	)
 
 static func _condition_hint(rule: RuleDefinition) -> String:
 	if rule.template == null:

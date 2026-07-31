@@ -50,6 +50,7 @@ id = &"mirror_room_double_ledger"
 display_name = "双影账页"
 description = "比较原牌与镜像副本落在不同桌间槽后的确定性结果。"
 encounter = SubResource("Encounter")
+build_identity_id = &"table_chain"
 target_total = 116
 success_intel_reward = 6
 tags = PackedStringArray("正序", "镜像", "比较")

@@ -1,6 +1,8 @@
 class_name ShopCardToken
 extends Button
 
+const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
+
 signal card_selected(card_id: StringName, role: StringName)
 
 var card_id: StringName
@@ -21,8 +23,10 @@ func bind_card(
 	button_pressed = selected
 	disabled = p_disabled
 	var price_copy := "" if price < 0 else "\n售价：%d 情报券" % price
-	text = "%s\n目标：%s\n%s%s" % [
+	var identities := BuildIdentities.new()
+	text = "%s｜%s\n目标：%s\n%s%s" % [
 		card.display_name,
+		identities.display_name(identities.identity_for_card(card)),
 		_target_copy(card.target_type),
 		card.rule_text,
 		price_copy,

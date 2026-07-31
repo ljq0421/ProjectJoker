@@ -129,7 +129,7 @@ func _test_intel_panel_contract() -> void:
 	assert_false(panel.get_node("%DealerIntelScroll").visible, "dealer view should hide")
 	assert_false(panel.get_node("%LeftIntelBody").text.is_empty(), "left route should bind")
 	assert_false(panel.get_node("%RightIntelBody").text.is_empty(), "right route should bind")
-	assert_true("三轮目标" in panel.get_node("%LeftIntelGoal").text, "left goal should bind")
+	assert_true("累计目标" in panel.get_node("%LeftIntelGoal").text, "left goal should bind")
 	assert_true("成功奖励" in panel.get_node("%RightIntelReward").text, "right reward should bind")
 	assert_false(panel.get_node("%LeftIntelSynergy").text.is_empty(), "synergy should bind")
 	for node_name in [

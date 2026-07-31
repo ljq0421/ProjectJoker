@@ -206,7 +206,8 @@ func _test_all_route_combinations_complete() -> void:
 			AreaRunSession.Phase.ENGRAVING_REWARD,
 			"%s should reach engraving reward" % [combination]
 		)
-		assert_equal(area.engraving_offer_ids.size(), 3, "dealer should offer three engravings")
+		assert_equal(area.engraving_offer_ids.size(), 2, "dealer should offer two engravings")
+		assert_equal(area.rare_card_offer_ids.size(), 1, "dealer should offer one rare card")
 
 		var before_invalid := _snapshot(area)
 		assert_false(
@@ -410,10 +411,11 @@ func _complete_current_encounter(
 ) -> void:
 	if force_success:
 		area.encounter_session.target_total = 0
-	for round_index in range(ThreeRoundEncounterSession.ROUND_COUNT):
+	var round_total := area.encounter_session.round_count
+	for round_index in range(round_total):
 		var report := area.encounter_session.current_session.commit()
 		assert_true(area.accept_encounter_report(report).accepted, "formal report should be accepted")
-		if round_index < ThreeRoundEncounterSession.ROUND_COUNT - 1:
+		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "next round should begin")
 
 func _snapshot(area: AreaRunSession) -> Dictionary:
