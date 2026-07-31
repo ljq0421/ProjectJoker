@@ -8,6 +8,28 @@ const CARD_EXPECTATIONS := {
 	&"mirror_deep_echo": [[EffectSpec.Operation.MODIFY_COEFFICIENT, 1, EffectSpec.Operation.REPEAT_TABLE, 2], [EffectSpec.Operation.REPEAT_TABLE, 1]],
 	&"mirror_silver_bridge": [[EffectSpec.Operation.LINK_NEIGHBORS, 1, EffectSpec.Operation.REPEAT_TABLE, 1], [EffectSpec.Operation.LINK_NEIGHBORS, 1]],
 }
+const ROOM_RULE_TEMPLATES := {
+	&"mirror_room_reverse_drill": [
+		&"rule_strict_descending",
+		&"rule_reverse_table",
+		&"rule_strict_ascending",
+	],
+	&"mirror_room_double_ledger": [
+		&"rule_mirrored",
+		&"rule_exact_sum",
+		&"rule_all_equal",
+	],
+	&"mirror_room_echo_bridge": [
+		&"rule_echo_table",
+		&"rule_bridge_table",
+		&"rule_fixed_difference",
+	],
+	&"mirror_room_symmetric_page": [
+		&"rule_slot_targets",
+		&"rule_mirrored",
+		&"rule_reverse_table",
+	],
+}
 
 func run() -> void:
 	var cards := CardCatalog.new()
@@ -66,6 +88,11 @@ func run() -> void:
 		assert_equal(room.encounter.rule_profile.mirror_limit_per_round, 1, "%s mirror limit" % room_id)
 		assert_equal(room.target_total, expected_rooms[room_id][1], "%s target" % room_id)
 		assert_equal(room.success_intel_reward, expected_rooms[room_id][2], "%s reward" % room_id)
+		assert_equal(
+			_template_ids(room.encounter),
+			ROOM_RULE_TEMPLATES[room_id],
+			"%s formal rule templates" % room_id
+		)
 
 	var dealer := dealers.mirror_lady()
 	assert_true(dealer != null, "Mirror Lady should load")
@@ -76,6 +103,11 @@ func run() -> void:
 		"Mirror Lady resolves right to left"
 	)
 	assert_true(area.dealer_encounter.rule_profile.mirror_first_table_card, "Mirror Lady mirrors")
+	assert_equal(
+		_template_ids(area.dealer_encounter),
+		[&"rule_echo_table", &"rule_bridge_table", &"rule_slot_targets"],
+		"Mirror Lady should use the formal distortion and position set"
+	)
 	assert_equal(engravings.mirror_hall_ids().size(), 4, "mirror engraving pool should be exact")
 
 	var session := AreaRunSession.new(20260727, area)
@@ -109,3 +141,9 @@ func _effect_signature(effects: Array[EffectSpec]) -> Array:
 		signature.append(effect.operation)
 		signature.append(effect.amount)
 	return signature
+
+func _template_ids(encounter: EncounterDefinition) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for rule in encounter.rules:
+		ids.append(rule.template.id)
+	return ids

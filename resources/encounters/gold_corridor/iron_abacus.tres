@@ -2,35 +2,35 @@
 
 [ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="1_encounter"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="2_rule"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="3_exact"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="4_even"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_consecutive.tres" id="5_consecutive"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_minimum_sum.tres" id="3_minimum"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_maximum_sum.tres" id="4_maximum"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="5_exact"]
 
 [sub_resource type="Resource" id="Rule_left"]
 script = ExtResource("2_rule")
 id = &"left"
-template = ExtResource("3_exact")
-display_name = "精确为 7"
+template = ExtResource("3_minimum")
+display_name = "至少为 8"
 slot_count = 2
-target_value = 7
+target_value = 8
 coefficient = 2
 
 [sub_resource type="Resource" id="Rule_middle"]
 script = ExtResource("2_rule")
 id = &"middle"
-template = ExtResource("5_consecutive")
-display_name = "连续三数"
-condition_type = 2
-slot_count = 3
+template = ExtResource("5_exact")
+display_name = "精确为 7"
+slot_count = 2
+target_value = 7
 coefficient = 2
 
 [sub_resource type="Resource" id="Rule_right"]
 script = ExtResource("2_rule")
 id = &"right"
-template = ExtResource("4_even")
-display_name = "单枚偶数"
-condition_type = 1
-slot_count = 1
+template = ExtResource("4_maximum")
+display_name = "至多为 7"
+slot_count = 2
+target_value = 7
 coefficient = 3
 
 [resource]

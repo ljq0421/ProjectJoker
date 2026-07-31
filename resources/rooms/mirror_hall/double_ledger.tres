@@ -5,8 +5,8 @@
 [ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="3_profile"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="4_rule"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="5_exact"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="6_even"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_consecutive.tres" id="7_consecutive"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_mirrored.tres" id="6_mirrored"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_equal.tres" id="7_equal"]
 
 [sub_resource type="Resource" id="Profile"]
 script = ExtResource("3_profile")
@@ -16,9 +16,8 @@ mirror_limit_per_round = 1
 [sub_resource type="Resource" id="Rule_left"]
 script = ExtResource("4_rule")
 id = &"left"
-template = ExtResource("6_even")
-display_name = "两枚全偶"
-condition_type = 1
+template = ExtResource("6_mirrored")
+display_name = "镜面对称"
 slot_count = 2
 coefficient = 3
 
@@ -34,11 +33,10 @@ coefficient = 3
 [sub_resource type="Resource" id="Rule_right"]
 script = ExtResource("4_rule")
 id = &"right"
-template = ExtResource("7_consecutive")
-display_name = "连续两数"
-condition_type = 2
+template = ExtResource("7_equal")
+display_name = "两枚相同"
 slot_count = 2
-coefficient = 3
+coefficient = 4
 
 [sub_resource type="Resource" id="Encounter"]
 script = ExtResource("2_encounter")

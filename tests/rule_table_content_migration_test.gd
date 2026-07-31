@@ -2,6 +2,7 @@ extends "res://tests/test_case.gd"
 
 func run() -> void:
 	var areas := AreaCatalog.new().all_areas()
+	var catalog := RuleTableCatalog.new()
 	var migrated_rules: Array[RuleDefinition] = []
 	for area in areas:
 		for room in area.rooms:
@@ -24,10 +25,9 @@ func run() -> void:
 		)
 		if rule.template == null:
 			continue
-		assert_equal(
-			rule.template.id,
-			_expected_template_id(rule.condition_type),
-			"rule %s should preserve its legacy condition semantics" % rule.id
+		assert_true(
+			rule.template.id in catalog.all_ids(),
+			"shipped rule %s should use a catalog template" % rule.id
 		)
 
 	var fixture := SingleEncounterFixture.make_encounter()
@@ -36,13 +36,3 @@ func run() -> void:
 			rule.template != null,
 			"teaching fixture rule %s should reference a template" % rule.id
 		)
-
-func _expected_template_id(condition_type: int) -> StringName:
-	match condition_type:
-		RuleDefinition.ConditionType.EXACT_SUM:
-			return &"rule_exact_sum"
-		RuleDefinition.ConditionType.ALL_EVEN:
-			return &"rule_all_even"
-		RuleDefinition.ConditionType.CONSECUTIVE:
-			return &"rule_consecutive"
-	return &""

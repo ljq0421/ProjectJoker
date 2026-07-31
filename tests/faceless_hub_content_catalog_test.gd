@@ -14,6 +14,28 @@ const EXPECTED_DECK: Array[StringName] = [
 	&"faceless_refund_calibration",
 	&"faceless_three_seats",
 ]
+const ROOM_RULE_TEMPLATES := {
+	&"faceless_room_crossed_archive": [
+		&"rule_sum_range",
+		&"rule_bridge_table",
+		&"rule_strict_descending",
+	],
+	&"faceless_room_reverse_index": [
+		&"rule_reverse_table",
+		&"rule_slot_targets",
+		&"rule_all_distinct",
+	],
+	&"faceless_room_single_hand_agenda": [
+		&"rule_minimum_sum",
+		&"rule_echo_table",
+		&"rule_all_equal",
+	],
+	&"faceless_room_three_seat_protocol": [
+		&"rule_all_odd",
+		&"rule_fixed_difference",
+		&"rule_maximum_sum",
+	],
+}
 
 func run() -> void:
 	var cards := CardCatalog.new()
@@ -41,6 +63,12 @@ func run() -> void:
 	assert_equal(area.initial_engraving_die_id, &"d3", "backflow starts on d3")
 	assert_equal(area.initial_engraving_face, 4, "backflow starts on face four")
 	assert_equal(area.engraving_offer_ids, engravings.faceless_hub_ids(), "reward pool is faceless-only")
+	for room in area.rooms:
+		assert_equal(
+			_template_ids(room.encounter),
+			ROOM_RULE_TEMPLATES[room.id],
+			"%s formal rule templates" % room.id
+		)
 	var unowned_shop_count := 0
 	for card_id in area.shop_offer_ids:
 		if card_id not in area.starting_deck_ids:
@@ -52,6 +80,21 @@ func run() -> void:
 	if schedule == null:
 		return
 	assert_equal(schedule.round_plans.size(), 3, "schedule has three rounds")
+	assert_equal(
+		_template_ids(schedule.round_plans[0].encounter),
+		[&"rule_exact_sum", &"rule_same_parity", &"rule_strict_ascending"],
+		"round one formal rule templates"
+	)
+	assert_equal(
+		_template_ids(schedule.round_plans[1].encounter),
+		[&"rule_reverse_table", &"rule_bridge_table", &"rule_strict_descending"],
+		"round two formal rule templates"
+	)
+	assert_equal(
+		_template_ids(schedule.round_plans[2].encounter),
+		[&"rule_slot_targets", &"rule_echo_table", &"rule_mirrored"],
+		"round three formal rule templates"
+	)
 	assert_equal(schedule.round_plans[0].display_name, "正面", "round one is front")
 	assert_equal(schedule.round_plans[1].display_name, "反面", "round two is reverse")
 	assert_equal(schedule.round_plans[2].display_name, "无面", "round three is unmasked")
@@ -78,3 +121,8 @@ func run() -> void:
 	)
 	assert_equal(schedule.distribution_restriction.amount, 3, "three seats requires all tables")
 
+func _template_ids(encounter: EncounterDefinition) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for rule in encounter.rules:
+		ids.append(rule.template.id)
+	return ids

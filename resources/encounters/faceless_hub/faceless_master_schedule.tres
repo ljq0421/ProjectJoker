@@ -8,8 +8,14 @@
 [ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/solo_verdict.tres" id="6_operation"]
 [ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/three_seats_present.tres" id="7_distribution"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_exact_sum.tres" id="8_exact"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_all_even.tres" id="9_even"]
-[ext_resource type="Resource" path="res://resources/rules/templates/rule_consecutive.tres" id="10_consecutive"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_same_parity.tres" id="9_parity"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_strict_ascending.tres" id="10_ascending"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_reverse_table.tres" id="11_reverse"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_bridge_table.tres" id="12_bridge"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_strict_descending.tres" id="13_descending"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_slot_targets.tres" id="14_targets"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_echo_table.tres" id="15_echo"]
+[ext_resource type="Resource" path="res://resources/rules/templates/rule_mirrored.tres" id="16_mirrored"]
 
 [sub_resource type="Resource" id="Profile_round_1"]
 script = ExtResource("4_profile")
@@ -26,20 +32,18 @@ coefficient = 5
 [sub_resource type="Resource" id="R1_middle"]
 script = ExtResource("5_rule")
 id = &"middle"
-template = ExtResource("9_even")
-display_name = "正面：两枚全偶"
-condition_type = 1
+template = ExtResource("9_parity")
+display_name = "正面：同奇偶"
 slot_count = 2
 coefficient = 5
 
 [sub_resource type="Resource" id="R1_right"]
 script = ExtResource("5_rule")
 id = &"right"
-template = ExtResource("8_exact")
-display_name = "正面：单骰精确 4"
-slot_count = 1
-target_value = 4
-coefficient = 6
+template = ExtResource("10_ascending")
+display_name = "正面：严格递增"
+slot_count = 2
+coefficient = 5
 
 [sub_resource type="Resource" id="Encounter_round_1"]
 script = ExtResource("3_encounter")
@@ -61,29 +65,26 @@ resolution_direction = 1
 [sub_resource type="Resource" id="R2_left"]
 script = ExtResource("5_rule")
 id = &"left"
-template = ExtResource("10_consecutive")
-display_name = "反面：连续两数"
-condition_type = 2
+template = ExtResource("11_reverse")
+display_name = "反面：逆序台"
 slot_count = 2
-coefficient = 5
+coefficient = 2
 
 [sub_resource type="Resource" id="R2_middle"]
 script = ExtResource("5_rule")
 id = &"middle"
-template = ExtResource("8_exact")
-display_name = "反面：单骰精确 3"
-slot_count = 1
-target_value = 3
-coefficient = 6
+template = ExtResource("12_bridge")
+display_name = "反面：桥接台"
+slot_count = 2
+coefficient = 2
 
 [sub_resource type="Resource" id="R2_right"]
 script = ExtResource("5_rule")
 id = &"right"
-template = ExtResource("8_exact")
-display_name = "反面：精确为 8"
+template = ExtResource("13_descending")
+display_name = "反面：严格递减"
 slot_count = 2
-target_value = 8
-coefficient = 5
+coefficient = 6
 
 [sub_resource type="Resource" id="Encounter_round_2"]
 script = ExtResource("3_encounter")
@@ -106,27 +107,25 @@ mirror_limit_per_round = 1
 [sub_resource type="Resource" id="R3_left"]
 script = ExtResource("5_rule")
 id = &"left"
-template = ExtResource("8_exact")
-display_name = "无面：单骰精确 5"
-slot_count = 1
-target_value = 5
+template = ExtResource("14_targets")
+display_name = "无面：槽位 2 / 5"
+slot_count = 2
+slot_targets = PackedInt32Array(2, 5)
 coefficient = 6
 
 [sub_resource type="Resource" id="R3_middle"]
 script = ExtResource("5_rule")
 id = &"middle"
-template = ExtResource("10_consecutive")
-display_name = "无面：连续两数"
-condition_type = 2
+template = ExtResource("15_echo")
+display_name = "无面：回声台"
 slot_count = 2
-coefficient = 6
+coefficient = 3
 
 [sub_resource type="Resource" id="R3_right"]
 script = ExtResource("5_rule")
 id = &"right"
-template = ExtResource("9_even")
-display_name = "无面：两枚全偶"
-condition_type = 1
+template = ExtResource("16_mirrored")
+display_name = "无面：镜面对称"
 slot_count = 2
 coefficient = 6
 

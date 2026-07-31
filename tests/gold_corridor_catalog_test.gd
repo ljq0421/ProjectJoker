@@ -42,24 +42,9 @@ func run() -> void:
 			var rule := room.encounter.rules[index]
 			slot_total += rule.slot_count
 			assert_equal(
-				rule.condition_type,
-				expected.conditions[index],
-				"%s lane %d condition should match" % [room_id, index]
-			)
-			assert_equal(
-				rule.slot_count,
-				expected.slots[index],
-				"%s lane %d slots should match" % [room_id, index]
-			)
-			assert_equal(
-				rule.coefficient,
-				expected.coefficients[index],
-				"%s lane %d coefficient should match" % [room_id, index]
-			)
-			assert_equal(
-				rule.target_value,
-				expected.targets[index],
-				"%s lane %d target should match" % [room_id, index]
+				_rule_signature(rule),
+				expected.rules[index],
+				"%s lane %d rule signature should match" % [room_id, index]
 			)
 		assert_equal(slot_total, 6, "%s should expose six slots" % room_id)
 
@@ -70,53 +55,52 @@ func _expected_rooms() -> Dictionary:
 		&"gold_room_precise_steps": {
 			"target": 100,
 			"reward": 2,
-			"conditions": [
-				RuleDefinition.ConditionType.EXACT_SUM,
-				RuleDefinition.ConditionType.CONSECUTIVE,
-				RuleDefinition.ConditionType.ALL_EVEN,
+			"rules": [
+				[&"rule_exact_sum", 2, 2, 7, 0, 0, 2],
+				[&"rule_consecutive", 2, 2, 0, 0, 0, 2],
+				[&"rule_minimum_sum", 2, 3, 8, 0, 0, 2],
 			],
-			"slots": [2, 3, 1],
-			"coefficients": [2, 2, 3],
-			"targets": [7, 0, 0],
 			"synergy_tags": PackedStringArray(["骰值", "校准", "重复"]),
 		},
 		&"gold_room_even_split": {
 			"target": 110,
 			"reward": 3,
-			"conditions": [
-				RuleDefinition.ConditionType.ALL_EVEN,
-				RuleDefinition.ConditionType.EXACT_SUM,
-				RuleDefinition.ConditionType.CONSECUTIVE,
+			"rules": [
+				[&"rule_all_even", 2, 3, 0, 0, 0, 2],
+				[&"rule_same_parity", 2, 2, 0, 0, 0, 2],
+				[&"rule_maximum_sum", 2, 2, 7, 0, 0, 2],
 			],
-			"slots": [2, 2, 2],
-			"coefficients": [3, 2, 2],
-			"targets": [0, 9, 0],
 			"synergy_tags": PackedStringArray(["骰值", "校准", "系数"]),
 		},
 		&"gold_room_narrow_ledger": {
 			"target": 120,
 			"reward": 2,
-			"conditions": [
-				RuleDefinition.ConditionType.EXACT_SUM,
-				RuleDefinition.ConditionType.CONSECUTIVE,
-				RuleDefinition.ConditionType.ALL_EVEN,
+			"rules": [
+				[&"rule_sum_range", 2, 3, 0, 8, 10, 2],
+				[&"rule_fixed_difference", 2, 2, 0, 0, 0, 2],
+				[&"rule_all_odd", 2, 3, 0, 0, 0, 2],
 			],
-			"slots": [2, 3, 1],
-			"coefficients": [3, 2, 3],
-			"targets": [10, 0, 0],
 			"synergy_tags": PackedStringArray(["骰值", "校准", "重复"]),
 		},
 		&"gold_room_parallel_proof": {
 			"target": 135,
 			"reward": 3,
-			"conditions": [
-				RuleDefinition.ConditionType.ALL_EVEN,
-				RuleDefinition.ConditionType.EXACT_SUM,
-				RuleDefinition.ConditionType.CONSECUTIVE,
+			"rules": [
+				[&"rule_all_distinct", 2, 3, 0, 0, 0, 2],
+				[&"rule_exact_sum", 2, 3, 8, 0, 0, 2],
+				[&"rule_all_equal", 2, 4, 0, 0, 0, 2],
 			],
-			"slots": [2, 2, 2],
-			"coefficients": [3, 3, 3],
-			"targets": [0, 8, 0],
 			"synergy_tags": PackedStringArray(["骰值", "校准", "系数"]),
 		},
 	}
+
+func _rule_signature(rule: RuleDefinition) -> Array:
+	return [
+		rule.template.id,
+		rule.slot_count,
+		rule.coefficient,
+		rule.target_value,
+		rule.minimum_value,
+		rule.maximum_value,
+		rule.difference,
+	]
