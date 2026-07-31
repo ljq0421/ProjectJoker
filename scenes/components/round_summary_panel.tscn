@@ -31,7 +31,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(680, 360)
+custom_minimum_size = Vector2(820, 540)
 layout_mode = 2
 
 [node name="Content" type="VBoxContainer" parent="Center/Panel"]
@@ -48,10 +48,39 @@ theme_override_font_sizes/font_size = 30
 [node name="SummaryDetail" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 3
 text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="FailureReview" type="VBoxContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="FailureResultLabel" type="Label" parent="Center/Panel/Content/FailureReview"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "结果"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.42, 1)
+
+[node name="FailureLossLabel" type="Label" parent="Center/Panel/Content/FailureReview"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "主要损失"
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.62, 0.7, 1)
+
+[node name="FailureSuggestionLabel" type="Label" parent="Center/Panel/Content/FailureReview"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "下次可尝试"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 
 [node name="Actions" type="GridContainer" parent="Center/Panel/Content"]
 layout_mode = 2

@@ -78,6 +78,7 @@ func _test_store_validation_and_round_trip() -> void:
 
 	var values := defaults.duplicate(true)
 	values["audio"]["ui_linear"] = 0.25
+	values["audio"]["music_linear"] = 0.20
 	values["display"]["window_width"] = 1600
 	values["display"]["window_height"] = 900
 	values["accessibility"]["reduce_flashes"] = true
@@ -90,6 +91,11 @@ func _test_store_validation_and_round_trip() -> void:
 		reloaded["values"]["audio"]["ui_linear"],
 		0.25,
 		"saved audio value should reload"
+	)
+	assert_equal(
+		reloaded["values"]["audio"]["music_linear"],
+		0.20,
+		"saved music value should reload"
 	)
 	assert_equal(
 		reloaded["values"]["display"]["window_width"],
@@ -205,6 +211,13 @@ func _test_accessibility_flow_and_legacy_defaults() -> void:
 		< 0.0001,
 		"legacy sibling values should survive additive migration"
 	)
+	assert_true(
+		absf(
+			float(legacy_result["values"]["audio"]["music_linear"])
+			- float(defaults["audio"]["music_linear"])
+		) < 0.0001,
+		"legacy settings should receive the new music default"
+	)
 
 	var service: Node = service_script.new()
 	service.configure_for_test(store, FakeDisplayAdapter.new(), 0.05)
@@ -283,6 +296,11 @@ func _test_service_audio_and_display_flow() -> void:
 		service.audio_percent(&"master"),
 		100,
 		"master default should be 100%"
+	)
+	assert_equal(
+		service.audio_percent(&"music"),
+		25,
+		"music default should stay behind interaction sounds"
 	)
 	assert_equal(
 		service.audio_percent(&"ui"),
@@ -415,7 +433,7 @@ func _test_service_audio_and_display_flow() -> void:
 
 func _audio_bus_snapshot() -> Dictionary:
 	var result := {}
-	for bus_name in [&"Master", &"UI", &"Gameplay"]:
+	for bus_name in [&"Master", &"Music", &"UI", &"Gameplay"]:
 		var index := AudioServer.get_bus_index(bus_name)
 		result[bus_name] = {
 			"volume_db": AudioServer.get_bus_volume_db(index),

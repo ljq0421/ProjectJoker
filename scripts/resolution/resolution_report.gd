@@ -12,6 +12,8 @@ var assigned_dice: int = 0
 var unassigned_dice: int = 0
 var dealer_reward: int = 0
 var dealer_reward_lost: int = 0
+var rule_failures: Array[Dictionary] = []
+var missed_effects: Array[String] = []
 var resolution_direction: EncounterRuleProfile.ResolutionDirection = (
 	EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT
 )

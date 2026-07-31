@@ -197,7 +197,7 @@ theme_override_font_sizes/font_size = 24
 
 [node name="AudioDescription" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
 layout_mode = 2
-text = "拖动时即时调整；松开滑杆后播放一次预听并保存。"
+text = "拖动时即时调整；音效滑杆松开后预听一次并保存。"
 theme_override_colors/font_color = Color(0.56, 0.68, 0.75, 1)
 
 [node name="MasterRow" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
@@ -232,6 +232,43 @@ horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="MasterMuteCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MasterRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 0)
+layout_mode = 2
+text = "静音"
+
+[node name="MusicRow" type="PanelContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MusicRow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Label" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MusicRow/Row"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "背景音乐"
+vertical_alignment = 1
+
+[node name="MusicSlider" type="HSlider" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MusicRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 25.0
+
+[node name="MusicValueLabel" type="Label" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MusicRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "25%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="MusicMuteCheck" type="CheckButton" parent="SettingsRoot/SettingsOverlay/SafeArea/GlassPanel/MainMargin/MainColumn/Content/ContentPanel/ContentMargin/AudioPage/MusicRow/Row"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 0)
 layout_mode = 2

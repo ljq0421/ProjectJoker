@@ -94,6 +94,7 @@ func _check_size(viewport_size: Vector2i) -> void:
 		"DisplayTabButton",
 		"AccessibilityTabButton",
 		"MasterSlider",
+		"MusicSlider",
 		"UiSlider",
 		"GameplaySlider",
 		"RestoreAudioDefaultsButton",

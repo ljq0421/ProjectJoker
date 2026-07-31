@@ -1,6 +1,8 @@
 class_name RoundSummaryPanel
 extends Control
 
+const FailureReview = preload("res://scripts/run/failure_review_builder.gd")
+
 signal next_round_requested
 signal shop_requested
 signal retry_requested
@@ -18,6 +20,10 @@ signal verification_retry_requested
 @onready var dealer_button: Button = %ChallengeDealerButton
 @onready var dealer_retry_button: Button = %RetryDealerButton
 @onready var verification_retry_button: Button = %RetryVerificationButton
+@onready var failure_review: Control = %FailureReview
+@onready var failure_result_label: Label = %FailureResultLabel
+@onready var failure_loss_label: Label = %FailureLossLabel
+@onready var failure_suggestion_label: Label = %FailureSuggestionLabel
 
 func _ready() -> void:
 	visible = false
@@ -54,6 +60,8 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 			maxi(run_session.target_total - run_session.cumulative_total, 0),
 		]
 	)
+	if run_session.status == ThreeRoundEncounterSession.Status.FAILED:
+		_bind_failure_review(run_session, false)
 	next_button.visible = run_session.status == ThreeRoundEncounterSession.Status.ROUND_SUMMARY
 	shop_button.visible = run_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	retry_button.visible = run_session.status == ThreeRoundEncounterSession.Status.FAILED
@@ -104,6 +112,7 @@ func show_dealer_failure(run_session: ThreeRoundEncounterSession) -> void:
 		last_report.unassigned_dice,
 		last_report.dealer_reward_lost,
 	]
+	_bind_failure_review(run_session, true)
 	dealer_retry_button.visible = true
 	retry_button.visible = true
 	retry_button.text = "完整重试"
@@ -128,6 +137,7 @@ func show_area_failure(
 		run_session.target_total,
 		maxi(run_session.target_total - run_session.cumulative_total, 0),
 	]
+	_bind_failure_review(run_session, dealer_failure)
 	retry_button.visible = true
 	retry_button.text = "重新开始%s" % area_name
 	return_button.visible = true
@@ -165,6 +175,7 @@ func close() -> void:
 	visible = false
 
 func _hide_actions() -> void:
+	failure_review.visible = false
 	for button in [
 		next_button,
 		shop_button,
@@ -185,3 +196,53 @@ func _title_for_status(status: ThreeRoundEncounterSession.Status) -> String:
 		ThreeRoundEncounterSession.Status.FAILED:
 			return "解析目标未达成"
 	return "轮次状态"
+
+func _bind_failure_review(
+	run_session: ThreeRoundEncounterSession,
+	dealer_failure: bool
+) -> void:
+	var review: Dictionary = FailureReview.new().build(
+		run_session.committed_reports,
+		run_session.target_total,
+		dealer_failure
+	)
+	failure_result_label.text = (
+		"结果｜累计 %d / %d，差 %d；最低为第 %d 轮（%d 点）。"
+		% [
+			review["cumulative_total"],
+			review["target_total"],
+			review["target_gap"],
+			review["weakest_round"],
+			review["weakest_total"],
+		]
+	)
+	var losses: Array[String] = []
+	if review["unassigned_dice"] > 0:
+		losses.append("未分配骰 %d 颗" % review["unassigned_dice"])
+	if review["dealer_reward_lost"] > 0:
+		losses.append("庄家固定奖励损失 %d 点" % review["dealer_reward_lost"])
+	for failure in review["rule_failures"].slice(
+		0,
+		mini(2, review["rule_failures"].size())
+	):
+		losses.append(
+			"%s：%s"
+			% [
+				failure.get("display_name", failure.get("rule_id", "规则台")),
+				failure.get("reason", "未满足公开条件"),
+			]
+		)
+	if losses.is_empty():
+		losses.append("未记录额外损失；主要差距来自各轮累计得分。")
+	failure_loss_label.text = "主要损失｜%s" % "；".join(losses)
+	var suggestions: Array[String] = []
+	for index in range(review["suggestions"].size()):
+		suggestions.append(
+			"%d. %s" % [index + 1, review["suggestions"][index]]
+		)
+	failure_suggestion_label.text = (
+		"下次可尝试｜%s" % "　".join(suggestions)
+		if not suggestions.is_empty()
+		else "下次可尝试｜复盘各轮规则成立情况，再调整分配顺序。"
+	)
+	failure_review.visible = true

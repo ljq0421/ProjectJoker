@@ -45,6 +45,8 @@ func load_settings(defaults: Dictionary) -> Dictionary:
 	for key in [
 		"master_linear",
 		"master_last_audible",
+		"music_linear",
+		"music_last_audible",
 		"ui_linear",
 		"ui_last_audible",
 		"gameplay_linear",
@@ -56,7 +58,7 @@ func load_settings(defaults: Dictionary) -> Dictionary:
 			var minimum := 0.0001 if key.ends_with("_last_audible") else 0.0
 			if number >= minimum and number <= 1.0:
 				audio[key] = number
-	for key in ["master_muted", "ui_muted", "gameplay_muted"]:
+	for key in ["master_muted", "music_muted", "ui_muted", "gameplay_muted"]:
 		var value: Variant = config.get_value("audio", key, audio[key])
 		if typeof(value) == TYPE_BOOL:
 			audio[key] = value
@@ -136,6 +138,9 @@ func save_settings(values: Dictionary) -> Dictionary:
 		"master_linear",
 		"master_muted",
 		"master_last_audible",
+		"music_linear",
+		"music_muted",
+		"music_last_audible",
 		"ui_linear",
 		"ui_muted",
 		"ui_last_audible",

@@ -1,6 +1,10 @@
 class_name AreaRunScreen
 extends Control
 
+const AreaPresentation = preload(
+	"res://scripts/ui/area_presentation_catalog.gd"
+)
+
 signal expedition_checkpoint_reached(snapshot: Dictionary)
 signal expedition_failed(reason: String)
 signal expedition_area_completed(summary: Dictionary)
@@ -19,6 +23,7 @@ signal expedition_exit_requested
 @onready var narrative_card: Control = %NarrativeCard
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
+@onready var area_chrome_label: Label = %AreaChromeLabel
 
 var area_session: AreaRunSession
 var _configured_area: AreaDefinition
@@ -31,6 +36,7 @@ var _dealer_opening_shown := false
 
 func _ready() -> void:
 	move_child(navigation_bar, get_child_count() - 1)
+	_reserve_top_chrome()
 	home_button.pressed.connect(_on_home_pressed)
 	encounter_screen.round_committed.connect(_on_round_committed)
 	encounter_screen.card_selected.connect(_after_card_selected)
@@ -58,6 +64,14 @@ func _ready() -> void:
 	summary_panel.get_node("%ReturnTeachingButton").text = "返回入口"
 	reward_panel.get_node("%InstallEngravingButton").text = "安装刻印并封存区域"
 	start_run()
+
+func _reserve_top_chrome() -> void:
+	for embedded_screen in [encounter_screen, shop_screen]:
+		var embedded_safe_area: Control = embedded_screen.get_node_or_null(
+			"SafeArea"
+		)
+		if embedded_safe_area is MarginContainer:
+			embedded_safe_area.offset_top = 96.0
 
 func configure(area_definition: AreaDefinition, seed: int) -> void:
 	_configured_area = area_definition
@@ -111,12 +125,33 @@ func start_run() -> void:
 	if not result.accepted:
 		_show_start_error(result.reason)
 		return
+	_apply_area_presentation()
 	complete_panel.configure_expedition(
 		_expedition_mode,
 		_expedition_has_next_area
 	)
 	_show_current_phase()
 	_emit_expedition_checkpoint()
+
+func _apply_area_presentation() -> void:
+	var area := area_session.area_definition
+	var presentation: Dictionary = AreaPresentation.new().find(area.id)
+	if presentation.is_empty():
+		return
+	area_chrome_label.text = "%s　%s" % [
+		presentation["eyebrow"],
+		area.display_name,
+	]
+	area_chrome_label.add_theme_color_override(
+		"font_color",
+		presentation["secondary"]
+	)
+	home_button.add_theme_color_override(
+		"font_color",
+		presentation["primary"]
+	)
+	encounter_screen.apply_area_presentation(area.id)
+	shop_screen.apply_area_presentation(area.id, area.display_name)
 
 func _show_current_phase() -> void:
 	match area_session.phase:
@@ -134,12 +169,18 @@ func _show_current_phase() -> void:
 				)
 		AreaRunSession.Phase.SHOP:
 			encounter_screen.visible = false
+			_request_music_for_phase(&"shop")
 			shop_screen.bind_session(
 				area_session.shop_session,
 				area_session.card_catalog
 			)
 		AreaRunSession.Phase.ENGRAVING_REWARD, AreaRunSession.Phase.ENGRAVING_INSTALL:
 			encounter_screen.visible = false
+			_request_music_for_phase(
+				&"engraving_install"
+				if area_session.phase == AreaRunSession.Phase.ENGRAVING_INSTALL
+				else &"engraving_reward"
+			)
 			reward_panel.bind_reward(
 				area_session.engraving_offer_ids,
 				area_session.die_profiles,
@@ -160,6 +201,7 @@ func _show_current_phase() -> void:
 			_show_start_error("恢复的区域阶段不受支持")
 
 func _show_route_choice() -> void:
+	_request_music_for_phase(&"route_choice")
 	intel_panel.close()
 	shop_screen.visible = false
 	reward_panel.close()
@@ -200,6 +242,11 @@ func bind_current_encounter() -> void:
 	):
 		encounter_screen.show_external_error("当前阶段没有可绑定的遭遇")
 		return
+	_request_music_for_phase(
+		&"dealer"
+		if area_session.phase == AreaRunSession.Phase.DEALER
+		else &"normal_room"
+	)
 	route_panel.close()
 	intel_panel.close()
 	shop_screen.visible = false
@@ -288,6 +335,7 @@ func _on_round_committed(report: ResolutionReport) -> void:
 	if area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:
 		summary_panel.close()
 		SfxAccess.play(self, &"round_success")
+		_request_music_for_phase(&"engraving_reward")
 		reward_panel.bind_reward(
 			area_session.engraving_offer_ids,
 			area_session.die_profiles,
@@ -326,6 +374,7 @@ func _on_shop_requested() -> void:
 		return
 	summary_panel.close()
 	encounter_screen.visible = false
+	_request_music_for_phase(&"shop")
 	shop_screen.bind_session(area_session.shop_session, area_session.card_catalog)
 	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_context_hint", &"shop")
@@ -421,6 +470,7 @@ func _on_reward_replacement_selected(card_id: StringName) -> void:
 
 func _show_area_completion() -> void:
 	reward_panel.close()
+	_request_music_for_phase(&"complete")
 	var bound := complete_panel.bind_summary(
 		area_session.completion_snapshot(),
 		area_session.area_definition,
@@ -527,6 +577,7 @@ func _show_restored_completion() -> void:
 		_show_start_error("恢复的区域完成摘要不存在")
 		return
 	encounter_screen.visible = false
+	_request_music_for_phase(&"complete")
 	complete_panel.bind_summary(
 		summary,
 		area_session.area_definition,
@@ -534,6 +585,11 @@ func _show_restored_completion() -> void:
 		area_session.dealer_catalog,
 		area_session.engraving_catalog
 	)
+
+func _request_music_for_phase(phase_name: StringName) -> void:
+	var service := get_tree().root.get_node_or_null("MusicService")
+	if service != null and service.has_method("play_area_phase"):
+		service.call("play_area_phase", phase_name)
 
 func _emit_expedition_checkpoint() -> void:
 	if not _expedition_mode or area_session == null:

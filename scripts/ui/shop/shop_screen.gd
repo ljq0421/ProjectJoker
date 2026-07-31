@@ -6,6 +6,11 @@ signal intel_view_requested(snapshot: ShopIntelSnapshot)
 signal state_changed
 
 const CARD_SCENE = preload("res://scenes/components/shop_card_token.tscn")
+const AreaPresentation = preload(
+	"res://scripts/ui/area_presentation_catalog.gd"
+)
+
+@export var content_top_inset := 0.0
 
 @onready var deck_grid: GridContainer = %DeckGrid
 @onready var offer_column: VBoxContainer = %OfferColumn
@@ -18,6 +23,11 @@ const CARD_SCENE = preload("res://scenes/components/shop_card_token.tscn")
 @onready var intel_button: Button = %PurchaseIntelButton
 @onready var leave_button: Button = %LeaveShopButton
 @onready var refresh_dialog: ConfirmationDialog = %RefreshConfirmationDialog
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var background: ColorRect = $Background
+@onready var area_atmosphere: Control = %AreaAtmosphere
+@onready var area_identity_bar: ColorRect = %AreaIdentityBar
+@onready var area_stage_label: Label = %AreaStageLabel
 
 var shop_session: ShopSession
 var catalog: CardCatalog
@@ -25,12 +35,29 @@ var selected_offer_id: StringName = &""
 var selected_deck_id: StringName = &""
 
 func _ready() -> void:
+	safe_area.offset_top += content_top_inset
 	visible = false
 	confirm_button.pressed.connect(_on_confirm_pressed)
 	refresh_button.pressed.connect(_on_refresh_pressed)
 	intel_button.pressed.connect(_on_intel_pressed)
 	leave_button.pressed.connect(func() -> void: leave_requested.emit())
 	refresh_dialog.confirmed.connect(_on_refresh_confirmed)
+
+func apply_area_presentation(area_id: StringName, area_name: String) -> void:
+	var presentation: Dictionary = AreaPresentation.new().find(area_id)
+	if presentation.is_empty():
+		return
+	background.color = presentation["background"]
+	area_identity_bar.color = presentation["primary"]
+	area_stage_label.text = "%s / %s" % [
+		presentation["eyebrow"],
+		area_name,
+	]
+	area_stage_label.add_theme_color_override(
+		"font_color",
+		presentation["secondary"]
+	)
+	area_atmosphere.configure(area_id)
 
 func bind_session(p_session: ShopSession, p_catalog: CardCatalog) -> void:
 	shop_session = p_session

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu_screen.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="3_settings"]
 
 [node name="MainMenuScreen" type="Control"]
 layout_mode = 3
@@ -12,6 +13,9 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
+
+[node name="SettingsLayer" parent="." instance=ExtResource("3_settings")]
+unique_name_in_owner = true
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

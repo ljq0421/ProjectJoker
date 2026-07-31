@@ -16,6 +16,13 @@ const CHANNELS := {
 		"last_audible": "master_last_audible",
 		"preview": &"ui_confirm",
 	},
+	&"music": {
+		"bus": &"Music",
+		"linear": "music_linear",
+		"muted": "music_muted",
+		"last_audible": "music_last_audible",
+		"preview": &"",
+	},
 	&"ui": {
 		"bus": &"UI",
 		"linear": "ui_linear",
@@ -36,6 +43,9 @@ const DEFAULT_SETTINGS := {
 		"master_linear": 1.0,
 		"master_muted": false,
 		"master_last_audible": 1.0,
+		"music_linear": 0.251188,
+		"music_muted": false,
+		"music_last_audible": 0.251188,
 		"ui_linear": 0.501187,
 		"ui_muted": false,
 		"ui_last_audible": 0.501187,
@@ -175,7 +185,9 @@ func finish_audio_adjustment(channel: StringName) -> bool:
 	var saved := _save_current()
 	if audio_linear(channel) > 0.0 and not audio_muted(channel):
 		var definition: Dictionary = CHANNELS[channel]
-		preview_requested.emit(StringName(definition["preview"]))
+		var preview := StringName(definition.get("preview", &""))
+		if preview != &"":
+			preview_requested.emit(preview)
 	return saved
 
 func set_audio_muted(channel: StringName, muted: bool) -> bool:
@@ -195,7 +207,9 @@ func set_audio_muted(channel: StringName, muted: bool) -> bool:
 	audio_changed.emit(channel)
 	var saved := _save_current()
 	if not muted:
-		preview_requested.emit(StringName(definition["preview"]))
+		var preview := StringName(definition.get("preview", &""))
+		if preview != &"":
+			preview_requested.emit(preview)
 	return saved
 
 func restore_audio_defaults() -> bool:

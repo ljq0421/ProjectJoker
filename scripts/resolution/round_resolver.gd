@@ -186,17 +186,26 @@ func resolve(
 
 	for rule in reverse_table_rules:
 		var reverse_result: RuleResult = precomputed_results[rule.id]
+		var reverse_label := (
+			"%s：已通过，最终结算方向已翻转" % rule.display_name
+			if reverse_result.valid
+			else "%s：未填满，结算方向不变" % rule.display_name
+		)
 		report.events.append(ResolutionEvent.new(
 			rule.template.id,
-			(
-				"%s：已通过，最终结算方向已翻转" % rule.display_name
-				if reverse_result.valid
-				else "%s：未填满，结算方向不变" % rule.display_name
-			),
+			reverse_label,
 			0,
 			report.total,
 			reverse_result.valid
 		))
+		if not reverse_result.valid:
+			report.rule_failures.append({
+				"rule_id": rule.id,
+				"display_name": rule.display_name,
+				"reason": reverse_result.reason,
+				"assigned_dice": state.assigned_die_ids(rule.id).size(),
+			})
+			_record_missed_effect(report, reverse_label)
 
 	var resolved_table_totals: Dictionary = {}
 	var pending_bridges: Dictionary = {}
@@ -237,6 +246,16 @@ func resolve(
 		)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))
+			report.rule_failures.append({
+				"rule_id": rule.id,
+				"display_name": (
+					rule.display_name
+					if not rule.display_name.is_empty()
+					else String(rule.id)
+				),
+				"reason": result.reason,
+				"assigned_dice": assigned_ids.size(),
+			})
 			if (
 				rule.template != null
 				and rule.template.post_pass_effect
@@ -249,6 +268,10 @@ func resolve(
 					report.total,
 					false
 				))
+				_record_missed_effect(
+					report,
+					"%s：未通过，回声未触发" % rule.display_name
+				)
 			for pending in pending_bridges.get(rule.id, []):
 				_append_outcome(report, EngravingOutcome.new(
 					pending.source_id,
@@ -403,6 +426,11 @@ func resolve(
 			report.total,
 			applied
 		))
+		if not applied:
+			_record_missed_effect(
+				report,
+				"%s：桥接未触发，%s" % [bridge_rule.display_name, reason]
+			)
 
 	_append_intel_outcomes(
 		report,
@@ -411,13 +439,13 @@ func resolve(
 		passed_rule_ids
 	)
 
+	var assigned: Dictionary = {}
+	for table_id in state.assignments:
+		for die_id in state.assigned_die_ids(table_id):
+			assigned[die_id] = true
+	report.assigned_dice = assigned.size()
+	report.unassigned_dice = maxi(state.dice.size() - assigned.size(), 0)
 	if normalized_context.dealer != null:
-		var assigned: Dictionary = {}
-		for table_id in state.assignments:
-			for die_id in state.assigned_die_ids(table_id):
-				assigned[die_id] = true
-		report.assigned_dice = assigned.size()
-		report.unassigned_dice = maxi(state.dice.size() - assigned.size(), 0)
 		report.dealer_reward_lost = mini(
 			normalized_context.dealer.fixed_reward,
 			report.unassigned_dice * normalized_context.dealer.penalty_per_unassigned_die
@@ -499,6 +527,12 @@ func _append_intel_outcomes(
 				report.total,
 				satisfied
 			))
+			if not satisfied:
+				_record_missed_effect(
+					report,
+					"%s：%s未满足，情报 +0"
+					% [played_card.definition.display_name, condition_copy]
+				)
 
 func _append_lock_rewards(
 	report: ResolutionReport,
@@ -539,6 +573,13 @@ func _append_outcome(report: ResolutionReport, outcome: EngravingOutcome) -> voi
 		report.total,
 		outcome.effect_applied
 	))
+	if not outcome.effect_applied:
+		_record_missed_effect(report, outcome.label)
+
+func _record_missed_effect(report: ResolutionReport, label: String) -> void:
+	if label.is_empty() or label in report.missed_effects:
+		return
+	report.missed_effects.append(label)
 
 func _invalid(reason: String) -> ResolutionReport:
 	var report := ResolutionReport.new()

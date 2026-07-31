@@ -18,6 +18,7 @@ func run() -> void:
 	assert_equal(report.events.size(), 4, "one card event and three table events are expected")
 	assert_equal(report.events[1].source_id, &"left", "left table should resolve first")
 	_test_neighbor_link()
+	_test_failure_facts()
 
 func _test_neighbor_link() -> void:
 	var state = _build_state()
@@ -36,6 +37,21 @@ func _test_neighbor_link() -> void:
 	assert_true(
 		report.events.any(_is_link_event),
 		"link should create a visible 14-point event"
+	)
+
+func _test_failure_facts() -> void:
+	var state = _build_state()
+	state.assignments.clear()
+	state.played_cards.clear()
+
+	var report = RoundResolverScript.new().resolve(state, _build_encounter())
+	assert_true(report.valid, "a failed scoring round should still produce a valid report")
+	assert_equal(report.unassigned_dice, 6, "report should expose all unused dice")
+	assert_equal(report.rule_failures.size(), 3, "report should expose each failed table rule")
+	assert_equal(
+		report.rule_failures[0].get("rule_id", &""),
+		&"left",
+		"failure facts should retain the producing rule id"
 	)
 
 func _is_link_event(event) -> bool:

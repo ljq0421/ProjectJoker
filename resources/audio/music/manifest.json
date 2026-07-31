@@ -1,0 +1,327 @@
+{
+  "assets": [
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "context": "menu",
+      "file": "glass_antechamber.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 26666.656,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 853333,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          38,
+          38,
+          34,
+          34,
+          29,
+          29,
+          36,
+          36
+        ],
+        "chords": [
+          [
+            50,
+            57,
+            64,
+            65
+          ],
+          [
+            50,
+            57,
+            60,
+            64
+          ],
+          [
+            46,
+            53,
+            57,
+            62
+          ],
+          [
+            46,
+            53,
+            57,
+            60
+          ],
+          [
+            41,
+            48,
+            52,
+            57
+          ],
+          [
+            41,
+            48,
+            52,
+            55
+          ],
+          [
+            48,
+            55,
+            62,
+            64
+          ],
+          [
+            48,
+            55,
+            59,
+            62
+          ]
+        ],
+        "lead": [
+          74,
+          77,
+          81,
+          76,
+          74,
+          72,
+          69,
+          72,
+          77,
+          76,
+          74,
+          69,
+          72,
+          67,
+          69,
+          72
+        ],
+        "profile": "luminous_menu",
+        "tempo_bpm": 72
+      },
+      "parameters_sha256": "7619e46a7432e662e110c7ba566464f83bdb88db28e2bcc895dd659681f3731c",
+      "seed": 31072026,
+      "sha256": "93e3bc3c34ef96065f29eb858a0bd59effa640127fcab1375e8dcd9d057400e1",
+      "third_party_samples": false,
+      "title": "Glass Antechamber"
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "context": "encounter",
+      "file": "loaded_dice.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 20000.0,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 640000,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          38,
+          38,
+          34,
+          34,
+          31,
+          31,
+          33,
+          33
+        ],
+        "chords": [
+          [
+            50,
+            57,
+            60,
+            64
+          ],
+          [
+            50,
+            56,
+            60,
+            65
+          ],
+          [
+            46,
+            53,
+            57,
+            61
+          ],
+          [
+            46,
+            52,
+            57,
+            60
+          ],
+          [
+            43,
+            50,
+            55,
+            58
+          ],
+          [
+            43,
+            49,
+            55,
+            59
+          ],
+          [
+            45,
+            52,
+            55,
+            61
+          ],
+          [
+            45,
+            52,
+            57,
+            60
+          ]
+        ],
+        "lead": [
+          74,
+          77,
+          76,
+          72,
+          73,
+          76,
+          69,
+          72,
+          70,
+          74,
+          73,
+          67,
+          69,
+          73,
+          72,
+          68
+        ],
+        "profile": "restrained_tension",
+        "tempo_bpm": 96
+      },
+      "parameters_sha256": "5c3e9f4fdc07b0aa37801f2025bcd9930bd214aac36a5308cc7bf58cd38ae580",
+      "seed": 31073035,
+      "sha256": "8cc562bdd3da9436a5f8be8fd56e9e08f6b6e3531b491ae504c99a6a33f102e7",
+      "third_party_samples": false,
+      "title": "Loaded Dice"
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "context": "journey",
+      "file": "masked_table.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 22857.156,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 731429,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          38,
+          38,
+          31,
+          31,
+          34,
+          34,
+          33,
+          33
+        ],
+        "chords": [
+          [
+            50,
+            57,
+            60,
+            64
+          ],
+          [
+            50,
+            57,
+            60,
+            65
+          ],
+          [
+            43,
+            50,
+            55,
+            59
+          ],
+          [
+            43,
+            50,
+            57,
+            59
+          ],
+          [
+            46,
+            53,
+            57,
+            62
+          ],
+          [
+            46,
+            53,
+            57,
+            60
+          ],
+          [
+            45,
+            52,
+            55,
+            60
+          ],
+          [
+            45,
+            52,
+            57,
+            60
+          ]
+        ],
+        "lead": [
+          69,
+          72,
+          74,
+          77,
+          76,
+          74,
+          69,
+          67,
+          69,
+          74,
+          72,
+          69,
+          67,
+          65,
+          67,
+          69
+        ],
+        "profile": "measured_journey",
+        "tempo_bpm": 84
+      },
+      "parameters_sha256": "feeece5c517c0203b48b0be56a1c64eb05e1203b6eb3ab2f75b11b22601b210e",
+      "seed": 31074044,
+      "sha256": "fcc6b3684683dcdd16af97be81441cd03321b0b934d5e34cd39d8ecc39b09183",
+      "third_party_samples": false,
+      "title": "Masked Table"
+    }
+  ],
+  "generated_on": "2026-07-31",
+  "generator": {
+    "master_seed": 31072026,
+    "path": "tools/generate_music.py",
+    "runtime_dependencies": [],
+    "version": "1.0.0"
+  },
+  "schema_version": 1
+}

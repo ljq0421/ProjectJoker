@@ -2,6 +2,7 @@ extends "res://tests/test_case.gd"
 
 const SETTINGS_SCENE_PATH := "res://scenes/components/settings_layer.tscn"
 const HOST_SCENES := [
+	"res://scenes/run/main_menu_screen.tscn",
 	"res://scenes/run/single_encounter_screen.tscn",
 	"res://scenes/run/three_round_run_screen.tscn",
 	"res://scenes/run/area_run_screen.tscn",
@@ -55,12 +56,15 @@ func _test_settings_scene_contract() -> void:
 		"DisplayPage",
 		"AccessibilityPage",
 		"MasterSlider",
+		"MusicSlider",
 		"UiSlider",
 		"GameplaySlider",
 		"MasterValueLabel",
+		"MusicValueLabel",
 		"UiValueLabel",
 		"GameplayValueLabel",
 		"MasterMuteCheck",
+		"MusicMuteCheck",
 		"UiMuteCheck",
 		"GameplayMuteCheck",
 		"DisplayModeOption",

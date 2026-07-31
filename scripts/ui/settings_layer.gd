@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const AUDIO_CHANNELS: Array[StringName] = [
 	&"master",
+	&"music",
 	&"ui",
 	&"gameplay",
 ]
@@ -23,12 +24,15 @@ const ENTRY_BLOCKER_GROUP := &"settings_entry_blocker"
 @onready var display_page: Control = %DisplayPage
 @onready var accessibility_page: Control = %AccessibilityPage
 @onready var master_slider: HSlider = %MasterSlider
+@onready var music_slider: HSlider = %MusicSlider
 @onready var ui_slider: HSlider = %UiSlider
 @onready var gameplay_slider: HSlider = %GameplaySlider
 @onready var master_value_label: Label = %MasterValueLabel
+@onready var music_value_label: Label = %MusicValueLabel
 @onready var ui_value_label: Label = %UiValueLabel
 @onready var gameplay_value_label: Label = %GameplayValueLabel
 @onready var master_mute_check: CheckButton = %MasterMuteCheck
+@onready var music_mute_check: CheckButton = %MusicMuteCheck
 @onready var ui_mute_check: CheckButton = %UiMuteCheck
 @onready var gameplay_mute_check: CheckButton = %GameplayMuteCheck
 @onready var mode_option: OptionButton = %DisplayModeOption
@@ -536,6 +540,8 @@ func _slider_for(channel: StringName) -> HSlider:
 	match channel:
 		&"master":
 			return master_slider
+		&"music":
+			return music_slider
 		&"ui":
 			return ui_slider
 		_:
@@ -545,6 +551,8 @@ func _value_label_for(channel: StringName) -> Label:
 	match channel:
 		&"master":
 			return master_value_label
+		&"music":
+			return music_value_label
 		&"ui":
 			return ui_value_label
 		_:
@@ -554,6 +562,8 @@ func _mute_check_for(channel: StringName) -> CheckButton:
 	match channel:
 		&"master":
 			return master_mute_check
+		&"music":
+			return music_mute_check
 		&"ui":
 			return ui_mute_check
 		_:

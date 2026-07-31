@@ -9,9 +9,13 @@ signal card_selected(card_index: int, card: CardDefinition, token: Control)
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
 const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
+const AreaPresentation = preload(
+	"res://scripts/ui/area_presentation_catalog.gd"
+)
 
 @export var tutorial_auto_start: bool = true
 @export var tutorial_config_path: String = "user://onboarding.cfg"
+@export var content_top_inset := 0.0
 
 @onready var lanes: Array[RuleLane] = [%LeftLane, %MiddleLane, %RightLane]
 @onready var dice_tray: DiceTray = %DiceTray
@@ -34,12 +38,18 @@ const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 @onready var faceless_hub_run_button: Button = %FacelessHubRunButton
 @onready var replay_faceless_hub_guide_button: Button = %ReplayFacelessHubGuideButton
 @onready var entry_groups: VBoxContainer = %EntryGroups
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var background: ColorRect = $Background
+@onready var area_atmosphere: Control = %AreaAtmosphere
+@onready var area_identity_bar: ColorRect = %AreaIdentityBar
+@onready var dealer_sigil: Control = %DealerSigil
 
 var session: SingleEncounterSession
 var dealer_definition: DealerDefinition
 var owns_session := true
 
 func _ready() -> void:
+	safe_area.offset_top += content_top_inset
 	session = SingleEncounterSession.new(
 		SingleEncounterFixture.make_state(),
 		SingleEncounterFixture.make_encounter(),
@@ -102,6 +112,20 @@ func bind_external_session(
 func set_run_status(area_copy: String, goal_copy: String) -> void:
 	area_label.text = area_copy
 	goal_label.text = goal_copy
+
+func apply_area_presentation(area_id: StringName) -> void:
+	var presentation: Dictionary = AreaPresentation.new().find(area_id)
+	if presentation.is_empty():
+		return
+	background.color = presentation["background"]
+	area_identity_bar.color = presentation["primary"]
+	area_label.add_theme_color_override("font_color", presentation["secondary"])
+	%DealerEyebrow.add_theme_color_override(
+		"font_color",
+		presentation["primary"]
+	)
+	area_atmosphere.configure(area_id)
+	dealer_sigil.configure(area_id)
 
 func bind_dealer(dealer: DealerDefinition) -> void:
 	dealer_definition = dealer
