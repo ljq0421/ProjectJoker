@@ -1,6 +1,8 @@
 class_name ExpeditionSession
 extends RefCounted
 
+const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
+
 enum Status {
 	NOT_STARTED,
 	ACTIVE,
@@ -16,21 +18,38 @@ const AREA_ORDER: Array[StringName] = [
 
 var status: Status = Status.NOT_STARTED
 var seed_value := 0
+var run_id: StringName = &""
+var starting_deck_id: StringName = ExpeditionConfigs.DICE_CONTROL
+var challenge_ids: Array[StringName] = []
 var current_area_index := 0
 var inherited_state: Dictionary = {}
 var area_checkpoint: Dictionary = {}
 var completed_areas: Array[Dictionary] = []
 var failure_reason := ""
 
-func start_new(seed: int) -> OperationResult:
+func start_new(
+	seed: int,
+	p_starting_deck_id: StringName = ExpeditionConfigs.DICE_CONTROL,
+	p_challenge_ids: Array[StringName] = []
+) -> OperationResult:
 	if status != Status.NOT_STARTED:
 		return OperationResult.new(false, "远征已经开始")
 	if seed <= 0:
 		return OperationResult.new(false, "远征种子必须为正整数")
+	var selection_error := ExpeditionConfigs.new().selection_error(
+		p_starting_deck_id,
+		p_challenge_ids,
+		true
+	)
+	if not selection_error.is_empty():
+		return OperationResult.new(false, selection_error)
 	status = Status.ACTIVE
 	seed_value = seed
+	run_id = StringName("%d-%d" % [seed, Time.get_ticks_usec()])
+	starting_deck_id = p_starting_deck_id
+	challenge_ids.assign(p_challenge_ids)
 	current_area_index = 0
-	inherited_state = {}
+	inherited_state = _initial_entry_state()
 	area_checkpoint = {}
 	completed_areas = []
 	failure_reason = ""
@@ -71,6 +90,7 @@ func complete_current_area(completion: Dictionary) -> OperationResult:
 		"intel_tickets": completion["intel_tickets"],
 		"die_profiles": completion["die_profiles"].duplicate(true),
 		"rng_state": completion["rng_state"],
+		"challenge_ids": challenge_ids.duplicate(),
 	}
 	completed_areas = next_completed
 	inherited_state = next_inherited
@@ -92,6 +112,9 @@ func to_snapshot() -> Dictionary:
 	return {
 		"status": status,
 		"seed_value": seed_value,
+		"run_id": run_id,
+		"starting_deck_id": starting_deck_id,
+		"challenge_ids": challenge_ids.duplicate(),
 		"current_area_index": current_area_index,
 		"inherited_state": inherited_state.duplicate(true),
 		"area_checkpoint": area_checkpoint.duplicate(true),
@@ -105,6 +128,9 @@ func restore_snapshot(snapshot: Dictionary) -> OperationResult:
 		return OperationResult.new(false, error)
 	status = snapshot["status"]
 	seed_value = snapshot["seed_value"]
+	run_id = snapshot["run_id"]
+	starting_deck_id = snapshot["starting_deck_id"]
+	challenge_ids.assign(snapshot["challenge_ids"])
 	current_area_index = snapshot["current_area_index"]
 	inherited_state = snapshot["inherited_state"].duplicate(true)
 	area_checkpoint = snapshot["area_checkpoint"].duplicate(true)
@@ -116,6 +142,9 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 	for key in [
 		"status",
 		"seed_value",
+		"run_id",
+		"starting_deck_id",
+		"challenge_ids",
 		"current_area_index",
 		"inherited_state",
 		"area_checkpoint",
@@ -132,6 +161,24 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		return "远征状态无效"
 	if not snapshot["seed_value"] is int or snapshot["seed_value"] <= 0:
 		return "远征种子无效"
+	if not snapshot["run_id"] is String and not snapshot["run_id"] is StringName:
+		return "远征局次 ID 格式无效"
+	if String(snapshot["run_id"]).strip_edges().is_empty():
+		return "远征局次 ID 无效"
+	if (
+		not snapshot["starting_deck_id"] is String
+		and not snapshot["starting_deck_id"] is StringName
+	):
+		return "起始构筑标识格式无效"
+	if not snapshot["challenge_ids"] is Array:
+		return "挑战列表格式无效"
+	var config_error := ExpeditionConfigs.new().selection_error(
+		snapshot["starting_deck_id"],
+		snapshot["challenge_ids"],
+		true
+	)
+	if not config_error.is_empty():
+		return config_error
 	if not snapshot["current_area_index"] is int:
 		return "当前区域序号无效"
 	var status_value: int = snapshot["status"]
@@ -184,6 +231,24 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		if not restored.accepted:
 			return restored.reason
 	return ""
+
+func _initial_entry_state() -> Dictionary:
+	var deck := ExpeditionConfigs.new().find_deck(starting_deck_id)
+	var profiles: Array[Dictionary] = []
+	for die_index in range(1, 7):
+		profiles.append({
+			"id": StringName("d%d" % die_index),
+			"rolled_value": 1,
+			"engraving_id": &"",
+			"engraved_face": 0,
+		})
+	return {
+		"deck_ids": deck.get("card_ids", []).duplicate(),
+		"intel_tickets": AreaCatalog.new().gold_corridor().starting_intel_tickets,
+		"die_profiles": profiles,
+		"rng_state": RunRng.new(seed_value).snapshot_state(),
+		"challenge_ids": challenge_ids.duplicate(),
+	}
 
 static func _completion_error(completion: Dictionary, expected_id: StringName) -> String:
 	for key in ["area_id", "rng_state", "deck_ids", "intel_tickets", "die_profiles"]:

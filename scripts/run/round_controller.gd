@@ -5,6 +5,7 @@ var state: RoundState
 var encounter: EncounterDefinition
 var resolution_context: ResolutionContext
 var active_restriction: FinalRestrictionDefinition
+var active_restrictions: Array[FinalRestrictionDefinition] = []
 var committed: bool = false
 
 var _history: ActionHistory
@@ -16,12 +17,20 @@ func _init(
 	p_state: RoundState,
 	p_encounter: EncounterDefinition,
 	p_context: ResolutionContext = null,
-	p_restriction: FinalRestrictionDefinition = null
+	p_restriction: FinalRestrictionDefinition = null,
+	p_additional_restrictions: Array[FinalRestrictionDefinition] = []
 ) -> void:
 	state = p_state.clone()
 	encounter = p_encounter
 	resolution_context = p_context if p_context != null else ResolutionContext.empty()
 	active_restriction = p_restriction
+	if p_restriction != null:
+		active_restrictions.append(p_restriction)
+	for restriction in p_additional_restrictions:
+		if restriction != null:
+			active_restrictions.append(restriction)
+	if active_restriction == null and not active_restrictions.is_empty():
+		active_restriction = active_restrictions[0]
 	_history = ActionHistory.new(state)
 
 func adjust_die(die_id: StringName, delta: int) -> ActionResult:
@@ -64,12 +73,13 @@ func play_card(played_card: PlayedCard) -> ActionResult:
 func validate_card_start() -> OperationResult:
 	if committed:
 		return OperationResult.new(false, "本轮已经结算")
-	var restriction_result := _restriction_evaluator.validate_card_play(
-		state,
-		active_restriction
-	)
-	if not restriction_result.accepted:
-		return restriction_result
+	for restriction in active_restrictions:
+		var restriction_result := _restriction_evaluator.validate_card_play(
+			state,
+			restriction
+		)
+		if not restriction_result.accepted:
+			return restriction_result
 	return OperationResult.new(true)
 
 func validate_card_play(played_card: PlayedCard) -> ActionResult:
@@ -131,13 +141,18 @@ func commit() -> ResolutionReport:
 	return report
 
 func _attach_restriction(report: ResolutionReport) -> void:
-	var restriction_result := _restriction_evaluator.evaluate_commit(
-		state,
-		encounter,
-		active_restriction
-	)
-	report.restriction_satisfied = restriction_result.accepted
-	report.restriction_reason = restriction_result.reason
+	report.restriction_satisfied = true
+	report.restriction_reason = ""
+	for restriction in active_restrictions:
+		var restriction_result := _restriction_evaluator.evaluate_commit(
+			state,
+			encounter,
+			restriction
+		)
+		if not restriction_result.accepted:
+			report.restriction_satisfied = false
+			report.restriction_reason = restriction_result.reason
+			return
 
 func _accept(result: ActionResult) -> ActionResult:
 	if result.accepted:

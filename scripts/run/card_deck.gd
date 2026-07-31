@@ -9,9 +9,9 @@ func start_encounter(card_ids: Array[StringName], run_rng: RunRng) -> void:
 	assert(card_ids.size() == 12, "an encounter deck must contain exactly twelve cards")
 	_draw_pile.assign(run_rng.shuffle(card_ids))
 
-func draw_round() -> Array[StringName]:
+func draw_round(count: int = HAND_SIZE) -> Array[StringName]:
 	var hand: Array[StringName] = []
-	for draw_index in range(mini(HAND_SIZE, _draw_pile.size())):
+	for draw_index in range(mini(count, _draw_pile.size())):
 		hand.append(_draw_pile.pop_front())
 	return hand
 

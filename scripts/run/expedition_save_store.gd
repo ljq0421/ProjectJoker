@@ -15,7 +15,7 @@ class LoadResult extends RefCounted:
 		reason = p_reason
 		snapshot = p_snapshot
 
-const FORMAT_VERSION := 1
+const FORMAT_VERSION := 2
 const CONTENT_VERSION := 1
 
 var config_path := "user://expedition_save.cfg"
@@ -102,18 +102,63 @@ func _load_path(path: String) -> LoadResult:
 	var error := config.load(_absolute(path))
 	if error != OK:
 		return LoadResult.new(false, "无法读取远征存档：%s" % error)
+	var format_version: int = config.get_value("meta", "format_version", -1)
 	if (
-		config.get_value("meta", "format_version", -1) != FORMAT_VERSION
+		format_version not in [1, FORMAT_VERSION]
 		or config.get_value("meta", "content_version", -1) != CONTENT_VERSION
 	):
 		return LoadResult.new(false, "远征存档版本不受支持")
 	var snapshot = config.get_value("run", "snapshot", null)
 	if not snapshot is Dictionary:
 		return LoadResult.new(false, "远征存档主体格式无效")
+	if format_version == 1:
+		snapshot = _migrate_v1_snapshot(snapshot)
 	var snapshot_error := ExpeditionSession.snapshot_error(snapshot)
 	if not snapshot_error.is_empty():
 		return LoadResult.new(false, snapshot_error)
 	return LoadResult.new(true, "", snapshot.duplicate(true))
+
+func _migrate_v1_snapshot(legacy: Dictionary) -> Dictionary:
+	var snapshot := legacy.duplicate(true)
+	var seed := int(snapshot.get("seed_value", 1))
+	var area_index := int(snapshot.get("current_area_index", 0))
+	snapshot["run_id"] = StringName("legacy-%d-%d" % [seed, area_index])
+	snapshot["starting_deck_id"] = &"dice_control"
+	snapshot["challenge_ids"] = []
+	var inherited: Dictionary = snapshot.get("inherited_state", {}).duplicate(true)
+	if (
+		inherited.is_empty()
+		and snapshot.get("status", ExpeditionSession.Status.NOT_STARTED)
+		== ExpeditionSession.Status.ACTIVE
+		and area_index == 0
+	):
+		var profiles: Array[Dictionary] = []
+		for die_index in range(1, 7):
+			profiles.append({
+				"id": StringName("d%d" % die_index),
+				"rolled_value": 1,
+				"engraving_id": &"",
+				"engraved_face": 0,
+			})
+		inherited = {
+			"deck_ids": AreaCatalog.new().gold_corridor().starting_deck_ids.duplicate(),
+			"intel_tickets": AreaCatalog.new().gold_corridor().starting_intel_tickets,
+			"die_profiles": profiles,
+			"rng_state": RunRng.new(seed).snapshot_state(),
+			"challenge_ids": [],
+		}
+	elif not inherited.is_empty():
+		inherited["challenge_ids"] = []
+	snapshot["inherited_state"] = inherited
+	var checkpoint: Dictionary = snapshot.get("area_checkpoint", {}).duplicate(true)
+	if not checkpoint.is_empty():
+		checkpoint["challenge_ids"] = []
+		if checkpoint.has("shop") and checkpoint["shop"] is Dictionary:
+			var shop: Dictionary = checkpoint["shop"].duplicate(true)
+			shop["price_modifier"] = 0
+			checkpoint["shop"] = shop
+	snapshot["area_checkpoint"] = checkpoint
+	return snapshot
 
 func _remove_if_exists(path: String) -> void:
 	var absolute := _absolute(path)

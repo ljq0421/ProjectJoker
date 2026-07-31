@@ -31,6 +31,7 @@ var intel_tickets: int
 var intel_snapshot: ShopIntelSnapshot
 var shop_index := 0
 var services_enabled := false
+var price_modifier := 0
 var refresh_used := false
 var intel_unlocked := false
 var initialization_error := ""
@@ -43,7 +44,8 @@ func _init(
 	p_intel_tickets: int,
 	p_intel_snapshot: ShopIntelSnapshot = null,
 	p_shop_index: int = 0,
-	p_services_enabled: bool = false
+	p_services_enabled: bool = false,
+	p_price_modifier: int = 0
 ) -> void:
 	catalog = p_catalog
 	deck_ids = p_deck_ids.duplicate()
@@ -52,6 +54,7 @@ func _init(
 	intel_snapshot = p_intel_snapshot
 	shop_index = p_shop_index
 	services_enabled = p_services_enabled
+	price_modifier = p_price_modifier
 	initialization_error = _initialization_error()
 	if initialization_error.is_empty():
 		offer_ids = _next_offer_batch(deck_ids, [])
@@ -75,7 +78,7 @@ func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
 		return _fail("要替换的旧牌不在当前牌组中")
 	if catalog.find_card(replaced_id) == null:
 		return _fail("旧牌定义不存在")
-	if intel_tickets < CARD_PRICE:
+	if intel_tickets < card_price():
 		return _fail("情报券不足")
 	if offer_id in deck_ids:
 		return _fail("牌组中已经存在这张候选牌")
@@ -94,12 +97,12 @@ func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
 		unique_ids[card_id] = true
 
 	deck_ids = next_deck
-	intel_tickets -= CARD_PRICE
+	intel_tickets -= card_price()
 	sold_offer_ids.append(offer_id)
 	purchase_records.append(ShopPurchaseRecord.new(
 		offer_id,
 		replaced_id,
-		CARD_PRICE
+		card_price()
 	))
 	last_error = ""
 	return OperationResult.new(true)
@@ -111,7 +114,7 @@ func refresh_offers() -> OperationResult:
 		return _fail("当前商店不提供刷新服务")
 	if refresh_used:
 		return _fail("本店已经刷新过候选")
-	if intel_tickets < REFRESH_PRICE:
+	if intel_tickets < refresh_price():
 		return _fail("情报券不足，无法刷新")
 	var next_offers := _next_offer_batch(deck_ids, shown_offer_ids)
 	if next_offers.size() != 3:
@@ -120,12 +123,12 @@ func refresh_offers() -> OperationResult:
 	offer_ids.assign(next_offers)
 	shown_offer_ids.append_array(next_offers)
 	sold_offer_ids.clear()
-	intel_tickets -= REFRESH_PRICE
+	intel_tickets -= refresh_price()
 	refresh_used = true
 	service_records.append(ShopServiceRecord.new(
 		shop_index,
 		ShopServiceRecord.ServiceType.REFRESH,
-		REFRESH_PRICE
+		refresh_price()
 	))
 	last_error = ""
 	return OperationResult.new(true)
@@ -142,15 +145,15 @@ func purchase_intel() -> OperationResult:
 		return _fail(snapshot_error)
 	if intel_unlocked:
 		return _fail("本店情报已经购买")
-	if intel_tickets < INTEL_PRICE:
+	if intel_tickets < intel_price():
 		return _fail("情报券不足，无法购买情报")
 
-	intel_tickets -= INTEL_PRICE
+	intel_tickets -= intel_price()
 	intel_unlocked = true
 	service_records.append(ShopServiceRecord.new(
 		shop_index,
 		ShopServiceRecord.ServiceType.INTEL,
-		INTEL_PRICE,
+		intel_price(),
 		intel_snapshot.kind
 	))
 	last_error = ""
@@ -184,6 +187,7 @@ func to_snapshot() -> Dictionary:
 		"intel_snapshot": _intel_to_snapshot(intel_snapshot),
 		"shop_index": shop_index,
 		"services_enabled": services_enabled,
+		"price_modifier": price_modifier,
 		"refresh_used": refresh_used,
 		"intel_unlocked": intel_unlocked,
 	}
@@ -204,6 +208,7 @@ static func from_snapshot(
 		"intel_snapshot",
 		"shop_index",
 		"services_enabled",
+		"price_modifier",
 		"refresh_used",
 		"intel_unlocked",
 	]:
@@ -232,6 +237,8 @@ static func from_snapshot(
 		or not snapshot["intel_unlocked"] is bool
 	):
 		return RestoreResult.new(false, "商店检查点服务状态无效")
+	if not snapshot["price_modifier"] is int or snapshot["price_modifier"] < 0:
+		return RestoreResult.new(false, "商店检查点价格修正无效")
 	var intel_result := _intel_from_snapshot(snapshot["intel_snapshot"])
 	if not intel_result.accepted:
 		return RestoreResult.new(false, intel_result.reason)
@@ -246,7 +253,8 @@ static func from_snapshot(
 		snapshot["intel_tickets"],
 		intel_result.snapshot,
 		snapshot["shop_index"],
-		snapshot["services_enabled"]
+		snapshot["services_enabled"],
+		snapshot["price_modifier"]
 	)
 	if not restored.initialization_error.is_empty():
 		return RestoreResult.new(false, restored.initialization_error)
@@ -276,6 +284,15 @@ static func from_snapshot(
 	restored.intel_unlocked = snapshot["intel_unlocked"]
 	restored.last_error = ""
 	return RestoreResult.new(true, "", restored)
+
+func card_price() -> int:
+	return CARD_PRICE + price_modifier
+
+func refresh_price() -> int:
+	return REFRESH_PRICE + price_modifier
+
+func intel_price() -> int:
+	return INTEL_PRICE + price_modifier
 
 class IntelRestoreResult extends RefCounted:
 	var accepted: bool

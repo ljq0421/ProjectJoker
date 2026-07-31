@@ -34,6 +34,7 @@ func _test_expedition_host_and_summary_structure() -> void:
 		"ExpeditionErrorPanel",
 		"ExpeditionSummaryPanel",
 		"ExpeditionSeedLabel",
+		"ExpeditionConfigLabel",
 		"ExpeditionAreaHistoryLabel",
 		"ExpeditionEpilogueLabel",
 		"NarrativeCard",

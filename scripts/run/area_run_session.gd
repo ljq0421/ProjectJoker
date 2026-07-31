@@ -1,6 +1,9 @@
 class_name AreaRunSession
 extends RefCounted
 
+const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
+const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd")
+
 enum Phase {
 	NOT_STARTED,
 	ROUTE_CHOICE,
@@ -44,6 +47,7 @@ var replaced_reward_card_id: StringName = &""
 var selected_engraving_id: StringName = &""
 var installed_die_id: StringName = &""
 var installed_face := 0
+var challenge_ids: Array[StringName] = []
 var failure_origin: Phase = Phase.NOT_STARTED
 var last_error := ""
 var _entry_state: Dictionary = {}
@@ -89,6 +93,15 @@ func start() -> OperationResult:
 		)
 	if not content_errors.is_empty():
 		return _fail("区域内容无效：%s" % "；".join(content_errors))
+	if not _entry_state.is_empty() and _entry_state.has("challenge_ids"):
+		challenge_ids.assign(_entry_state["challenge_ids"])
+	var challenge_error := ExpeditionConfigs.new().selection_error(
+		ExpeditionConfigs.DICE_CONTROL,
+		challenge_ids,
+		true
+	)
+	if not challenge_error.is_empty():
+		return _fail(challenge_error)
 
 	var first_ids := area_definition.first_route_ids
 	var route_error := _route_error(first_ids)
@@ -139,6 +152,20 @@ func configure_entry_state(state: Dictionary) -> OperationResult:
 	if not error.is_empty():
 		return _fail(error)
 	_entry_state = state.duplicate(true)
+	last_error = ""
+	return OperationResult.new(true)
+
+func configure_challenges(p_challenge_ids: Array[StringName]) -> OperationResult:
+	if phase != Phase.NOT_STARTED:
+		return _fail("区域开始后不能修改挑战配置")
+	var error := ExpeditionConfigs.new().selection_error(
+		ExpeditionConfigs.DICE_CONTROL,
+		p_challenge_ids,
+		true
+	)
+	if not error.is_empty():
+		return _fail(error)
+	challenge_ids.assign(p_challenge_ids)
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -260,7 +287,8 @@ func open_shop() -> OperationResult:
 		intel_tickets,
 		intel,
 		room_index,
-		true
+		true,
+		ChallengeRules.new(challenge_ids).shop_price(0)
 	)
 	if not next_shop.initialization_error.is_empty():
 		run_rng.restore_state(rng_before)
@@ -482,6 +510,7 @@ func restart() -> OperationResult:
 
 func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	var rng_before := run_rng.snapshot_state()
+	var challenges := ChallengeRules.new(challenge_ids)
 	var setup := EncounterRunSetup.new()
 	setup.run_rng = run_rng
 	setup.deck_ids = deck_ids.duplicate()
@@ -491,13 +520,18 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.round_plans.assign(room.round_plans)
 	setup.fixed_restriction = room.restriction
 	setup.resolution_context = ResolutionContext.new(null, engraving_catalog)
-	setup.success_intel_reward = room.success_intel_reward
+	setup.success_intel_reward = challenges.intel_reward(room.success_intel_reward)
 	setup.prepare_shop_offers = false
 	setup.die_profiles = _clone_profiles(die_profiles)
+	setup.hand_size = challenges.hand_size(not room.fixed_hand_ids.is_empty())
+	setup.undo_allowed = challenges.undo_allowed()
+	var extra_restriction := challenges.full_table_restriction()
+	if extra_restriction != null:
+		setup.additional_restrictions.append(extra_restriction)
 	var next := ThreeRoundEncounterSession.new(
 		card_catalog,
 		seed_value,
-		room.target_total,
+		challenges.target_total(room.target_total),
 		setup
 	)
 	var result := next.start()
@@ -543,6 +577,7 @@ func _create_dealer(
 	next_service_history: Array[ShopServiceRecord]
 ) -> OperationResult:
 	var rng_before := run_rng.snapshot_state()
+	var challenges := ChallengeRules.new(challenge_ids)
 	var setup := EncounterRunSetup.new()
 	setup.run_rng = run_rng
 	setup.deck_ids = next_deck.duplicate()
@@ -555,10 +590,15 @@ func _create_dealer(
 	setup.success_intel_reward = 0
 	setup.prepare_shop_offers = false
 	setup.die_profiles = _clone_profiles(die_profiles)
+	setup.hand_size = challenges.hand_size(false)
+	setup.undo_allowed = challenges.undo_allowed()
+	var extra_restriction := challenges.full_table_restriction()
+	if extra_restriction != null:
+		setup.additional_restrictions.append(extra_restriction)
 	var next := ThreeRoundEncounterSession.new(
 		card_catalog,
 		seed_value,
-		area_definition.dealer_target,
+		challenges.target_total(area_definition.dealer_target),
 		setup
 	)
 	var result := next.start()
@@ -733,6 +773,7 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 		"pending_route_ids",
 		"intel_tickets",
 		"die_profiles",
+		"challenge_ids",
 		"purchases",
 		"services",
 		"engraving_offer_ids",
@@ -796,6 +837,7 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	market_ids.assign(snapshot["market_ids"])
 	pending_route_ids.assign(snapshot["pending_route_ids"])
 	intel_tickets = snapshot["intel_tickets"]
+	challenge_ids.assign(snapshot["challenge_ids"])
 	die_profiles = next_profiles
 	shop_purchase_history = _purchase_history_from_snapshots(snapshot["purchases"])
 	shop_service_history = _service_history_from_snapshots(snapshot["services"])
@@ -842,6 +884,7 @@ func _state_snapshot() -> Dictionary:
 		"pending_route_ids": pending_route_ids.duplicate(),
 		"intel_tickets": intel_tickets,
 		"die_profiles": _profile_snapshots(),
+		"challenge_ids": challenge_ids.duplicate(),
 		"purchases": purchases,
 		"services": services,
 		"rare_card_offer_ids": rare_card_offer_ids.duplicate(),
@@ -868,6 +911,7 @@ func _copy_runtime_from(other: AreaRunSession) -> void:
 	market_ids = other.market_ids
 	pending_route_ids = other.pending_route_ids
 	intel_tickets = other.intel_tickets
+	challenge_ids = other.challenge_ids
 	die_profiles = other.die_profiles
 	encounter_session = other.encounter_session
 	shop_session = other.shop_session
@@ -902,6 +946,16 @@ func _entry_state_error(state: Dictionary) -> String:
 		return "跨区入口随机状态无效"
 	if not state["die_profiles"] is Array:
 		return "跨区入口骰子配置无效"
+	if state.has("challenge_ids"):
+		if not state["challenge_ids"] is Array:
+			return "跨区入口挑战格式无效"
+		var challenge_error := ExpeditionConfigs.new().selection_error(
+			ExpeditionConfigs.DICE_CONTROL,
+			state["challenge_ids"],
+			true
+		)
+		if not challenge_error.is_empty():
+			return challenge_error
 	return _profiles_error(_profiles_from_snapshots(state["die_profiles"]))
 
 func _profiles_from_snapshots(snapshots: Array) -> Array[DieState]:

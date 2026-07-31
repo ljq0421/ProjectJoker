@@ -12,7 +12,8 @@ func bind_snapshot(
 	area_definition: AreaDefinition,
 	deck_ids: Array[StringName],
 	card_catalog: CardCatalog,
-	dealer_catalog: DealerCatalog
+	dealer_catalog: DealerCatalog,
+	challenge_ids: Array[StringName] = []
 ) -> bool:
 	if snapshot == null:
 		return _fail_closed("情报快照不可用")
@@ -31,11 +32,17 @@ func bind_snapshot(
 			snapshot.route_ids,
 			area_definition,
 			deck_ids,
-			card_catalog
+			card_catalog,
+			challenge_ids
 		):
 			return false
 	else:
-		if not _bind_dealer(snapshot, area_definition, dealer_catalog):
+		if not _bind_dealer(
+			snapshot,
+			area_definition,
+			dealer_catalog,
+			challenge_ids
+		):
 			return false
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -52,7 +59,8 @@ func _bind_routes(
 	route_ids: Array[StringName],
 	area_definition: AreaDefinition,
 	deck_ids: Array[StringName],
-	card_catalog: CardCatalog
+	card_catalog: CardCatalog,
+	challenge_ids: Array[StringName]
 ) -> bool:
 	var left := area_definition.find_room(route_ids[0])
 	var right := area_definition.find_room(route_ids[1])
@@ -64,8 +72,8 @@ func _bind_routes(
 		return _fail_closed("右侧路线必须包含三张规则台")
 	%IntelTitle.text = "%s · 下一组路线情报" % area_definition.display_name
 	%IntelSubtitle.text = "路线与顺序已经固定；查看情报不会改变后续结果。"
-	_bind_route_page("Left", left, deck_ids, card_catalog)
-	_bind_route_page("Right", right, deck_ids, card_catalog)
+	_bind_route_page("Left", left, deck_ids, card_catalog, challenge_ids)
+	_bind_route_page("Right", right, deck_ids, card_catalog, challenge_ids)
 	%RouteMode.visible = true
 	%RouteIntelPages.visible = true
 	%DealerMode.visible = false
@@ -76,18 +84,25 @@ func _bind_route_page(
 	prefix: String,
 	room: RoomDefinition,
 	deck_ids: Array[StringName],
-	card_catalog: CardCatalog
+	card_catalog: CardCatalog,
+	challenge_ids: Array[StringName]
 ) -> void:
 	get_node("%sIntelName" % ["%" + prefix]).text = room.display_name
 	get_node("%sIntelBody" % ["%" + prefix]).text = "%s\n%s" % [
 		room.description,
 		RouteBriefFormatter.activity_text(room, card_catalog),
 	]
-	get_node("%sIntelGoal" % ["%" + prefix]).text = (
-		RouteBriefFormatter.goal_text(room)
-	)
+	var challenge_rules = preload(
+		"res://scripts/run/expedition_challenge_rules.gd"
+	).new(challenge_ids)
+	get_node("%sIntelGoal" % ["%" + prefix]).text = "累计目标：%d（%d 回合）" % [
+		challenge_rules.target_total(room.target_total),
+		room.round_count,
+	]
 	get_node("%sIntelReward" % ["%" + prefix]).text = (
-		"成功奖励：%d 张情报券" % room.success_intel_reward
+		"成功奖励：%d 张情报券" % challenge_rules.intel_reward(
+			room.success_intel_reward
+		)
 	)
 	get_node("%sIntelTags" % ["%" + prefix]).text = (
 		"%s　房间特征｜%s" % [
@@ -113,7 +128,8 @@ func _bind_route_page(
 func _bind_dealer(
 	snapshot: ShopIntelSnapshot,
 	area_definition: AreaDefinition,
-	dealer_catalog: DealerCatalog
+	dealer_catalog: DealerCatalog,
+	challenge_ids: Array[StringName]
 ) -> bool:
 	var dealer := dealer_catalog.find_dealer(snapshot.dealer_id)
 	if dealer == null:
@@ -134,7 +150,9 @@ func _bind_dealer(
 	%IntelTitle.text = "%s · 庄家完整情报" % area_definition.display_name
 	%IntelSubtitle.text = "仅公开规则、三轮日程与限制；不预告未来骰面、手牌或结算结果。"
 	%DealerIntelName.text = dealer.display_name
-	%DealerIntelTarget.text = "三轮累计目标：%d" % snapshot.dealer_target
+	%DealerIntelTarget.text = "三轮累计目标：%d" % preload(
+		"res://scripts/run/expedition_challenge_rules.gd"
+	).new(challenge_ids).target_total(snapshot.dealer_target)
 	%DealerIntelMechanism.text = "庄家机制\n%s" % dealer.rule_text
 	%DealerIntelSchedule.text = "三轮公开日程"
 	_bind_dealer_rounds(area_definition)

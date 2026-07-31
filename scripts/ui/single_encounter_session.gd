@@ -5,21 +5,26 @@ var controller: RoundController
 var hand: Array[CardDefinition]
 var selection := InteractionState.new()
 var last_error: String = ""
+var undo_allowed := true
 
 func _init(
 	state: RoundState,
 	encounter: EncounterDefinition,
 	p_hand: Array[CardDefinition],
 	p_context: ResolutionContext = null,
-	p_restriction: FinalRestrictionDefinition = null
+	p_restriction: FinalRestrictionDefinition = null,
+	p_additional_restrictions: Array[FinalRestrictionDefinition] = [],
+	p_undo_allowed: bool = true
 ) -> void:
 	controller = RoundController.new(
 		state,
 		encounter,
 		p_context,
-		p_restriction
+		p_restriction,
+		p_additional_restrictions
 	)
 	hand = p_hand
+	undo_allowed = p_undo_allowed
 
 func activate_die(die_id: StringName) -> bool:
 	if selection.kind == InteractionState.Kind.CARD:
@@ -268,6 +273,8 @@ func calibrate_die(die_id: StringName, delta: int) -> bool:
 	return _accept(controller.adjust_die(die_id, delta), false)
 
 func undo() -> bool:
+	if not undo_allowed:
+		return _fail("落子无悔：本次远征禁止撤销")
 	var accepted := controller.undo()
 	if not accepted:
 		return _fail("当前没有可撤销的操作")

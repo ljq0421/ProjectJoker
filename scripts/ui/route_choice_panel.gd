@@ -12,7 +12,8 @@ func bind_routes(
 	p_route_ids: Array[StringName],
 	room_catalog,
 	deck_ids: Array[StringName],
-	card_catalog: CardCatalog
+	card_catalog: CardCatalog,
+	challenge_ids: Array[StringName] = []
 ) -> bool:
 	if room_catalog == null or card_catalog == null:
 		return _fail_closed("路线资料目录不可用")
@@ -26,8 +27,8 @@ func bind_routes(
 	if left == null or right == null:
 		return _fail_closed("路线选择包含未知房间")
 
-	_bind_route("Left", left, deck_ids, card_catalog)
-	_bind_route("Right", right, deck_ids, card_catalog)
+	_bind_route("Left", left, deck_ids, card_catalog, challenge_ids)
+	_bind_route("Right", right, deck_ids, card_catalog, challenge_ids)
 	%LeftRouteButton.set_meta("room_id", left.id)
 	%RightRouteButton.set_meta("room_id", right.id)
 	%RouteErrorLabel.text = ""
@@ -47,16 +48,25 @@ func _bind_route(
 	prefix: String,
 	room: RoomDefinition,
 	deck_ids: Array[StringName],
-	card_catalog: CardCatalog
+	card_catalog: CardCatalog,
+	challenge_ids: Array[StringName]
 ) -> void:
 	get_node("%sRouteName" % ["%" + prefix]).text = room.display_name
 	get_node("%sRouteDescription" % ["%" + prefix]).text = "%s\n%s" % [
 		room.description,
 		RouteBriefFormatter.activity_text(room, card_catalog),
 	]
-	get_node("%sRouteGoal" % ["%" + prefix]).text = RouteBriefFormatter.goal_text(room)
+	var challenge_rules = preload(
+		"res://scripts/run/expedition_challenge_rules.gd"
+	).new(challenge_ids)
+	get_node("%sRouteGoal" % ["%" + prefix]).text = "累计目标：%d（%d 回合）" % [
+		challenge_rules.target_total(room.target_total),
+		room.round_count,
+	]
 	get_node("%sRouteReward" % ["%" + prefix]).text = (
-		"成功奖励：%d 张情报券" % room.success_intel_reward
+		"成功奖励：%d 张情报券" % challenge_rules.intel_reward(
+			room.success_intel_reward
+		)
 	)
 	get_node("%sRouteTags" % ["%" + prefix]).text = (
 		"%s　房间特征｜%s" % [

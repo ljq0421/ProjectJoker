@@ -7,12 +7,16 @@ const AREA_SCENES := {
 	&"mirror_hall": "res://scenes/run/mirror_hall_run_screen.tscn",
 	&"faceless_hub": "res://scenes/run/faceless_hub_run_screen.tscn",
 }
+const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
+const ExpeditionMeta = preload("res://scripts/run/expedition_meta_store.gd")
+const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd")
 
 @onready var area_host: Control = %AreaHost
 @onready var error_panel: Control = %ExpeditionErrorPanel
 @onready var error_label: Label = %ExpeditionErrorLabel
 @onready var summary_panel: Control = %ExpeditionSummaryPanel
 @onready var seed_label: Label = %ExpeditionSeedLabel
+@onready var config_label: Label = %ExpeditionConfigLabel
 @onready var area_history_label: Label = %ExpeditionAreaHistoryLabel
 @onready var final_build_label: Label = %ExpeditionFinalBuildLabel
 @onready var epilogue_label: Label = %ExpeditionEpilogueLabel
@@ -23,6 +27,8 @@ const AREA_SCENES := {
 var expedition := ExpeditionSession.new()
 var store: ExpeditionSaveStore
 var save_path := "user://expedition_save.cfg"
+var meta_path := "user://expedition_meta.cfg"
+var meta_store
 var current_area_screen: AreaRunScreen
 var _pending_completion: Dictionary = {}
 
@@ -39,19 +45,33 @@ func _ready() -> void:
 		&"continue"
 	)
 	var seed := int(root_window.get_meta("expedition_seed", 0))
+	var starting_deck_id: StringName = root_window.get_meta(
+		"expedition_starting_deck_id",
+		ExpeditionConfigs.DICE_CONTROL
+	)
+	var challenge_ids: Array[StringName] = []
+	challenge_ids.assign(root_window.get_meta("expedition_challenge_ids", []))
 	save_path = String(root_window.get_meta(
 		"expedition_save_path",
 		save_path
 	))
+	meta_path = String(root_window.get_meta("expedition_meta_path", meta_path))
 	root_window.remove_meta("expedition_launch_mode")
 	root_window.remove_meta("expedition_seed")
+	root_window.remove_meta("expedition_starting_deck_id")
+	root_window.remove_meta("expedition_challenge_ids")
 	store = ExpeditionSaveStore.new(save_path)
+	meta_store = ExpeditionMeta.new(meta_path)
 	if mode == &"new":
 		var cleared := store.clear()
 		if not cleared.accepted:
 			_show_error(cleared.reason)
 			return
-		var result := expedition.start_new(maxi(seed, 1))
+		var result := expedition.start_new(
+			maxi(seed, 1),
+			starting_deck_id,
+			challenge_ids
+		)
 		if not result.accepted:
 			_show_error(result.reason)
 			return
@@ -65,6 +85,10 @@ func _ready() -> void:
 			_show_error(restored.reason)
 			return
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
+		var record_result := _record_run(&"complete", "")
+		if not record_result.accepted:
+			_show_error(record_result.reason)
+			return
 		_show_summary()
 	elif expedition.area_checkpoint.is_empty():
 		var boundary_save := store.save(expedition.to_snapshot())
@@ -117,6 +141,10 @@ func _on_checkpoint_reached(snapshot: Dictionary) -> void:
 
 func _on_expedition_failed(reason: String) -> void:
 	expedition.fail_run(reason if not reason.is_empty() else "区域挑战未达标")
+	var record_result := _record_run(&"failed", expedition.failure_reason)
+	if not record_result.accepted:
+		_show_error(record_result.reason)
+		return
 	var cleared := store.clear()
 	if not cleared.accepted:
 		_show_error(cleared.reason)
@@ -141,6 +169,10 @@ func _on_continue_requested() -> void:
 		return
 	_pending_completion = {}
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
+		var record_result := _record_run(&"complete", "")
+		if not record_result.accepted:
+			_show_error(record_result.reason)
+			return
 		_show_summary()
 	else:
 		_show_area_transition()
@@ -155,6 +187,12 @@ func _show_summary() -> void:
 	current_area_screen = null
 	summary_panel.visible = true
 	seed_label.text = "远征种子｜%d" % expedition.seed_value
+	config_label.text = "起手牌组｜%s　挑战｜%s" % [
+		_deck_name(expedition.starting_deck_id),
+		ChallengeRules.new(expedition.challenge_ids).display_copy(
+			ExpeditionConfigs.new()
+		),
+	]
 	var area_lines: Array[String] = []
 	for index in range(expedition.completed_areas.size()):
 		var completion: Dictionary = expedition.completed_areas[index]
@@ -216,6 +254,59 @@ func _area_definition(area_id: StringName) -> AreaDefinition:
 func _area_name(area_id: StringName) -> String:
 	var definition := _area_definition(area_id)
 	return String(area_id) if definition == null else definition.display_name
+
+func _deck_name(deck_id: StringName) -> String:
+	var definition: Dictionary = ExpeditionConfigs.new().find_deck(deck_id)
+	return String(deck_id) if definition.is_empty() else definition["display_name"]
+
+func _record_run(result_kind: StringName, reason: String) -> OperationResult:
+	if meta_store == null:
+		return OperationResult.new(false, "远征元进度存储尚未初始化")
+	var route_ids: Array[StringName] = []
+	var reward_ids: Array[StringName] = []
+	var completed_area_ids: Array[StringName] = []
+	for completion in expedition.completed_areas:
+		completed_area_ids.append(completion.get("area_id", &""))
+		for room in completion.get("rooms", []):
+			route_ids.append(room.get("room_id", &""))
+		var reward_id: StringName = (
+			completion.get("reward_card_id", &"")
+			if completion.get("reward_kind", &"engraving") == &"rare_card"
+			else completion.get("engraving_id", &"")
+		)
+		if reward_id != &"":
+			reward_ids.append(reward_id)
+	if (
+		result_kind == &"failed"
+		and current_area_screen != null
+		and current_area_screen.area_session != null
+	):
+		for room_id in current_area_screen.area_session.selected_room_ids:
+			route_ids.append(room_id)
+	var final_state := expedition.inherited_state
+	if (
+		result_kind == &"failed"
+		and current_area_screen != null
+		and current_area_screen.area_session != null
+	):
+		final_state = {
+			"deck_ids": current_area_screen.area_session.deck_ids.duplicate(),
+			"intel_tickets": current_area_screen.area_session.intel_tickets,
+		}
+	return meta_store.record_run({
+		"run_id": expedition.run_id,
+		"ended_at": int(Time.get_unix_time_from_system()),
+		"result": result_kind,
+		"seed_value": expedition.seed_value,
+		"starting_deck_id": expedition.starting_deck_id,
+		"challenge_ids": expedition.challenge_ids.duplicate(),
+		"completed_areas": completed_area_ids,
+		"route_ids": route_ids,
+		"reward_ids": reward_ids,
+		"final_deck_count": final_state.get("deck_ids", []).size(),
+		"intel_tickets": int(final_state.get("intel_tickets", 0)),
+		"failure_reason": reason,
+	})
 
 func _show_area_transition() -> void:
 	summary_panel.visible = false

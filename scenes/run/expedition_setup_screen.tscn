@@ -1,0 +1,270 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/expedition_setup_screen.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="MainPanel"]
+content_margin_left = 18.0
+content_margin_top = 16.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+bg_color = Color(0.025, 0.034, 0.11, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.34, 0.88, 0.84, 0.7)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="HistoryPanel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.055, 0.025, 0.105, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.61, 0.31, 0.75)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="SeedPanel"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.08, 0.09, 0.19, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.55, 0.82, 0.7)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="ExpeditionSetupScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.008, 0.01, 0.045, 1)
+mouse_filter = 2
+
+[node name="ContractGlow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -540.0
+offset_right = 5.0
+offset_bottom = 540.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.66, 0.25, 0.16)
+mouse_filter = 2
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Page" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/Page"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Titles" type="VBoxContainer" parent="SafeArea/Page/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Eyebrow" type="Label" parent="SafeArea/Page/Header/Titles"]
+layout_mode = 2
+text = "DEPARTURE LEDGER / 远征出发契据"
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="Title" type="Label" parent="SafeArea/Page/Header/Titles"]
+layout_mode = 2
+text = "签下这一局的公开条款"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 31
+
+[node name="Subtitle" type="Label" parent="SafeArea/Page/Header/Titles"]
+layout_mode = 2
+text = "选择十二张起手牌、至多两项挑战，并留下可复盘的种子。"
+theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="ReturnFromSetupButton" type="Button" parent="SafeArea/Page/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 50)
+layout_mode = 2
+text = "返回梦层入口"
+
+[node name="Columns" type="HBoxContainer" parent="SafeArea/Page"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ConfigPanel" type="PanelContainer" parent="SafeArea/Page/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("MainPanel")
+
+[node name="ConfigScroll" type="ScrollContainer" parent="SafeArea/Page/Columns/ConfigPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Config" type="VBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="DeckTitle" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+layout_mode = 2
+text = "起手契据｜三套牌组立即开放"
+theme_override_colors/font_color = Color(0.5, 0.96, 0.9, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="DeckChoiceRow" type="HBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ChallengeHeader" type="HBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+layout_mode = 2
+
+[node name="ChallengeTitle" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/ChallengeHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "挑战条款｜首次完整通关后开放"
+theme_override_colors/font_color = Color(0.95, 0.74, 0.38, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="ChallengeCountLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/ChallengeHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "已选条款 0 / 2"
+theme_override_font_sizes/font_size = 18
+
+[node name="ChallengeLockLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.66, 0.46, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="ChallengeGrid" type="GridContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="SeedPanel" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SeedPanel")
+
+[node name="SeedRow" type="HBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SeedLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
+layout_mode = 2
+text = "远征种子"
+theme_override_font_sizes/font_size = 19
+
+[node name="ExpeditionSeedInput" type="LineEdit" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "输入大于 0 的整数"
+
+[node name="StartConfiguredExpeditionButton" type="Button" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 44)
+layout_mode = 2
+text = "签署并开始远征"
+
+[node name="SetupErrorLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.55, 1)
+
+[node name="HistoryPanel" type="PanelContainer" parent="SafeArea/Page/Columns"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 1
+theme_override_styles/panel = SubResource("HistoryPanel")
+
+[node name="History" type="VBoxContainer" parent="SafeArea/Page/Columns/HistoryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HistoryEyebrow" type="Label" parent="SafeArea/Page/Columns/HistoryPanel/History"]
+layout_mode = 2
+text = "LAST 30 CONTRACTS"
+theme_override_colors/font_color = Color(0.93, 0.71, 0.38, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="HistoryTitle" type="Label" parent="SafeArea/Page/Columns/HistoryPanel/History"]
+layout_mode = 2
+text = "最近远征"
+theme_override_font_sizes/font_size = 26
+
+[node name="HistoryHint" type="Label" parent="SafeArea/Page/Columns/HistoryPanel/History"]
+layout_mode = 2
+text = "点击条目，用相同种子、牌组和挑战直接重开。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.9, 1)
+
+[node name="HistoryScroll" type="ScrollContainer" parent="SafeArea/Page/Columns/HistoryPanel/History"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="RunHistoryList" type="VBoxContainer" parent="SafeArea/Page/Columns/HistoryPanel/History/HistoryScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8

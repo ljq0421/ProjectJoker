@@ -56,7 +56,7 @@ func _refresh() -> void:
 			&"offer",
 			selected_offer_id == card_id,
 			card_id in shop_session.sold_offer_ids,
-			ShopSession.CARD_PRICE
+			shop_session.card_price()
 		)
 
 	ticket_label.text = "情报券：%d" % shop_session.intel_tickets
@@ -71,6 +71,11 @@ func _refresh() -> void:
 	intel_button.visible = show_services
 	if show_services:
 		var intel_name := _intel_name()
+		refresh_button.text = (
+			"候选已刷新"
+			if shop_session.refresh_used
+			else "刷新候选（%d 情报券）" % shop_session.refresh_price()
+		)
 		service_status_label.text = "刷新：%s　%s：%s" % [
 			"已使用" if shop_session.refresh_used else "可用",
 			intel_name,
@@ -80,7 +85,7 @@ func _refresh() -> void:
 		intel_button.text = (
 			"查看已购%s" % intel_name
 			if shop_session.intel_unlocked
-			else "购买%s（%d 情报券）" % [intel_name, ShopSession.INTEL_PRICE]
+			else "购买%s（%d 情报券）" % [intel_name, shop_session.intel_price()]
 		)
 
 func _add_card(

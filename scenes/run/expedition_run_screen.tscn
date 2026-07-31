@@ -93,6 +93,15 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.51, 0.96, 0.89, 1)
 theme_override_font_sizes/font_size = 20
 
+[node name="ExpeditionConfigLabel" type="Label" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.78, 0.96, 1)
+theme_override_font_sizes/font_size = 18
+
 [node name="Body" type="HBoxContainer" parent="ExpeditionSummaryPanel/SafeArea/Ledger/Content"]
 layout_mode = 2
 size_flags_vertical = 3

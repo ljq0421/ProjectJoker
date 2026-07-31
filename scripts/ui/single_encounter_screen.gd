@@ -244,31 +244,42 @@ func refresh_from_session() -> void:
 	_refresh_active_restriction(state)
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed
+	%UndoButton.disabled = session.controller.committed or not session.undo_allowed
+	%UndoButton.tooltip_text = (
+		"落子无悔：本次远征禁止撤销"
+		if not session.undo_allowed
+		else "撤销上一步操作"
+	)
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	view_refreshed.emit()
 
 func _refresh_active_restriction(state: RoundState) -> void:
-	var restriction := session.controller.active_restriction
-	active_restriction_badge.visible = restriction != null
-	if restriction == null:
+	var restrictions := session.controller.active_restrictions
+	active_restriction_badge.visible = not restrictions.is_empty()
+	if restrictions.is_empty():
 		active_restriction_badge.text = ""
 		active_restriction_badge.tooltip_text = ""
 		return
+	var names: Array[String] = []
+	var tooltips: Array[String] = []
 	var progress_copy := ""
-	if (
-		restriction.operation
-		== FinalRestrictionDefinition.Operation.REQUIRE_ALL_TABLES_OCCUPIED
-	):
-		progress_copy = " · %s" % RoundRestrictionEvaluator.new().coverage_copy(
-			state,
-			session.controller.encounter
-		)
+	for restriction in restrictions:
+		names.append(restriction.display_name)
+		tooltips.append(restriction.rule_text)
+		if (
+			restriction.operation
+			== FinalRestrictionDefinition.Operation.REQUIRE_ALL_TABLES_OCCUPIED
+		):
+			progress_copy = " · %s" % RoundRestrictionEvaluator.new().coverage_copy(
+				state,
+				session.controller.encounter
+			)
 	active_restriction_badge.text = "公开限制 · %s%s" % [
-		restriction.display_name,
+		" / ".join(names),
 		progress_copy,
 	]
-	active_restriction_badge.tooltip_text = restriction.rule_text
+	active_restriction_badge.tooltip_text = "\n".join(tooltips)
 
 func _refresh_direction(report: ResolutionReport) -> void:
 	%DirectionBadge.text = (

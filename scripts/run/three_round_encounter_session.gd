@@ -181,10 +181,15 @@ func _begin_round() -> OperationResult:
 	var next_hand_ids: Array[StringName] = (
 		setup.fixed_hand_ids.duplicate()
 		if not setup.fixed_hand_ids.is_empty()
-		else _deck.draw_round()
+		else _deck.draw_round(setup.hand_size)
 	)
-	if next_hand_ids.size() != CardDeck.HAND_SIZE:
-		return _fail("当前轮没有抽到四张手法牌")
+	var expected_hand_size := (
+		setup.fixed_hand_ids.size()
+		if not setup.fixed_hand_ids.is_empty()
+		else setup.hand_size
+	)
+	if next_hand_ids.size() != expected_hand_size:
+		return _fail("当前轮没有抽到预期数量的手法牌")
 
 	var hand: Array[CardDefinition] = []
 	for card_id in next_hand_ids:
@@ -228,7 +233,9 @@ func _begin_round() -> OperationResult:
 		encounter,
 		hand,
 		context,
-		active_restriction()
+		active_restriction(),
+		setup.additional_restrictions,
+		setup.undo_allowed
 	)
 	current_hand_ids.assign(next_hand_ids)
 	current_session = next_session
@@ -243,6 +250,14 @@ func _profile_for(die_id: StringName) -> DieState:
 func _validate_setup() -> String:
 	if setup.success_intel_reward < 0:
 		return "成功情报券奖励不能为负数"
+	if setup.hand_size < 1 or setup.hand_size > CardDeck.HAND_SIZE:
+		return "每轮手牌数量必须为一到四张"
+	for restriction in setup.additional_restrictions:
+		if restriction == null:
+			return "附加公开限制不能为空"
+		var restriction_errors := restriction.validate()
+		if not restriction_errors.is_empty():
+			return "附加公开限制无效：%s" % "；".join(restriction_errors)
 	if setup.round_count < 1 or setup.round_count > ROUND_COUNT:
 		return "遭遇轮数必须为一到三轮"
 	if setup.round_schedule != null and setup.round_count != ROUND_COUNT:

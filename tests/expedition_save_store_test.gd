@@ -7,6 +7,7 @@ func run() -> void:
 		"project-joker-expedition-save-test-%d.cfg" % Time.get_ticks_usec()
 	)
 	_test_round_trip_and_clear()
+	_test_v1_snapshot_migrates_without_changing_legacy_deck()
 	_test_corrupt_file_is_preserved()
 	_cleanup()
 
@@ -33,6 +34,38 @@ func _test_corrupt_file_is_preserved() -> void:
 	assert_true(FileAccess.file_exists(absolute), "corrupt original must remain")
 	assert_true(store.archive_corrupt().accepted, "explicit archive should succeed")
 	assert_false(store.has_save(), "archived corrupt save leaves formal path free")
+
+func _test_v1_snapshot_migrates_without_changing_legacy_deck() -> void:
+	var expedition := ExpeditionSession.new()
+	expedition.start_new(20260730)
+	var legacy := expedition.to_snapshot()
+	legacy.erase("run_id")
+	legacy.erase("starting_deck_id")
+	legacy.erase("challenge_ids")
+	legacy["inherited_state"] = {}
+	var config := ConfigFile.new()
+	config.set_value("meta", "format_version", 1)
+	config.set_value("meta", "content_version", 1)
+	config.set_value("run", "snapshot", legacy)
+	assert_equal(
+		config.save(ProjectSettings.globalize_path(_base_path)),
+		OK,
+		"legacy fixture should write"
+	)
+	var loaded := ExpeditionSaveStore.new(_base_path).load_snapshot()
+	assert_true(loaded.accepted, "v1 save should migrate")
+	assert_equal(
+		loaded.snapshot.get("starting_deck_id"),
+		&"dice_control",
+		"legacy save should receive the compatibility identity"
+	)
+	assert_equal(loaded.snapshot.get("challenge_ids"), [], "legacy save should have no challenges")
+	assert_equal(
+		loaded.snapshot.get("inherited_state", {}).get("deck_ids"),
+		AreaCatalog.new().gold_corridor().starting_deck_ids,
+		"migration should preserve the old starting deck"
+	)
+	ExpeditionSaveStore.new(_base_path).clear()
 
 func _cleanup() -> void:
 	for suffix in ["", ".tmp", ".bak"]:

@@ -169,7 +169,8 @@ func _show_route_choice() -> void:
 		area_session.current_route_ids(),
 		area_session.area_definition,
 		area_session.deck_ids,
-		area_session.card_catalog
+		area_session.card_catalog,
+		area_session.challenge_ids
 	)
 	if not bound:
 		encounter_screen.visible = true
@@ -247,12 +248,20 @@ func _area_copy() -> String:
 	return "%s · %s" % [area_name, room.display_name]
 
 func _encounter_goal_copy() -> String:
-	return "累计：%d / %d　轮次 %d / %d　情报券：%d" % [
+	var base := "累计：%d / %d　轮次 %d / %d　情报券：%d" % [
 		area_session.encounter_session.cumulative_total,
 		area_session.encounter_session.target_total,
 		area_session.encounter_session.current_round,
 		area_session.encounter_session.round_count,
 		area_session.intel_tickets,
+	]
+	if area_session.challenge_ids.is_empty():
+		return base
+	return "%s　挑战：%s" % [
+		base,
+		preload("res://scripts/run/expedition_challenge_rules.gd").new(
+			area_session.challenge_ids
+		).display_copy(),
 	]
 
 func _on_round_committed(report: ResolutionReport) -> void:
@@ -332,7 +341,8 @@ func _on_shop_intel_view_requested(snapshot: ShopIntelSnapshot) -> void:
 		area_session.area_definition,
 		area_session.shop_session.deck_ids,
 		area_session.card_catalog,
-		area_session.dealer_catalog
+		area_session.dealer_catalog,
+		area_session.challenge_ids
 	)
 	if bound:
 		SfxAccess.play(self, &"panel_open")

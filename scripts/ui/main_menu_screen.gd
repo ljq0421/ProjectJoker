@@ -7,6 +7,7 @@ const MIRROR_HALL_SCENE := "res://scenes/run/mirror_hall_run_screen.tscn"
 const FACELESS_HUB_SCENE := "res://scenes/run/faceless_hub_run_screen.tscn"
 const RULE_ARCHIVE_SCENE := "res://scenes/run/rule_archive_screen.tscn"
 const EXPEDITION_SCENE := "res://scenes/run/expedition_run_screen.tscn"
+const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
 
 @onready var practice_button: Button = %PracticeButton
 @onready var gold_corridor_button: Button = %GoldCorridorButton
@@ -63,18 +64,7 @@ func _on_start_expedition_pressed() -> void:
 	_launch_new_expedition()
 
 func _launch_new_expedition() -> void:
-	if expedition_store.has_save():
-		var loaded := expedition_store.load_snapshot()
-		if not loaded.accepted:
-			var archived := expedition_store.archive_corrupt()
-			if not archived.accepted:
-				expedition_status_label.text = archived.reason
-				return
-	var seed := int(
-		abs(Time.get_unix_time_from_system() * 1000.0)
-		+ Time.get_ticks_msec()
-	)
-	_launch_expedition(&"new", maxi(seed, 1))
+	_open_scene(EXPEDITION_SETUP_SCENE)
 
 func _on_continue_expedition_pressed() -> void:
 	var loaded := expedition_store.load_snapshot()
