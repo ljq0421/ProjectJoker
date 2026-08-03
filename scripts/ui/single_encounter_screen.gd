@@ -15,8 +15,6 @@ const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
-const AreaThemeFactory = preload("res://scripts/ui/area_theme_factory.gd")
-const BASE_THEME = preload("res://resources/themes/neon_dream_theme.tres")
 
 @export var tutorial_auto_start: bool = true
 @export var tutorial_config_path: String = "user://onboarding.cfg"
@@ -147,13 +145,6 @@ func apply_area_presentation(area_id: StringName) -> void:
 	if presentation.is_empty():
 		return
 	_area_id = area_id
-	var area_theme := AreaThemeFactory.build(BASE_THEME, presentation)
-	theme = area_theme
-	var settings_button := get_node_or_null(
-		"SettingsLayer/SettingsRoot/SettingsButton"
-	) as Button
-	if settings_button != null:
-		settings_button.theme = area_theme
 	background.color = presentation["background"]
 	area_identity_bar.color = presentation["primary"]
 	area_label.add_theme_color_override("font_color", presentation["secondary"])
@@ -164,19 +155,7 @@ func apply_area_presentation(area_id: StringName) -> void:
 	area_atmosphere.configure(area_id)
 	dealer_sigil.configure(area_id)
 	%AreaDirectivePanel.visible = true
-	%AreaDirectiveAccent.color = presentation["primary"]
 	%AreaDirectiveTitle.text = presentation["directive_title"]
-	var directive_style := %AreaDirectivePanel.get_theme_stylebox(
-		"panel"
-	) as StyleBoxFlat
-	if directive_style != null:
-		var themed_directive := directive_style.duplicate() as StyleBoxFlat
-		themed_directive.border_color = Color(presentation["primary"], 0.82)
-		themed_directive.bg_color = presentation["background"].lightened(0.055)
-		%AreaDirectivePanel.add_theme_stylebox_override(
-			"panel",
-			themed_directive
-		)
 
 func bind_dealer(dealer: DealerDefinition) -> void:
 	dealer_definition = dealer

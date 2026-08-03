@@ -135,16 +135,6 @@ func _test_route_panel_contract() -> void:
 		"三轮反照" in panel.get_node("%RouteInstruction").text,
 		"mirror route instruction should disclose the reflection structure"
 	)
-	var mirror_ledger_style := panel.get_node(
-		"%RouteLedger"
-	).get_theme_stylebox("panel") as StyleBoxFlat
-	assert_equal(
-		mirror_ledger_style.border_color,
-		preload("res://scripts/ui/area_presentation_catalog.gd").new()
-			.find(&"mirror_hall").primary,
-		"route ledger border should use the bound area's primary color"
-	)
-
 	var faceless_area := AreaCatalog.new().faceless_hub()
 	assert_true(
 		panel.bind_routes(

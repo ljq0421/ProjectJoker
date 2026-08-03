@@ -6,8 +6,6 @@ signal route_selected(room_id: StringName)
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
-const AreaThemeFactory = preload("res://scripts/ui/area_theme_factory.gd")
-const BASE_THEME = preload("res://resources/themes/neon_dream_theme.tres")
 
 var _open_tween: Tween
 
@@ -44,7 +42,7 @@ func bind_routes(
 		presentation.get("route_code", "未知区域"),
 		route_index + 1,
 	]
-	_apply_area_presentation(presentation)
+	%RouteInstruction.text = presentation["route_instruction"]
 	_bind_route("Left", left, deck_ids, card_catalog, challenge_ids)
 	_bind_route("Right", right, deck_ids, card_catalog, challenge_ids)
 	%LeftRouteButton.set_meta("room_id", left.id)
@@ -54,52 +52,6 @@ func bind_routes(
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	call_deferred("_play_open_motion")
 	return true
-
-func _apply_area_presentation(presentation: Dictionary) -> void:
-	if presentation.is_empty():
-		return
-	var primary: Color = presentation["primary"]
-	var secondary: Color = presentation["secondary"]
-	var background: Color = presentation["background"]
-	theme = AreaThemeFactory.build(BASE_THEME, presentation)
-	%RouteTitle.add_theme_color_override("font_color", primary)
-	%RouteInstruction.text = presentation["route_instruction"]
-	%LedgerMark.add_theme_color_override("font_color", secondary)
-	$SafeArea/RouteLedger/LedgerColumn/HeaderRule.color = Color(primary, 0.72)
-	_retheme_panel(%RouteLedger, primary, background.lightened(0.025))
-	var route_pages := [
-		$SafeArea/RouteLedger/LedgerColumn/RoutePages/LeftRoutePage,
-		$SafeArea/RouteLedger/LedgerColumn/RoutePages/RightRoutePage,
-	]
-	for route_page in route_pages:
-		_retheme_panel(route_page, secondary, background.lightened(0.055))
-	var lane_panels := [
-		%LeftLaneOne.get_parent(),
-		%LeftLaneTwo.get_parent(),
-		%LeftLaneThree.get_parent(),
-		%RightLaneOne.get_parent(),
-		%RightLaneTwo.get_parent(),
-		%RightLaneThree.get_parent(),
-	]
-	for lane_panel in lane_panels:
-		_retheme_panel(lane_panel, primary, presentation["surface"].darkened(0.18))
-	for route_name in [%LeftRouteName, %RightRouteName]:
-		route_name.add_theme_color_override("font_color", secondary)
-	for button in [%LeftRouteButton, %RightRouteButton]:
-		button.add_theme_color_override("font_color", primary.lightened(0.26))
-
-func _retheme_panel(
-	panel: PanelContainer,
-	border_color: Color,
-	background_color: Color
-) -> void:
-	var current := panel.get_theme_stylebox("panel") as StyleBoxFlat
-	if current == null:
-		return
-	var themed := current.duplicate() as StyleBoxFlat
-	themed.border_color = border_color
-	themed.bg_color = background_color
-	panel.add_theme_stylebox_override("panel", themed)
 
 func _play_open_motion() -> void:
 	var ledger := %RouteLedger as Control
