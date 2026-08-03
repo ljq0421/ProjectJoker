@@ -17,7 +17,7 @@ resolution_direction = 1
 script = ExtResource("4_rule")
 id = &"left"
 template = ExtResource("6_reverse")
-display_name = "逆序台"
+display_name = "反向台"
 slot_count = 2
 coefficient = 2
 

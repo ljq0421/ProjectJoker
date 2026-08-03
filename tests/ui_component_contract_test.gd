@@ -20,6 +20,10 @@ func run() -> void:
 	)
 	assert_true(lane.has_signal("lane_activated"), "lane should emit click activation")
 	assert_true(lane.has_signal("die_drop_requested"), "lane should emit die drops")
+	assert_true(
+		lane.has_signal("die_return_requested"),
+		"lane should forward right-click returns from assigned dice"
+	)
 	assert_true(lane.has_signal("slot_activated"), "lane should emit slot activation")
 	assert_true(
 		lane.has_signal("die_drop_to_slot_requested"),
@@ -27,11 +31,45 @@ func run() -> void:
 	)
 	assert_true(slot.has_signal("slot_activated"), "slot should emit activation")
 	assert_true(slot.has_signal("die_drop_requested"), "slot should emit die drops")
+	assert_true(
+		slot.has_signal("die_return_requested"),
+		"slot should expose assigned-die right-click returns"
+	)
+	assert_equal(
+		slot.custom_minimum_size,
+		Vector2(60, 60),
+		"an empty rule slot should match the 60 px die token footprint"
+	)
+	assert_equal(
+		slot.size_flags_vertical,
+		Control.SIZE_SHRINK_CENTER,
+		"a rule slot should remain square instead of stretching with the lane"
+	)
+	var slot_index := slot.get_node_or_null("%SlotIndex") as Label
+	assert_true(
+		slot_index != null and slot_index.offset_top < 0.0,
+		"the position hint should sit outside the square die footprint"
+	)
 	assert_true(die.has_method("set_legal_target"), "die token should expose target highlight")
 	assert_true(lane.has_method("set_legal_target"), "lane should expose table target highlight")
 	assert_true(lane.has_method("set_die_target_highlight"), "lane should highlight assigned dice")
 	assert_true(panel.has_method("bind_report"), "resolution panel should bind reports")
 	var die_state := DieState.new(&"d5", 5)
+	slot.bind_slot(
+		0,
+		die_state,
+		load("res://scenes/components/die_token.tscn"),
+		&""
+	)
+	var assigned_token: DieToken = null
+	for child in slot.get_children():
+		if child is DieToken:
+			assigned_token = child
+			break
+	assert_true(
+		assigned_token != null and "右键放回骰盘" in assigned_token.tooltip_text,
+		"an assigned die should advertise the right-click return shortcut"
+	)
 	die.bind_die(die_state, false, 3)
 	assert_equal(
 		die.face_icon_path(3),

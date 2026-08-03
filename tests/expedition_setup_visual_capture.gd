@@ -4,12 +4,15 @@ const ExpeditionMeta = preload("res://scripts/run/expedition_meta_store.gd")
 
 var output := ""
 var meta_path := ""
+var state := "unlocked"
 var capture_viewport: SubViewport
 
 func _initialize() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--output="):
 			output = argument.trim_prefix("--output=")
+		elif argument.begins_with("--state="):
+			state = argument.trim_prefix("--state=")
 	call_deferred("_run")
 
 func _run() -> void:
@@ -26,7 +29,12 @@ func _run() -> void:
 	)
 	var meta_store = ExpeditionMeta.new(meta_path)
 	meta_store.clear()
-	meta_store.record_run(_complete_record())
+	if state == "unlocked":
+		meta_store.record_run(_complete_record())
+	elif state != "first-run":
+		push_error("unknown expedition setup capture state: %s" % state)
+		quit(1)
+		return
 	root.set_meta("expedition_meta_path", meta_path)
 
 	var setup: Control = load(
@@ -34,9 +42,10 @@ func _run() -> void:
 	).instantiate()
 	capture_viewport.add_child(setup)
 	await _settle()
-	_press_choice(setup.get_node("%DeckChoiceRow"), &"deck_id", &"table_chain")
-	_press_choice(setup.get_node("%ChallengeGrid"), &"challenge_id", &"high_pressure")
-	_press_choice(setup.get_node("%ChallengeGrid"), &"challenge_id", &"no_undo")
+	if state == "unlocked":
+		_press_choice(setup.get_node("%DeckChoiceRow"), &"deck_id", &"table_chain")
+		_press_choice(setup.get_node("%ChallengeGrid"), &"challenge_id", &"high_pressure")
+		_press_choice(setup.get_node("%ChallengeGrid"), &"challenge_id", &"no_undo")
 	setup.get_node("%ExpeditionSeedInput").text = "424242"
 	await _settle()
 
@@ -46,7 +55,7 @@ func _run() -> void:
 		meta_store.clear()
 		quit(1)
 		return
-	print("CAPTURED expedition setup 1920x1080 -> %s" % output)
+	print("CAPTURED expedition setup state=%s 1920x1080 -> %s" % [state, output])
 	meta_store.clear()
 	quit(0)
 

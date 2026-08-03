@@ -1,6 +1,8 @@
 class_name SettingsLayer
 extends CanvasLayer
 
+@export var show_rule_entry := true
+
 const AUDIO_CHANNELS: Array[StringName] = [
 	&"master",
 	&"music",
@@ -16,6 +18,8 @@ const ACTIVE_LAYER_GROUP := &"active_settings_layer"
 const ENTRY_BLOCKER_GROUP := &"settings_entry_blocker"
 
 @onready var settings_button: Button = %SettingsButton
+@onready var rule_reference_button: Button = %RuleReferenceButton
+@onready var rule_reference_overlay: Control = %RuleReferenceOverlay
 @onready var overlay: Control = %SettingsOverlay
 @onready var audio_tab_button: Button = %AudioTabButton
 @onready var display_tab_button: Button = %DisplayTabButton
@@ -51,6 +55,7 @@ const ENTRY_BLOCKER_GROUP := &"settings_entry_blocker"
 var _settings_service: Node
 var _previous_tree_paused := false
 var _open := false
+var _rule_reference_open := false
 var _refreshing := false
 var _entry_blockers: Array[CanvasItem] = []
 
@@ -59,7 +64,9 @@ func _ready() -> void:
 	var active_layer := get_tree().get_first_node_in_group(ACTIVE_LAYER_GROUP)
 	if active_layer != null and active_layer != self:
 		settings_button.visible = false
+		rule_reference_button.visible = false
 		overlay.visible = false
+		rule_reference_overlay.visible = false
 		process_mode = Node.PROCESS_MODE_DISABLED
 		return
 	add_to_group(ACTIVE_LAYER_GROUP)
@@ -68,6 +75,7 @@ func _ready() -> void:
 	_populate_display_options()
 	_populate_accessibility_options()
 	overlay.visible = false
+	rule_reference_overlay.visible = false
 	confirmation_layer.visible = false
 	settings_button.visible = true
 	_show_audio_page(false)
@@ -76,10 +84,12 @@ func _ready() -> void:
 		_refresh_all()
 	else:
 		status_label.text = "设置服务不可用"
+	get_tree().node_added.connect(_on_scene_node_added)
+	get_tree().node_removed.connect(_on_scene_node_removed)
 	call_deferred("_bind_entry_blockers")
 
 func open_settings() -> void:
-	if _open:
+	if _open or _rule_reference_open:
 		return
 	_settings_service = get_node_or_null("/root/SettingsService")
 	if _settings_service == null:
@@ -89,6 +99,7 @@ func open_settings() -> void:
 	_open = true
 	layer = 100
 	settings_button.visible = false
+	rule_reference_button.visible = false
 	overlay.visible = true
 	_settings_service.call("begin_display_draft")
 	_refresh_all()
@@ -118,7 +129,52 @@ func close_settings() -> void:
 func is_open() -> bool:
 	return _open
 
+func open_rule_reference() -> void:
+	if _open or _rule_reference_open or not rule_reference_button.visible:
+		return
+	_previous_tree_paused = get_tree().paused
+	_rule_reference_open = true
+	layer = 100
+	settings_button.visible = false
+	rule_reference_button.visible = false
+	rule_reference_overlay.call("open_reference", _current_rule_definitions())
+	get_tree().paused = true
+	SfxAccess.play(self, &"panel_open")
+
+func close_rule_reference() -> void:
+	if not _rule_reference_open:
+		return
+	rule_reference_overlay.call("close_reference")
+	_rule_reference_open = false
+	layer = 0
+	_update_entry_visibility()
+	get_tree().paused = _previous_tree_paused
+	rule_reference_button.grab_focus()
+	SfxAccess.play(self, &"panel_close")
+
+func is_rule_reference_open() -> bool:
+	return _rule_reference_open
+
+func apply_entry_theme(entry_theme: Theme) -> void:
+	settings_button.theme = entry_theme
+	rule_reference_button.theme = entry_theme
+
 func _input(event: InputEvent) -> void:
+	if _is_rule_reference_shortcut(event):
+		if _rule_reference_open:
+			close_rule_reference()
+		elif rule_reference_button.visible:
+			open_rule_reference()
+		get_viewport().set_input_as_handled()
+		return
+	if (
+		_rule_reference_open
+		and event.is_action_pressed("ui_cancel")
+		and not event.is_echo()
+	):
+		close_rule_reference()
+		get_viewport().set_input_as_handled()
+		return
 	if (
 		_open
 		and event.is_action_pressed("ui_cancel")
@@ -129,6 +185,8 @@ func _input(event: InputEvent) -> void:
 
 func _bind_controls() -> void:
 	settings_button.pressed.connect(open_settings)
+	rule_reference_button.pressed.connect(open_rule_reference)
+	rule_reference_overlay.connect("close_requested", close_rule_reference)
 	%CloseSettingsButton.pressed.connect(close_settings)
 	audio_tab_button.pressed.connect(func() -> void: _show_audio_page(true))
 	display_tab_button.pressed.connect(
@@ -209,25 +267,72 @@ func _bind_service() -> void:
 func _bind_entry_blockers() -> void:
 	_entry_blockers.clear()
 	for node in get_tree().get_nodes_in_group(ENTRY_BLOCKER_GROUP):
-		if node is not CanvasItem:
-			continue
-		var blocker := node as CanvasItem
+		_track_entry_blocker(node)
+	_update_entry_visibility()
+
+func _on_scene_node_added(node: Node) -> void:
+	if node.is_in_group(ENTRY_BLOCKER_GROUP):
+		call_deferred("_track_entry_blocker", node)
+
+func _on_scene_node_removed(node: Node) -> void:
+	if node is not CanvasItem:
+		return
+	var blocker := node as CanvasItem
+	if _entry_blockers.has(blocker):
+		_entry_blockers.erase(blocker)
+		call_deferred("_update_entry_visibility")
+
+func _track_entry_blocker(node: Node) -> void:
+	if (
+		node is not CanvasItem
+		or not is_instance_valid(node)
+		or not node.is_inside_tree()
+		or not node.is_in_group(ENTRY_BLOCKER_GROUP)
+	):
+		return
+	var blocker := node as CanvasItem
+	if not _entry_blockers.has(blocker):
 		_entry_blockers.append(blocker)
-		if not blocker.visibility_changed.is_connected(
-			_update_entry_visibility
-		):
-			blocker.visibility_changed.connect(_update_entry_visibility)
+	if not blocker.visibility_changed.is_connected(_update_entry_visibility):
+		blocker.visibility_changed.connect(_update_entry_visibility)
 	_update_entry_visibility()
 
 func _update_entry_visibility() -> void:
-	if _open or process_mode == Node.PROCESS_MODE_DISABLED:
+	if (
+		_open
+		or _rule_reference_open
+		or process_mode == Node.PROCESS_MODE_DISABLED
+	):
 		settings_button.visible = false
+		rule_reference_button.visible = false
 		return
 	for blocker in _entry_blockers:
 		if is_instance_valid(blocker) and blocker.is_visible_in_tree():
 			settings_button.visible = false
+			rule_reference_button.visible = false
 			return
 	settings_button.visible = true
+	rule_reference_button.visible = show_rule_entry
+
+func _current_rule_definitions() -> Array[RuleDefinition]:
+	var rules: Array[RuleDefinition] = []
+	for node in get_tree().get_nodes_in_group(&"rule_reference_context"):
+		if node is CanvasItem and not node.is_visible_in_tree():
+			continue
+		if not node.has_method("rule_reference_rules"):
+			continue
+		for rule in node.call("rule_reference_rules"):
+			if rule is RuleDefinition:
+				rules.append(rule)
+		if not rules.is_empty():
+			return rules
+	return rules
+
+func _is_rule_reference_shortcut(event: InputEvent) -> bool:
+	if event is not InputEventKey or not event.is_pressed() or event.is_echo():
+		return false
+	var key_event := event as InputEventKey
+	return key_event.keycode == KEY_F1 or key_event.physical_keycode == KEY_F1
 
 func _populate_display_options() -> void:
 	mode_option.clear()

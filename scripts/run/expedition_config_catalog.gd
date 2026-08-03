@@ -124,6 +124,9 @@ func deck_ids() -> Array[StringName]:
 		ids.append(definition["id"])
 	return ids
 
+func recommended_deck_id() -> StringName:
+	return DICE_CONTROL
+
 func challenge_ids() -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for definition in _challenges:

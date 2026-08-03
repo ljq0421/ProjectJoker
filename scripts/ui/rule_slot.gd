@@ -4,6 +4,7 @@ extends Button
 signal slot_activated(slot_index: int)
 signal die_activated(die_id: StringName)
 signal die_drop_requested(die_id: StringName, slot_index: int)
+signal die_return_requested(die_id: StringName)
 
 var index: int = -1
 var die_id: StringName = &""
@@ -40,9 +41,10 @@ func bind_slot(
 		return
 	text = ""
 	tooltip_text = "骰位 %d：骰子 %s" % [index + 1, die.id]
+	tooltip_text += "；右键放回骰盘"
 	var token: DieToken = die_scene.instantiate()
-	token.custom_minimum_size = Vector2(54, 54)
-	token.position = Vector2(5, 24)
+	token.custom_minimum_size = Vector2(60, 60)
+	token.position = Vector2.ZERO
 	add_child(token)
 	token.bind_die_with_engravings(
 		die,
@@ -51,13 +53,27 @@ func bind_slot(
 		true,
 		effective_value
 	)
+	token.tooltip_text += "\n右键放回骰盘"
 	token.die_activated.connect(_on_die_activated)
+	token.gui_input.connect(_on_assigned_die_gui_input.bind(die.id))
 
 func _on_die_activated(activated_die_id: StringName) -> void:
 	if selected_die_id != &"" and selected_die_id != activated_die_id:
 		slot_activated.emit(index)
 	else:
 		die_activated.emit(activated_die_id)
+
+func _on_assigned_die_gui_input(
+	event: InputEvent,
+	assigned_die_id: StringName
+) -> void:
+	if (
+		event is InputEventMouseButton
+		and event.button_index == MOUSE_BUTTON_RIGHT
+		and event.pressed
+	):
+		die_return_requested.emit(assigned_die_id)
+		get_viewport().set_input_as_handled()
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	return data is Dictionary and data.get("kind") == "die"

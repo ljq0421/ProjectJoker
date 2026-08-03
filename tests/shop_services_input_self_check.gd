@@ -30,7 +30,7 @@ func _run() -> void:
 
 	await _click(_route_button_at(0))
 	await _settle()
-	await _complete_three_rounds()
+	await _complete_encounter()
 	screen.area_session.intel_tickets = 10
 	await _click(screen.get_node("%RoundSummaryPanel").get_node("%EnterShopButton"))
 	await _settle()
@@ -123,7 +123,7 @@ func _run() -> void:
 
 	await _click(_route_button_at(0))
 	await _settle()
-	await _complete_three_rounds()
+	await _complete_encounter()
 	await _click(screen.get_node("%RoundSummaryPanel").get_node("%EnterShopButton"))
 	await _settle()
 	var second_session := screen.area_session.shop_session
@@ -233,22 +233,24 @@ func _find_buyback_fixture() -> Dictionary:
 
 func _complete_domain_encounter(area: AreaRunSession) -> void:
 	area.encounter_session.target_total = 0
-	for round_index in range(3):
+	var round_count := area.encounter_session.round_count
+	for round_index in range(round_count):
 		var report := area.encounter_session.current_session.commit()
 		area.accept_encounter_report(report)
-		if round_index < 2:
+		if round_index < round_count - 1:
 			area.advance_encounter_round()
 
-func _complete_three_rounds() -> void:
+func _complete_encounter() -> void:
 	screen.area_session.encounter_session.target_total = 0
-	for round_index in range(3):
+	var round_count := screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var encounter: SingleEncounterScreen = screen.get_node(
 			"%EncounterScreen"
 		)
 		await _click(encounter.get_node("%ConfirmButton"))
 		encounter.resolution_panel.finish_playback()
 		await _settle()
-		if round_index < 2:
+		if round_index < round_count - 1:
 			await _click(
 				screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton")
 			)

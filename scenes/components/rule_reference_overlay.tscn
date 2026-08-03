@@ -1,0 +1,328 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/rule_reference_overlay.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[node name="RuleReferenceOverlay" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="DimBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.008, 0.055, 0.92)
+mouse_filter = 0
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 56.0
+offset_top = 36.0
+offset_right = -56.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GlassPanel" type="PanelContainer" parent="SafeArea"]
+layout_mode = 2
+
+[node name="MainMargin" type="MarginContainer" parent="SafeArea/GlassPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MainColumn" type="VBoxContainer" parent="SafeArea/GlassPanel/MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TitleColumn" type="VBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Eyebrow" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
+layout_mode = 2
+text = "RULE ARCHIVE / OPEN INFORMATION"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Title" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
+layout_mode = 2
+text = "规则档案"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 34
+
+[node name="HeaderHint" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
+layout_mode = 2
+text = "只读查阅 · F1 / Esc 返回"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="CloseRuleReferenceButton" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 48)
+layout_mode = 2
+text = "关闭"
+tooltip_text = "关闭规则档案并返回当前页面"
+
+[node name="Divider" type="HSeparator" parent="SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+
+[node name="Content" type="HBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="ArchiveSpinePanel" type="PanelContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+
+[node name="SpineMargin" type="MarginContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Spine" type="VBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SpineTitle" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine"]
+layout_mode = 2
+text = "档案卷宗"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="CurrentRulesButton" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "当前牌局\n桌面规则快照"
+toggle_mode = true
+autowrap_mode = 2
+
+[node name="SpineDivider" type="HSeparator" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine"]
+layout_mode = 2
+
+[node name="ArchiveGrid" type="GridContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Archive01Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Archive02Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Archive03Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Archive04Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Archive05Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Archive06Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine/ArchiveGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="RuleIndexPanel" type="PanelContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+
+[node name="IndexMargin" type="MarginContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 12
+
+[node name="Index" type="VBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ArchiveContextLabel" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "01 · 点数阈值"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 23
+
+[node name="ArchiveSummaryLabel" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+text = "选择卷宗查看公开说明。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="IndexDivider" type="HSeparator" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+layout_mode = 2
+
+[node name="Rule01Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+toggle_mode = true
+text = "规则一"
+
+[node name="Rule02Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+toggle_mode = true
+text = "规则二"
+
+[node name="Rule03Button" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel/IndexMargin/Index"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+toggle_mode = true
+text = "规则三"
+
+[node name="DetailPanel" type="PanelContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DetailMargin" type="MarginContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 16
+
+[node name="Detail" type="VBoxContainer" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RuleDetailEyebrow" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "点数阈值 / OPEN RULE"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="RuleDetailTitle" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "精确总和 7"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="RuleDetailFormula" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Σ = 7"
+theme_override_colors/font_color = Color(1, 0.44, 0.72, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="DetailDivider" type="HSeparator" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+
+[node name="DescriptionCaption" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+text = "通过条件"
+theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="RuleDetailDescription" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "分配骰子的总和必须精确等于公开目标。"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="RuleDetailMetrics" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "骰位 2　·　基础系数 ×2"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="TimingCaption" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+text = "结算时机"
+theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="RuleDetailTiming" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "满足条件后，按本轮最终方向产生一次基础计分事件。"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="DetailSpacer" type="Control" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ReadOnlyHint" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+text = "档案浮层只提供查阅；固定练习请从主页面进入规则档案室。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
+theme_override_font_sizes/font_size = 14

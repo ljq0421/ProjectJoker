@@ -219,6 +219,50 @@ func _run() -> void:
 	_assert_false(paused, "closing should restore the prior unpaused state")
 	_assert_latest(&"panel_close", "closing should play panel_close once")
 
+	var session_before := screen.session
+	var state_before := screen.session.controller.state
+	await _click(settings_layer.get_node("%RuleReferenceButton"))
+	_assert_true(
+		settings_layer.is_rule_reference_open(),
+		"rule reference click should open the read-only overlay"
+	)
+	_assert_true(paused, "opening rule reference should pause the scene tree")
+	var reference: Control = settings_layer.get_node("%RuleReferenceOverlay")
+	_assert_true(reference.visible, "rule reference overlay should become visible")
+	_assert_true(
+		reference.get_node("%CurrentRulesButton").visible,
+		"active encounter should expose its current three rules"
+	)
+	_assert_equal(
+		reference.get_node("%ArchiveContextLabel").text,
+		"当前牌局",
+		"active encounter should open on the current-rules spine"
+	)
+	_assert_equal(screen.session, session_before, "opening reference should keep the session")
+	_assert_equal(
+		screen.session.controller.state,
+		state_before,
+		"opening reference should keep the mutable round state"
+	)
+	await _click(reference.get_node("%Archive06Button"))
+	await _click(reference.get_node("%Rule03Button"))
+	_assert_equal(
+		reference.get_node("%RuleDetailTitle").text,
+		"反向台",
+		"real pointer should open the canonical reverse-table entry"
+	)
+	_assert_true(
+		reference.get_node("%RuleDetailTiming").text.contains("翻转"),
+		"reverse-table entry should explain its timing"
+	)
+	await _press_f1()
+	_assert_false(
+		settings_layer.is_rule_reference_open(),
+		"F1 should close the rule reference overlay"
+	)
+	_assert_false(paused, "closing rule reference should restore play")
+	_assert_equal(screen.session, session_before, "closing reference should keep the session")
+
 	paused = true
 	settings_layer.open_settings()
 	_assert_true(
@@ -332,6 +376,18 @@ func _press_escape() -> void:
 	await process_frame
 	var release := InputEventKey.new()
 	release.keycode = KEY_ESCAPE
+	release.pressed = false
+	root.push_input(release, true)
+	await process_frame
+
+func _press_f1() -> void:
+	var press := InputEventKey.new()
+	press.keycode = KEY_F1
+	press.pressed = true
+	root.push_input(press, true)
+	await process_frame
+	var release := InputEventKey.new()
+	release.keycode = KEY_F1
 	release.pressed = false
 	root.push_input(release, true)
 	await process_frame

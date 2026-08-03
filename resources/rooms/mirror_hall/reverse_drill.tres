@@ -26,7 +26,7 @@ coefficient = 3
 script = ExtResource("4_rule")
 id = &"middle"
 template = ExtResource("7_reverse")
-display_name = "逆序台"
+display_name = "反向台"
 slot_count = 2
 coefficient = 1
 

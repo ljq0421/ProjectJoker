@@ -104,8 +104,11 @@ func _run() -> void:
 	var assigned_d1 := _find_die(encounter, &"d1")
 	_assert_true(assigned_d1 != null, "engraved d1 should render in a rule lane")
 	if assigned_d1 != null:
+		var engraving_status := assigned_d1.get_node_or_null(
+			"%EngravingStatus"
+		) as Label
 		_assert_true(
-			"激活" in assigned_d1.text,
+			engraving_status != null and "激活" in engraving_status.text,
 			"assigned engraved die should show active text"
 		)
 

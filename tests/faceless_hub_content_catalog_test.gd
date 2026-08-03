@@ -69,6 +69,11 @@ func run() -> void:
 			ROOM_RULE_TEMPLATES[room.id],
 			"%s formal rule templates" % room.id
 		)
+		_assert_reverse_table_public_name(
+			room.encounter,
+			"%s reverse table" % room.id,
+			"反向台"
+		)
 	var unowned_shop_count := 0
 	for card_id in area.shop_offer_ids:
 		if card_id not in area.starting_deck_ids:
@@ -98,6 +103,11 @@ func run() -> void:
 	assert_equal(schedule.round_plans[0].display_name, "正面", "round one is front")
 	assert_equal(schedule.round_plans[1].display_name, "反面", "round two is reverse")
 	assert_equal(schedule.round_plans[2].display_name, "无面", "round three is unmasked")
+	_assert_reverse_table_public_name(
+		schedule.round_plans[1].encounter,
+		"faceless dealer reverse round",
+		"反面：反向台"
+	)
 	assert_equal(
 		schedule.round_plans[0].encounter.rule_profile.resolution_direction,
 		EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT,
@@ -126,3 +136,12 @@ func _template_ids(encounter: EncounterDefinition) -> Array[StringName]:
 	for rule in encounter.rules:
 		ids.append(rule.template.id)
 	return ids
+
+func _assert_reverse_table_public_name(
+	encounter: EncounterDefinition,
+	context: String,
+	expected_name: String
+) -> void:
+	for rule in encounter.rules:
+		if rule.template.id == &"rule_reverse_table":
+			assert_equal(rule.display_name, expected_name, "%s uses canonical public name" % context)

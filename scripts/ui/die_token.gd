@@ -9,6 +9,9 @@ var die_id: StringName
 
 func _ready() -> void:
 	pressed.connect(func() -> void: die_activated.emit(die_id))
+	toggled.connect(func(_pressed: bool) -> void: _refresh_face_cue())
+	focus_entered.connect(_refresh_face_cue)
+	focus_exited.connect(_refresh_face_cue)
 
 func bind_die(
 	state: DieState,
@@ -21,8 +24,16 @@ func bind_die(
 	)
 	text = ""
 	var icon_path := face_icon_path(displayed_effective)
-	icon = load(icon_path) if not icon_path.is_empty() else null
+	icon = null
+	var face_icon := _face_icon()
+	if face_icon != null:
+		face_icon.texture = load(icon_path) if not icon_path.is_empty() else null
+	var engraving_status := _engraving_status()
+	if engraving_status != null:
+		engraving_status.visible = false
+		engraving_status.text = ""
 	button_pressed = selected
+	_refresh_face_cue()
 	tooltip_text = (
 		"骰子 %s：初始 %d，手法牌后 %d"
 		% [state.id, state.value, displayed_effective]
@@ -55,7 +66,10 @@ func bind_die_with_engravings(
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
 	)
-	text = "激活" if active else ("命中" if face_hit else "刻印")
+	var engraving_status := _engraving_status()
+	if engraving_status != null:
+		engraving_status.text = "激活" if active else ("命中" if face_hit else "刻印")
+		engraving_status.visible = true
 	tooltip_text = (
 		"骰子 %s：掷出 %d，初始 %d，手法牌后 %d；%s" % [
 			state.id,
@@ -86,9 +100,26 @@ func set_target_state(active: bool, legal: bool) -> void:
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var preview := TextureRect.new()
-	preview.custom_minimum_size = Vector2(68, 68)
-	preview.texture = icon
+	preview.custom_minimum_size = Vector2(54, 54)
+	var face_icon := _face_icon()
+	preview.texture = face_icon.texture if face_icon != null else null
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	set_drag_preview(preview)
 	return {"kind": "die", "die_id": die_id}
+
+func _face_icon() -> TextureRect:
+	return get_node_or_null("%FaceIcon") as TextureRect
+
+func _engraving_status() -> Label:
+	return get_node_or_null("%EngravingStatus") as Label
+
+func _refresh_face_cue() -> void:
+	var face_icon := _face_icon()
+	if face_icon == null:
+		return
+	face_icon.self_modulate = (
+		Color(0.72, 1.0, 0.96, 1.0)
+		if button_pressed or has_focus()
+		else Color.WHITE
+	)

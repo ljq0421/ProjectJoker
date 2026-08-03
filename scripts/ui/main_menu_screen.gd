@@ -10,6 +10,9 @@ const EXPEDITION_SCENE := "res://scenes/run/expedition_run_screen.tscn"
 const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
 const TUTORIAL_CONFIG_META := "tutorial_config_path"
 const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
+const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
+
+@export_enum("Auto:-1", "Full:0", "Demo:1") var demo_scope_override := -1
 
 @onready var tutorial_button: Button = %TutorialButton
 @onready var practice_button: Button = %PracticeButton
@@ -23,10 +26,24 @@ const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
 @onready var expedition_status_label: Label = %ExpeditionStatusLabel
 @onready var abandon_expedition_dialog: ConfirmationDialog = %AbandonExpeditionDialog
 @onready var new_expedition_dialog: ConfirmationDialog = %NewExpeditionDialog
+@onready var credits_button: Button = %CreditsButton
+@onready var quit_button: Button = %QuitButton
+@onready var version_label: Label = %VersionLabel
+@onready var credits_overlay: Control = %CreditsOverlay
+@onready var credits_text: TextEdit = %CreditsText
+@onready var close_credits_button: Button = %CloseCreditsButton
+@onready var quit_game_dialog: ConfirmationDialog = %QuitGameDialog
+@onready var practice_routes_header: Control = %PracticeRoutesHeader
+@onready var route_grid: Control = %RouteGrid
+@onready var practice_row: Control = %PracticeRow
+@onready var practice_hint: Label = %PracticeHint
+@onready var content: VBoxContainer = $SafeArea/Content
+@onready var demo_journey_panel: Control = %DemoJourneyPanel
 
 var expedition_store: ExpeditionSaveStore
 var expedition_save_path := "user://expedition_save.cfg"
 var tutorial_config_path := "user://onboarding.cfg"
+var _is_demo_build := false
 
 func _ready() -> void:
 	var root_window := get_tree().root
@@ -45,6 +62,10 @@ func _ready() -> void:
 	)
 	abandon_expedition_dialog.confirmed.connect(_on_abandon_confirmed)
 	new_expedition_dialog.confirmed.connect(_launch_new_expedition)
+	credits_button.pressed.connect(_on_credits_pressed)
+	close_credits_button.pressed.connect(_on_close_credits_pressed)
+	quit_button.pressed.connect(_on_quit_pressed)
+	quit_game_dialog.confirmed.connect(_on_quit_confirmed)
 	practice_button.pressed.connect(func() -> void: _open_scene(PRACTICE_SCENE))
 	gold_corridor_button.pressed.connect(
 		func() -> void: _open_scene(GOLD_CORRIDOR_SCENE)
@@ -58,8 +79,118 @@ func _ready() -> void:
 	rule_archive_button.pressed.connect(
 		func() -> void: _open_scene(RULE_ARCHIVE_SCENE)
 	)
+	_apply_build_scope()
+	_run_release_smoke_probe_if_requested()
 	_refresh_tutorial_entry()
 	_refresh_expedition_status()
+	_refresh_release_identity()
+
+func _apply_build_scope() -> void:
+	var profile := DemoProfile.new()
+	var is_demo := profile.is_demo_build(demo_scope_override)
+	_is_demo_build = is_demo
+	var access := profile.main_menu_access(demo_scope_override)
+	demo_journey_panel.visible = is_demo
+	practice_routes_header.visible = bool(access["region_practice"])
+	route_grid.visible = bool(access["region_practice"])
+	rule_archive_button.visible = bool(access["developer_practice"])
+	practice_button.visible = bool(access["developer_practice"])
+	tutorial_button.visible = bool(access["tutorial"])
+	practice_row.visible = (
+		tutorial_button.visible
+		or rule_archive_button.visible
+		or practice_button.visible
+	)
+	practice_hint.text = (
+		"想重温基础操作？"
+		if is_demo
+		else "想先熟悉基础结算？"
+	)
+	content.alignment = (
+		BoxContainer.ALIGNMENT_CENTER
+		if is_demo
+		else BoxContainer.ALIGNMENT_BEGIN
+	)
+
+func _run_release_smoke_probe_if_requested() -> void:
+	if "--release-smoke-test" not in OS.get_cmdline_user_args():
+		return
+	var release_files_present := FileAccess.file_exists(
+		"res://release/steam_demo/store_assets_manifest.json"
+	)
+	print(
+		"RELEASE_SMOKE demo=%s release_files=%s"
+		% [_is_demo_build, release_files_present]
+	)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if (
+		credits_overlay.visible
+		and event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode == KEY_ESCAPE
+	):
+		_on_close_credits_pressed()
+		get_viewport().set_input_as_handled()
+
+func _refresh_release_identity() -> void:
+	var version := String(
+		ProjectSettings.get_setting("application/config/version", "unversioned")
+	)
+	version_label.text = "Demo v%s" % version
+	credits_text.text = _build_credits_text(version)
+
+func _build_credits_text(version: String) -> String:
+	var sections: Array[String] = [
+		(
+			"《六面诡局》 Steam Demo\n"
+			+ "版本：%s\n" % version
+			+ "制作：独立开发版本 · 开发者暂不公开\n\n"
+			+ "游戏设计、程序、美术界面与文字为本项目内容。\n"
+			+ "音乐与音效由项目内确定性生成工具合成，不含第三方采样、"
+			+ "录音、循环素材或外部音乐库。"
+		),
+		(
+			"Godot Engine\n"
+			+ "This game uses Godot Engine.\n"
+			+ "Copyright (c) 2014-present Godot Engine contributors.\n"
+			+ "Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.\n\n"
+			+ Engine.get_license_text()
+		),
+	]
+	var license_info := Engine.get_license_info()
+	var license_names: Array[String] = []
+	for license_name in license_info.keys():
+		license_names.append(String(license_name))
+	license_names.sort()
+	var bundled_sections: Array[String] = [
+		"Godot bundled third-party license texts"
+	]
+	for license_name in license_names:
+		bundled_sections.append(
+			"[%s]\n%s" % [license_name, String(license_info[license_name])]
+		)
+	sections.append("\n\n".join(bundled_sections))
+	return "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n".join(sections)
+
+func _on_credits_pressed() -> void:
+	credits_overlay.visible = true
+	credits_text.scroll_vertical = 0
+	close_credits_button.grab_focus()
+	SfxAccess.play(self, &"panel_open")
+
+func _on_close_credits_pressed() -> void:
+	credits_overlay.visible = false
+	credits_button.grab_focus()
+	SfxAccess.play(self, &"ui_back")
+
+func _on_quit_pressed() -> void:
+	quit_game_dialog.popup_centered()
+	SfxAccess.play(self, &"panel_open")
+
+func _on_quit_confirmed() -> void:
+	get_tree().quit()
 
 func _open_scene(scene_path: String) -> void:
 	SfxAccess.play(self, &"page_transition")
@@ -131,7 +262,10 @@ func _refresh_expedition_status() -> void:
 	continue_expedition_button.disabled = not has_save
 	abandon_expedition_button.disabled = not has_save
 	if not has_save:
-		expedition_status_label.text = "没有进行中的远征"
+		expedition_status_label.text = (
+			"从金线回廊出发，连续完成三个区域；"
+			+ "进度会在区域边界自动保存。"
+		)
 		continue_expedition_button.text = "继续远征"
 		return
 	var loaded := expedition_store.load_snapshot()

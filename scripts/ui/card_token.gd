@@ -20,10 +20,18 @@ func bind_card(
 ) -> void:
 	card_index = index
 	var formatter := Formatter.new()
-	text = formatter.compact_copy(definition)
-	icon = load(formatter.effect_icon_path(definition))
+	var face := get_node_or_null("CardFaceContent")
+	if face != null:
+		text = ""
+		icon = null
+		face.bind_card(definition)
+	else:
+		text = formatter.compact_copy(definition)
+		icon = load(formatter.effect_icon_path(definition))
 	button_pressed = selected
 	disabled = used or not disabled_reason.is_empty()
+	if face != null:
+		face.set_interaction_state(selected, disabled)
 	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
 		definition.suit_copy(),
 		definition.rank_label,

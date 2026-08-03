@@ -37,9 +37,9 @@ func _test_exact_strategy_copy() -> void:
 	var flow = FlowScript.new()
 	assert_true(
 		String(flow.card_spec(&"route").get("instruction")).contains(
-			"三轮共同完成累计目标"
+			"每个房间只进行一轮"
 		),
-		"route copy should explain shared accumulation"
+		"route copy should explain the one-round room contract"
 	)
 	assert_true(
 		String(flow.card_spec(&"shop").get("instruction")).contains(
@@ -57,9 +57,15 @@ func _test_exact_strategy_copy() -> void:
 	assert_true(String(flow.card_spec(&"dealer").get("instruction")).contains("减少 2"), "dealer copy should state penalty")
 	assert_true(
 		String(flow.card_spec(&"engraving").get("instruction")).contains(
-			"不再进入刻印验证局"
+			"两类奖励只能选择其一"
 		),
-		"engraving copy should state direct completion"
+		"reward copy should explain the exclusive choice"
+	)
+	assert_true(
+		String(flow.card_spec(&"engraving").get("instruction")).contains(
+			"本区域直接完成"
+		),
+		"reward copy should state direct completion"
 	)
 
 func _test_seen_and_dismissed_filtering() -> void:

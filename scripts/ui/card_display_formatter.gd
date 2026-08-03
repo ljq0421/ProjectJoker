@@ -2,6 +2,50 @@ class_name CardDisplayFormatter
 extends RefCounted
 
 const ICON_ROOT := "res://resources/ui/dream_glass/icons/"
+const CARD_FACE_ROOT := "res://resources/ui/dream_glass/card_faces/prototypes/"
+
+const CARD_FACE_FILES := {
+	&"starter_nudge_down_1": "starter_nudge_down_1.svg",
+	&"shop_precision_map": "shop_precision_map.svg",
+	&"starter_link": "starter_link.svg",
+	&"starter_reverse": "starter_reverse.svg",
+	&"faceless_copy_value": "faceless_copy_value.svg",
+	&"faceless_lock_bonus": "faceless_lock_bonus.svg",
+	&"starter_nudge_up_1": "starter_nudge_up_1.svg",
+	&"starter_nudge_down_2": "starter_nudge_down_2.svg",
+	&"starter_nudge_up_2": "starter_nudge_up_2.svg",
+	&"starter_map_1": "starter_map_1.svg",
+	&"starter_map_2": "starter_map_2.svg",
+	&"starter_repeat_1": "starter_repeat_1.svg",
+	&"starter_repeat_2": "starter_repeat_2.svg",
+	&"starter_stable_repeat": "starter_stable_repeat.svg",
+	&"starter_amplified_repeat": "starter_amplified_repeat.svg",
+	&"shop_triple_repeat": "shop_triple_repeat.svg",
+	&"shop_long_push": "shop_long_push.svg",
+	&"shop_deep_drop": "shop_deep_drop.svg",
+	&"mirror_folded_map": "mirror_folded_map.svg",
+	&"mirror_soft_echo": "mirror_soft_echo.svg",
+	&"mirror_hinged_bridge": "mirror_hinged_bridge.svg",
+	&"mirror_double_exposure": "mirror_double_exposure.svg",
+	&"mirror_deep_echo": "mirror_deep_echo.svg",
+	&"mirror_silver_bridge": "mirror_silver_bridge.svg",
+	&"shop_amplified_chain": "shop_amplified_chain.svg",
+	&"shop_reverse_backup": "shop_reverse_backup.svg",
+	&"faceless_swap_values": "faceless_swap_values.svg",
+	&"faceless_flip_value": "faceless_flip_value.svg",
+	&"faceless_refund_calibration": "faceless_refund_calibration.svg",
+	&"faceless_exact_tolerance": "faceless_exact_tolerance.svg",
+	&"faceless_even_tolerance": "faceless_even_tolerance.svg",
+	&"faceless_sequence_tolerance": "faceless_sequence_tolerance.svg",
+	&"faceless_table_receipt": "faceless_table_receipt.svg",
+	&"faceless_full_allocation": "faceless_full_allocation.svg",
+	&"faceless_three_seats": "faceless_three_seats.svg",
+	&"faceless_complete_dossier": "faceless_complete_dossier.svg",
+	&"faceless_strict_mapping": "faceless_strict_mapping.svg",
+	&"faceless_reverse_replay": "faceless_reverse_replay.svg",
+	&"faceless_compressed_repeat": "faceless_compressed_repeat.svg",
+	&"faceless_closed_circuit": "faceless_closed_circuit.svg",
+}
 
 const EFFECT_ICON_FILES := {
 	EffectSpec.Operation.ADJUST_DIE: "adjust_die.svg",
@@ -75,6 +119,127 @@ func header_copy(card: CardDefinition) -> String:
 		card.rank_label,
 		card.display_name,
 	]
+
+func compact_identity_copy(card: CardDefinition) -> String:
+	return "%s%s" % [suit_mark_copy(card.suit), card.rank_label]
+
+func suit_mark_copy(suit: CardDefinition.Suit) -> String:
+	match suit:
+		CardDefinition.Suit.CLUBS:
+			return "♣"
+		CardDefinition.Suit.HEARTS:
+			return "♥"
+		CardDefinition.Suit.DIAMONDS:
+			return "♦"
+		CardDefinition.Suit.SPADES:
+			return "♠"
+	return "?"
+
+func effect_short_copy(card: CardDefinition) -> String:
+	if card != null and card.effects.size() > 1:
+		var parts: PackedStringArray = []
+		for combined_effect in card.effects:
+			match combined_effect.operation:
+				EffectSpec.Operation.MODIFY_COEFFICIENT:
+					parts.append("系数 %s" % _signed(combined_effect.amount))
+				EffectSpec.Operation.REPEAT_TABLE:
+					parts.append("结算 +%d 次" % combined_effect.amount)
+				EffectSpec.Operation.LINK_NEIGHBORS:
+					parts.append("连接")
+				EffectSpec.Operation.REVERSE_RESOLUTION:
+					parts.append("反转顺序")
+				EffectSpec.Operation.MODIFY_CONDITION:
+					parts.append(_condition_short_copy(combined_effect))
+				_:
+					parts.append(_effect_copy(combined_effect))
+		return " · ".join(parts)
+	var effect := _primary_effect(card)
+	if effect == null:
+		return card.rule_text
+	match effect.operation:
+		EffectSpec.Operation.ADJUST_DIE:
+			return "骰值 %s" % _signed(effect.amount)
+		EffectSpec.Operation.MODIFY_COEFFICIENT:
+			return "系数 %s" % _signed(effect.amount)
+		EffectSpec.Operation.REPEAT_TABLE:
+			return "额外结算 %d 次" % effect.amount
+		EffectSpec.Operation.REVERSE_RESOLUTION:
+			return "反转顺序"
+		EffectSpec.Operation.LINK_NEIGHBORS:
+			return "连接相邻台"
+		EffectSpec.Operation.SWAP_DICE:
+			return "交换两颗骰值"
+		EffectSpec.Operation.COPY_DIE:
+			return "复制第一颗"
+		EffectSpec.Operation.FLIP_DIE:
+			return "骰值翻面"
+		EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+			return "锁定骰值"
+		EffectSpec.Operation.REFUND_CALIBRATION:
+			return "返还 %d 校准点" % effect.amount
+		EffectSpec.Operation.MODIFY_CONDITION:
+			return _condition_short_copy(effect)
+		EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
+			return "情报券 +%d" % effect.amount
+	return _effect_copy(effect)
+
+func effect_detail_copy(card: CardDefinition) -> String:
+	if card == null:
+		return ""
+	var parts: PackedStringArray = []
+	for direct_effect in card.effects:
+		var direct_detail := _effect_detail_for(direct_effect)
+		if card.effects.size() > 1 and direct_detail == "传递已解析结果":
+			direct_detail = "传递结果"
+		if not direct_detail.is_empty() and direct_detail not in parts:
+			parts.append(direct_detail)
+	if not card.mirror_effects.is_empty():
+		parts.erase("本轮生效")
+		parts.erase("传递已解析结果")
+		parts.erase("传递结果")
+		var mirror_parts: PackedStringArray = []
+		for mirror_effect in card.mirror_effects:
+			mirror_parts.append(_effect_copy(mirror_effect))
+		parts.append("镜像：%s" % " · ".join(mirror_parts))
+	return " · ".join(parts)
+
+func _effect_detail_for(effect: EffectSpec) -> String:
+	if effect == null:
+		return ""
+	match effect.operation:
+		EffectSpec.Operation.ADJUST_DIE:
+			return "范围 1–6"
+		EffectSpec.Operation.MODIFY_COEFFICIENT:
+			return "最低 1" if effect.amount < 0 else ""
+		EffectSpec.Operation.REPEAT_TABLE:
+			return "本轮生效"
+		EffectSpec.Operation.REVERSE_RESOLUTION:
+			return "本轮生效"
+		EffectSpec.Operation.LINK_NEIGHBORS:
+			return "传递已解析结果"
+		EffectSpec.Operation.SWAP_DICE:
+			return "当前有效点数"
+		EffectSpec.Operation.COPY_DIE:
+			return "当前有效点数"
+		EffectSpec.Operation.FLIP_DIE:
+			return "7 - 当前值"
+		EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
+			return "规则台通过 %s" % _signed(effect.amount)
+		EffectSpec.Operation.REFUND_CALIBRATION:
+			return "校准点上限 2"
+		EffectSpec.Operation.MODIFY_CONDITION:
+			return _condition_detail_copy(effect)
+		EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
+			return _intel_condition_trigger_copy(effect)
+	return ""
+
+func has_card_face_art(card: CardDefinition) -> bool:
+	return card != null and CARD_FACE_FILES.has(card.id)
+
+func card_art_path(card: CardDefinition) -> String:
+	if has_card_face_art(card):
+		return "%s%s" % [CARD_FACE_ROOT, CARD_FACE_FILES[card.id]]
+	return effect_icon_path(card)
 
 func effect_summary_lines(card: CardDefinition) -> PackedStringArray:
 	var lines: PackedStringArray = []
@@ -172,18 +337,57 @@ func _condition_modifier_copy(effect: EffectSpec) -> String:
 			return "所需骰位 +%d（上限 6）" % effect.amount
 	return "修改规则条件"
 
+func _condition_short_copy(effect: EffectSpec) -> String:
+	match effect.condition_modifier:
+		EffectSpec.ConditionModifier.EXACT_TOLERANCE:
+			return "精确条件放宽"
+		EffectSpec.ConditionModifier.ALLOW_ONE_ODD:
+			return "全偶条件放宽"
+		EffectSpec.ConditionModifier.ALLOW_ONE_GAP:
+			return "连续条件放宽"
+		EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT:
+			return "所需骰位 +%d" % effect.amount
+	return "修改规则条件"
+
+func _condition_detail_copy(effect: EffectSpec) -> String:
+	match effect.condition_modifier:
+		EffectSpec.ConditionModifier.EXACT_TOLERANCE:
+			return "允许 ±%d" % effect.amount
+		EffectSpec.ConditionModifier.ALLOW_ONE_ODD:
+			return "允许 %d 颗奇数" % effect.amount
+		EffectSpec.ConditionModifier.ALLOW_ONE_GAP:
+			return "允许 %d 个差2缺口" % effect.amount
+		EffectSpec.ConditionModifier.INCREASE_SLOT_COUNT:
+			return "骰位上限 6"
+	return "本轮生效"
+
 func _intel_condition_copy(effect: EffectSpec) -> String:
-	var condition_copy := "满足条件"
+	return "%s：情报 +%d" % [
+		_intel_condition_trigger_copy(effect),
+		effect.amount,
+	]
+
+func _intel_condition_trigger_copy(effect: EffectSpec) -> String:
+	var condition_copy := "满足条件时"
 	match effect.intel_condition:
 		EffectSpec.IntelCondition.TARGET_TABLE_PASSED:
-			condition_copy = "目标台通过"
+			condition_copy = "目标台通过时"
 		EffectSpec.IntelCondition.ALL_DICE_ASSIGNED:
-			condition_copy = "分配全部骰子"
+			condition_copy = "分配全部骰子时"
 		EffectSpec.IntelCondition.ALL_TABLES_OCCUPIED:
-			condition_copy = "三台均有骰"
+			condition_copy = "三台均有骰时"
 		EffectSpec.IntelCondition.ALL_TABLES_PASSED:
-			condition_copy = "三台均通过"
-	return "%s：情报 +%d" % [condition_copy, effect.amount]
+			condition_copy = "三台均通过时"
+	return condition_copy
+
+func _primary_effect(card: CardDefinition) -> EffectSpec:
+	if card == null:
+		return null
+	if not card.effects.is_empty():
+		return card.effects[0]
+	if not card.mirror_effects.is_empty():
+		return card.mirror_effects[0]
+	return null
 
 func _signed(value: int) -> String:
 	return "+%d" % value if value >= 0 else str(value)

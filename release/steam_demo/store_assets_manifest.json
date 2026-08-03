@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "product": "六面诡局 Demo",
+  "version": "0.1.0-demo.1",
+  "updated_at": "2026-08-03",
+  "capsules": [
+    {"id": "header", "file": "capsules/header_capsule.png", "width": 920, "height": 430, "status": "missing"},
+    {"id": "small", "file": "capsules/small_capsule.png", "width": 462, "height": 174, "status": "missing"},
+    {"id": "main", "file": "capsules/main_capsule.png", "width": 1232, "height": 706, "status": "missing"},
+    {"id": "vertical", "file": "capsules/vertical_capsule.png", "width": 748, "height": 896, "status": "missing"}
+  ],
+  "screenshots": [
+    {"id": "demo_main_menu", "file": "screenshots/01_demo_main_menu.png", "width": 1920, "height": 1080, "status": "generated_pending_human_review"},
+    {"id": "first_run_setup", "file": "screenshots/02_first_run_setup.png", "width": 1920, "height": 1080, "status": "generated_pending_human_review"},
+    {"id": "gold_corridor", "file": "screenshots/03_gold_corridor_encounter.png", "width": 1920, "height": 1080, "status": "generated_pending_human_review"},
+    {"id": "mirror_hall", "file": "screenshots/04_mirror_hall_encounter.png", "width": 1920, "height": 1080, "status": "generated_pending_human_review"},
+    {"id": "faceless_hub", "file": "screenshots/05_faceless_hub_encounter.png", "width": 1920, "height": 1080, "status": "generated_pending_human_review"}
+  ],
+  "trailer": {"status": "missing"},
+  "human_review": {"screenshots": "pending", "capsules": "pending", "store_copy": "pending"}
+}

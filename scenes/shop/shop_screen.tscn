@@ -88,6 +88,10 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "情报券：2"
 
+[node name="UtilityDockSpacer" type="Control" parent="SafeArea/RootColumn/Header"]
+custom_minimum_size = Vector2(224, 0)
+layout_mode = 2
+
 [node name="Body" type="HBoxContainer" parent="SafeArea/RootColumn"]
 layout_mode = 2
 size_flags_vertical = 3

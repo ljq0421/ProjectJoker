@@ -63,7 +63,7 @@ func _run() -> void:
 	await _settle()
 	run_screen.area_session.encounter_session.target_total = 0
 	var first_dice := _rolled_values(run_screen.area_session.encounter_session)
-	await _complete_three_rounds()
+	await _complete_encounter()
 	await _enter_shop_and_purchase()
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
 	await _settle()
@@ -72,7 +72,7 @@ func _run() -> void:
 	await _click(route_panel.get_node("%RightRouteButton"))
 	await _settle()
 	run_screen.area_session.encounter_session.target_total = 0
-	await _complete_three_rounds()
+	await _complete_encounter()
 	await _enter_shop_and_purchase()
 	run_screen.guide_auto_start = true
 	await _click(run_screen.get_node("%ShopScreen").get_node("%LeaveShopButton"))
@@ -113,7 +113,7 @@ func _run() -> void:
 	dealer_guide.close_card()
 	run_screen.guide_auto_start = false
 	run_screen.area_session.encounter_session.target_total = 0
-	await _complete_three_rounds()
+	await _complete_encounter()
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")
 	_assert_true(reward.visible, "dealer success should open engraving reward")
 
@@ -184,7 +184,7 @@ func _run() -> void:
 		"restart should replay first-room dice"
 	)
 
-	await _complete_three_rounds(false)
+	await _fail_encounter_direct()
 	var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
 	_assert_true(
 		run_screen.area_session.phase == AreaRunSession.Phase.FAILED,
@@ -209,16 +209,27 @@ func _run() -> void:
 	_assert_true(run_screen.area_session.selected_room_ids.is_empty(), "retry clears route history")
 	await _finish()
 
-func _complete_three_rounds(force_success: bool = true) -> void:
-	if force_success:
-		run_screen.area_session.encounter_session.target_total = 0
-	for round_number in range(1, 4):
+func _complete_encounter() -> void:
+	run_screen.area_session.encounter_session.target_total = 0
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
 		encounter.resolution_panel.finish_playback()
 		await _settle()
-		if round_number < 3:
+		if round_index < round_count - 1:
 			await _click(run_screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton"))
+			await _settle()
+
+func _fail_encounter_direct() -> void:
+	run_screen.area_session.encounter_session.target_total = 999999
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
+		var report := run_screen.area_session.encounter_session.current_session.commit()
+		run_screen._on_round_committed(report)
+		await _settle()
+		if round_index < round_count - 1:
+			run_screen._on_next_round_requested()
 			await _settle()
 
 func _enter_shop_and_purchase() -> void:

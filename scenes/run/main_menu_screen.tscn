@@ -45,20 +45,21 @@ theme_override_constants/separation = 18
 
 [node name="Eyebrow" type="Label" parent="SafeArea/Content"]
 layout_mode = 2
-text = "DREAM GLASS / ROUTE ENTRY"
+text = "SIX-SIDED RULEBREAKERS / STEAM DEMO"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 18
 
-[node name="Title" type="Label" parent="SafeArea/Content"]
+[node name="GameTitleLabel" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "梦层入口"
+text = "六面诡局"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 54
 
 [node name="Subtitle" type="Label" parent="SafeArea/Content"]
 layout_mode = 2
-text = "选择一条路径，开始本次试炼。"
+text = "分配骰子，改写规则，破解三层梦境赌场。"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 20
@@ -76,16 +77,17 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="Title" type="Label" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionCopy"]
+[node name="ExpeditionTitleLabel" type="Label" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionCopy"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "三区域连续远征"
+text = "完整 Demo 远征 · 推荐"
 theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
 theme_override_font_sizes/font_size = 27
 
 [node name="ExpeditionStatusLabel" type="Label" parent="SafeArea/Content/ExpeditionPanel/ExpeditionRow/ExpeditionCopy"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "没有进行中的远征"
+text = "从金线回廊出发，连续完成三个区域；进度会在区域边界自动保存。"
 autowrap_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 17
@@ -111,13 +113,92 @@ text = "继续远征"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(190, 52)
 layout_mode = 2
-text = "开始新远征"
+text = "开始 Demo 远征"
 
 [node name="Spacer" type="Control" parent="SafeArea/Content"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 
+[node name="DemoJourneyPanel" type="PanelContainer" parent="SafeArea/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 176)
+layout_mode = 2
+
+[node name="JourneyContent" type="VBoxContainer" parent="SafeArea/Content/DemoJourneyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="JourneyTitle" type="Label" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent"]
+layout_mode = 2
+text = "本次试玩路线 / THREE DISTINCT REGIONS"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="JourneySteps" type="HBoxContainer" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="GoldStep" type="Label" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent/JourneySteps"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "1 · 金线回廊\n公开规则 · 路线改牌"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.96, 0.83, 0.45, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="MirrorStep" type="Label" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent/JourneySteps"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "2 · 反照牌厅\n反向结算 · 镜像牌面"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="FacelessStep" type="Label" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent/JourneySteps"]
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "3 · 无面中枢\n公开议程 · 最终限制"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="JourneyHint" type="Label" parent="SafeArea/Content/DemoJourneyPanel/JourneyContent"]
+layout_mode = 2
+text = "牌组、情报券与庄家奖励会连续继承；每个区域边界自动保存。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="PracticeRoutesHeader" type="HBoxContainer" parent="SafeArea/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="PracticeRoutesLabel" type="Label" parent="SafeArea/Content/PracticeRoutesHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "区域练习 / OPTIONAL PRACTICE"
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="PracticeRoutesHint" type="Label" parent="SafeArea/Content/PracticeRoutesHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "单独复习一个区域，不继承完整远征的牌组与奖励。"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.55, 0.68, 0.76, 1)
+theme_override_font_sizes/font_size = 15
+
 [node name="RouteGrid" type="GridContainer" parent="SafeArea/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 columns = 3
@@ -127,6 +208,7 @@ theme_override_constants/v_separation = 24
 [node name="GoldCorridorCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
 custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/GoldCorridorCard"]
 layout_mode = 2
@@ -134,7 +216,7 @@ theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="SafeArea/Content/RouteGrid/GoldCorridorCard/Content"]
 layout_mode = 2
-text = "金钱回廊"
+text = "金线回廊"
 theme_override_colors/font_color = Color(0.88, 0.78, 0.4, 1)
 theme_override_font_sizes/font_size = 30
 
@@ -150,12 +232,13 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "区域试玩：金钱回廊"
-tooltip_text = "从金钱回廊的第一组路线开始试炼"
+text = "练习：金线回廊"
+tooltip_text = "从金线回廊的第一组路线开始试炼"
 
 [node name="MirrorHallCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
 custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/MirrorHallCard"]
 layout_mode = 2
@@ -179,12 +262,13 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "区域试玩：反照牌厅"
+text = "练习：反照牌厅"
 tooltip_text = "从反照牌厅的第一组路线开始试炼"
 
 [node name="FacelessHubCard" type="PanelContainer" parent="SafeArea/Content/RouteGrid"]
 custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Content/RouteGrid/FacelessHubCard"]
 layout_mode = 2
@@ -208,15 +292,17 @@ theme_override_font_sizes/font_size = 18
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "区域试玩：无面中枢"
+text = "练习：无面中枢"
 tooltip_text = "从无面中枢的第一组路线开始试炼"
 
 [node name="PracticeRow" type="HBoxContainer" parent="SafeArea/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 16
 
 [node name="PracticeHint" type="Label" parent="SafeArea/Content/PracticeRow"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "想先熟悉基础结算？"
 theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
@@ -240,6 +326,134 @@ layout_mode = 2
 text = "进入基础牌局演练"
 tooltip_text = "进入基础牌局与教学入口"
 
+[node name="ReleaseFooter" type="HBoxContainer" parent="SafeArea/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="VersionLabel" type="Label" parent="SafeArea/Content/ReleaseFooter"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Demo v0.1.0-demo.1"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.48, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="FooterDivider" type="VSeparator" parent="SafeArea/Content/ReleaseFooter"]
+custom_minimum_size = Vector2(1, 34)
+layout_mode = 2
+
+[node name="CreditsButton" type="Button" parent="SafeArea/Content/ReleaseFooter"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+text = "制作与授权"
+tooltip_text = "查看版本、制作说明和开源软件授权"
+
+[node name="QuitButton" type="Button" parent="SafeArea/Content/ReleaseFooter"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 38)
+layout_mode = 2
+text = "退出游戏"
+tooltip_text = "确认后退出六面诡局"
+
+[node name="CreditsOverlay" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 100
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="DimBackground" type="ColorRect" parent="CreditsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.016, 0.07, 0.92)
+mouse_filter = 0
+
+[node name="SafeArea" type="MarginContainer" parent="CreditsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 280.0
+offset_top = 112.0
+offset_right = -280.0
+offset_bottom = -112.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CreditsOverlay/SafeArea"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="CreditsOverlay/SafeArea/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 26
+
+[node name="Content" type="VBoxContainer" parent="CreditsOverlay/SafeArea/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="CreditsOverlay/SafeArea/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleColumn" type="VBoxContainer" parent="CreditsOverlay/SafeArea/Panel/Margin/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="CreditsOverlay/SafeArea/Panel/Margin/Content/Header/TitleColumn"]
+layout_mode = 2
+text = "制作与授权 / CREDITS"
+theme_override_colors/font_color = Color(0.66, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="Subtitle" type="Label" parent="CreditsOverlay/SafeArea/Panel/Margin/Content/Header/TitleColumn"]
+layout_mode = 2
+text = "独立开发版本 · 开发者暂不公开"
+theme_override_colors/font_color = Color(0.62, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="CloseCreditsButton" type="Button" parent="CreditsOverlay/SafeArea/Panel/Margin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 48)
+layout_mode = 2
+text = "关闭 ×"
+
+[node name="Divider" type="HSeparator" parent="CreditsOverlay/SafeArea/Panel/Margin/Content"]
+layout_mode = 2
+
+[node name="CreditsText" type="TextEdit" parent="CreditsOverlay/SafeArea/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+wrap_mode = 1
+scroll_fit_content_height = false
+text = "正在载入制作与授权信息……"
+theme_override_colors/font_color = Color(0.78, 0.88, 0.94, 1)
+theme_override_colors/background_color = Color(0.025, 0.022, 0.09, 0.78)
+theme_override_font_sizes/font_size = 16
+
+[node name="CreditsHint" type="Label" parent="CreditsOverlay/SafeArea/Panel/Margin/Content"]
+layout_mode = 2
+text = "授权文字来自当前 Godot Engine 构建；可滚动查看。按 Esc 返回。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.48, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+
 [node name="AbandonExpeditionDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "放弃当前远征"
@@ -253,3 +467,10 @@ title = "开始新远征"
 dialog_text = "开始新远征会覆盖当前检查点。"
 ok_button_text = "覆盖并开始"
 cancel_button_text = "取消"
+
+[node name="QuitGameDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "退出六面诡局"
+dialog_text = "确定退出游戏吗？当前远征只会保留最近一次自动保存的检查点。"
+ok_button_text = "退出游戏"
+cancel_button_text = "继续游玩"

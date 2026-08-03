@@ -166,6 +166,14 @@ func _verify_size(rendered_size: Vector2i) -> void:
 		screen.area_session.phase == AreaRunSession.Phase.DEALER,
 		"%s should reach the dealer after the second shop" % size_label
 	)
+	_assert_true(
+		screen.get_node("%NarrativeCard").is_open(),
+		"%s should show the dealer opening before the guide" % size_label
+	)
+	screen.get_node("%NarrativeCard").get_node(
+		"%NarrativeContinueButton"
+	).emit_signal("pressed")
+	await _settle()
 	await _assert_checkpoint(screen, &"dealer", 3, size_label)
 	await _complete_active_encounter(screen)
 	await _settle()
@@ -358,7 +366,7 @@ func _approved_target_ids(checkpoint_id: StringName) -> Array[StringName]:
 		&"dealer":
 			return [&"dealer_panel", &"resolution_panel"]
 		&"engraving":
-			return [&"reward_offers", &"reward_dice", &"reward_faces"]
+			return [&"reward_modes"]
 	return []
 
 func _approved_target(
@@ -384,12 +392,8 @@ func _approved_target(
 			return screen.get_node("%EncounterScreen").get_node("%DealerPanel")
 		&"resolution_panel":
 			return screen.get_node("%EncounterScreen").get_node("%ResolutionPanel")
-		&"reward_offers":
-			return screen.get_node("%EngravingRewardPanel").get_node("%OfferRow")
-		&"reward_dice":
-			return screen.get_node("%EngravingRewardPanel").get_node("%DieRow")
-		&"reward_faces":
-			return screen.get_node("%EngravingRewardPanel").get_node("%FaceGrid")
+		&"reward_modes":
+			return screen.get_node("%EngravingRewardPanel").get_node("%RewardModeRow")
 	return null
 
 func _expected_focus_rect(
@@ -424,11 +428,12 @@ func _target_content_rect(target: Control) -> Rect2:
 
 func _complete_active_encounter(screen: GoldCorridorRunScreen) -> void:
 	screen.area_session.encounter_session.target_total = 0
-	for round_index in range(ThreeRoundEncounterSession.ROUND_COUNT):
+	var round_count := screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var report := screen.area_session.encounter_session.current_session.commit()
 		screen._on_round_committed(report)
 		await _settle()
-		if round_index < ThreeRoundEncounterSession.ROUND_COUNT - 1:
+		if round_index < round_count - 1:
 			screen._on_next_round_requested()
 			await _settle()
 

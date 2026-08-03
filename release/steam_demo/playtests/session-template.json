@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "participant_id": "anonymous-01",
+  "tested_at": "2026-08-03",
+  "build_version": "0.1.0-demo.1",
+  "first_time_player": true,
+  "session_minutes": 0,
+  "minutes_to_first_area_completion": null,
+  "completed_tutorial": false,
+  "completed_first_area": false,
+  "completed_expedition": false,
+  "needed_verbal_help": false,
+  "would_continue": false,
+  "recognized_three_region_difference": false,
+  "content_sufficiency_score_1_to_5": 0,
+  "blocker_tags": [],
+  "exit_reason": "",
+  "observer_notes": ""
+}

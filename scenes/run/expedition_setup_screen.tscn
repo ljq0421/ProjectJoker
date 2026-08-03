@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/expedition_setup_screen.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="3_settings"]
 
 [sub_resource type="StyleBoxFlat" id="MainPanel"]
 content_margin_left = 18.0
@@ -60,6 +61,9 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
+
+[node name="SettingsLayer" parent="." instance=ExtResource("3_settings")]
+unique_name_in_owner = true
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -124,9 +128,10 @@ text = "签下这一局的公开条款"
 theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
 theme_override_font_sizes/font_size = 31
 
-[node name="Subtitle" type="Label" parent="SafeArea/Page/Header/Titles"]
+[node name="SetupSubtitle" type="Label" parent="SafeArea/Page/Header/Titles"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "选择十二张起手牌、至多两项挑战，并留下可复盘的种子。"
+text = "首局选择一套起手牌并使用标准难度；种子可用于复盘。"
 theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
 theme_override_font_sizes/font_size = 15
 
@@ -135,6 +140,10 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 50)
 layout_mode = 2
 text = "返回梦层入口"
+
+[node name="UtilityDockSpacer" type="Control" parent="SafeArea/Page/Header"]
+custom_minimum_size = Vector2(224, 0)
+layout_mode = 2
 
 [node name="Columns" type="HBoxContainer" parent="SafeArea/Page"]
 layout_mode = 2
@@ -160,6 +169,13 @@ layout_mode = 2
 text = "起手契据｜三套牌组立即开放"
 theme_override_colors/font_color = Color(0.5, 0.96, 0.9, 1)
 theme_override_font_sizes/font_size = 22
+
+[node name="DeckRecommendationLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "首局推荐：骰值控制（已默认选择）"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="DeckChoiceRow" type="HBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
 unique_name_in_owner = true
@@ -197,6 +213,79 @@ columns = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 
+[node name="SelectionSummaryLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "当前配置：骰值控制 · 标准难度（推荐首局）"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="FirstRunJourneyPanel" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="JourneyContent" type="VBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="JourneyTitle" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent"]
+layout_mode = 2
+text = "本次 Demo 路线｜三个区域连续继承"
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 19
+
+[node name="JourneyRow" type="HBoxContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="GoldStage" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow/GoldStage"]
+layout_mode = 2
+text = "1 · 金线回廊\n公开规则与路线改牌"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.96, 0.83, 0.45, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="MirrorStage" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow/MirrorStage"]
+layout_mode = 2
+text = "2 · 反照牌厅\n反向结算与镜像牌面"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.58, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="FacelessStage" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Copy" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent/JourneyRow/FacelessStage"]
+layout_mode = 2
+text = "3 · 无面中枢\n公开议程与最终限制"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="JourneyHint" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/FirstRunJourneyPanel/JourneyContent"]
+layout_mode = 2
+text = "牌组、情报券与庄家奖励会带入下一区域；每个区域边界自动保存。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 15
+
 [node name="SeedPanel" type="PanelContainer" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("SeedPanel")
@@ -207,7 +296,7 @@ theme_override_constants/separation = 12
 
 [node name="SeedLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
 layout_mode = 2
-text = "远征种子"
+text = "复盘种子（可选）"
 theme_override_font_sizes/font_size = 19
 
 [node name="ExpeditionSeedInput" type="LineEdit" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
@@ -219,9 +308,9 @@ placeholder_text = "输入大于 0 的整数"
 
 [node name="StartConfiguredExpeditionButton" type="Button" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config/SeedPanel/SeedRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(190, 44)
+custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
-text = "签署并开始远征"
+text = "以当前配置开始"
 
 [node name="SetupErrorLabel" type="Label" parent="SafeArea/Page/Columns/ConfigPanel/ConfigScroll/Config"]
 unique_name_in_owner = true
@@ -232,6 +321,7 @@ autowrap_mode = 2
 theme_override_colors/font_color = Color(1, 0.45, 0.55, 1)
 
 [node name="HistoryPanel" type="PanelContainer" parent="SafeArea/Page/Columns"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 size_flags_horizontal = 1

@@ -22,6 +22,7 @@ const AreaPresentation = preload(
 
 @onready var lanes: Array[RuleLane] = [%LeftLane, %MiddleLane, %RightLane]
 @onready var dice_tray: DiceTray = %DiceTray
+@onready var dice_tray_empty_label: Label = %DiceTrayEmptyLabel
 @onready var hand_container: HBoxContainer = %Hand
 @onready var card_detail_panel: PanelContainer = %CardDetailPanel
 @onready var card_detail_icon: TextureRect = %CardDetailIcon
@@ -68,6 +69,7 @@ func _ready() -> void:
 		lane.lane_activated.connect(_on_lane_activated)
 		lane.slot_activated.connect(_on_slot_activated)
 		lane.die_activated.connect(_on_die_activated)
+		lane.die_return_requested.connect(_on_die_return_requested)
 		lane.die_drop_requested.connect(_on_die_drop_requested)
 		lane.die_drop_to_slot_requested.connect(
 			_on_die_drop_to_slot_requested
@@ -139,6 +141,13 @@ func bind_external_session(
 func set_run_status(area_copy: String, goal_copy: String) -> void:
 	area_label.text = area_copy
 	goal_label.text = goal_copy
+
+func rule_reference_rules() -> Array[RuleDefinition]:
+	var rules: Array[RuleDefinition] = []
+	if session == null or session.controller == null or session.controller.encounter == null:
+		return rules
+	rules.assign(session.controller.encounter.rules)
+	return rules
 
 func apply_area_presentation(area_id: StringName) -> void:
 	var presentation: Dictionary = AreaPresentation.new().find(area_id)
@@ -251,8 +260,10 @@ func refresh_from_session() -> void:
 
 	for child in dice_tray.get_children():
 		child.queue_free()
+	var unassigned_dice_count := 0
 	for die in state.dice:
 		if not _is_assigned(die.id):
+			unassigned_dice_count += 1
 			var token: DieToken = DIE_SCENE.instantiate()
 			dice_tray.add_child(token)
 			token.bind_die_with_engravings(
@@ -271,6 +282,7 @@ func refresh_from_session() -> void:
 				session.is_legal_die_card_target(die.id)
 			)
 			token.die_activated.connect(_on_die_activated)
+	dice_tray_empty_label.visible = unassigned_dice_count == 0
 
 	for child in hand_container.get_children():
 		child.queue_free()
@@ -336,13 +348,18 @@ func _refresh_card_detail() -> void:
 		or session.selection.card_index < 0
 		or session.selection.card_index >= session.hand.size()
 	):
-		card_detail_panel.visible = false
+		card_detail_panel.visible = true
+		card_detail_icon.visible = false
 		card_detail_icon.texture = null
-		card_detail_text.text = ""
+		card_detail_text.text = (
+			"手法牌说明\n"
+			+ "选择一张手法牌，查看完整规则、作用目标与下一步操作。"
+		)
 		return
 	var card: CardDefinition = session.hand[session.selection.card_index]
 	var formatter := CardFormatter.new()
 	card_detail_panel.visible = true
+	card_detail_icon.visible = true
 	card_detail_icon.texture = load(formatter.effect_icon_path(card))
 	card_detail_text.text = formatter.detail_copy(
 		card,

@@ -16,6 +16,11 @@ const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd"
 @onready var error_label: Label = %SetupErrorLabel
 @onready var start_button: Button = %StartConfiguredExpeditionButton
 @onready var return_button: Button = %ReturnFromSetupButton
+@onready var setup_subtitle: Label = %SetupSubtitle
+@onready var deck_recommendation_label: Label = %DeckRecommendationLabel
+@onready var selection_summary_label: Label = %SelectionSummaryLabel
+@onready var first_run_journey_panel: PanelContainer = %FirstRunJourneyPanel
+@onready var history_panel: PanelContainer = %HistoryPanel
 
 var configs = ExpeditionConfigs.new()
 var meta_store
@@ -57,7 +62,9 @@ func _build_deck_choices() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.toggle_mode = true
 		button.button_group = group
-		button.text = "%s\n%s" % [
+		var is_recommended: bool = definition["id"] == configs.recommended_deck_id()
+		button.text = "%s%s\n%s" % [
+			"首局推荐｜" if is_recommended else "",
 			definition["display_name"],
 			definition["description"],
 		]
@@ -88,12 +95,8 @@ func _build_challenge_choices() -> void:
 func _build_history(history: Array) -> void:
 	for child in history_list.get_children():
 		child.queue_free()
+	history_panel.visible = not history.is_empty()
 	if history.is_empty():
-		var empty := Label.new()
-		empty.text = "尚无远征记录。\n完成或失败的远征都会在这里留下可复盘条目。"
-		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.modulate = Color(0.7, 0.76, 0.9)
-		history_list.add_child(empty)
 		return
 	for record in history:
 		var button := Button.new()
@@ -140,11 +143,39 @@ func _refresh_selection() -> void:
 		ExpeditionConfigs.MAX_CHALLENGES,
 	]
 	challenge_lock_label.visible = not challenges_unlocked
+	challenge_grid.visible = challenges_unlocked
+	first_run_journey_panel.visible = not challenges_unlocked
+	setup_subtitle.text = (
+		"选择十二张起手牌、至多两项挑战，并留下可复盘的种子。"
+		if challenges_unlocked
+		else "首局选择一套起手牌并使用标准难度；种子可用于复盘。"
+	)
+	deck_recommendation_label.text = "首局推荐：%s%s" % [
+		_deck_name(configs.recommended_deck_id()),
+		"（已选择）" if selected_deck_id == configs.recommended_deck_id() else "",
+	]
 	challenge_lock_label.text = (
 		"挑战条款尚未生效：完成一次完整三区远征后六项同时开放。"
 		if not challenges_unlocked
 		else "挑战已开放；所有条款在出发前公开，单局最多组合两项。"
 	)
+	var difficulty_copy := (
+		ChallengeRules.new(selected_challenge_ids).display_copy(configs)
+		if challenges_unlocked
+		else "标准难度"
+	)
+	selection_summary_label.text = "当前配置：%s · %s%s" % [
+		_deck_name(selected_deck_id),
+		difficulty_copy,
+		(
+			"（推荐首局）"
+			if (
+				not challenges_unlocked
+				and selected_deck_id == configs.recommended_deck_id()
+			)
+			else ""
+		),
+	]
 
 func _start_selected() -> void:
 	var seed := int(seed_input.text)

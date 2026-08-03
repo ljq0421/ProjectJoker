@@ -16,7 +16,7 @@ const CARD_SPECS := {
 		"progress_total": 4,
 		"title": "先比较，再选择",
 		"instruction": (
-			"每个房间用三轮共同完成累计目标。目标、情报券奖励、"
+			"每个房间只进行一轮，在这一轮完成公开目标。目标、情报券奖励、"
 			+ "三条规则与当前牌组呼应均已公开；选择更适合当前构筑的路线。"
 		),
 		"target_ids": [&"route_left", &"route_right"],
@@ -52,13 +52,13 @@ const CARD_SPECS := {
 		"progress_label": "区域提示",
 		"progress_index": 4,
 		"progress_total": 4,
-		"title": "这次安装将封存区域",
+		"title": "从庄家奖励中选择一类",
 		"instruction": (
-			"依次选择一种刻印、一颗骰子和它的 1–6 面；"
-			+ "安装前可以自由修改三项选择。正式区域安装后直接进入"
-			+ "完成账目，不再进入刻印验证局。"
+			"稀有手法牌会替换牌组中的一张牌；骰面刻印会永久改变"
+			+ "一颗骰子的指定面。两类奖励只能选择其一，确认前仍可"
+			+ "切换。领取后本区域直接完成。"
 		),
-		"target_ids": [&"reward_offers", &"reward_dice", &"reward_faces"],
+		"target_ids": [&"reward_modes"],
 	},
 }
 

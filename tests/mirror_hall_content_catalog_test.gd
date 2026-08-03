@@ -93,6 +93,7 @@ func run() -> void:
 			ROOM_RULE_TEMPLATES[room_id],
 			"%s formal rule templates" % room_id
 		)
+		_assert_reverse_table_public_name(room.encounter, "%s reverse table" % room_id)
 
 	var dealer := dealers.mirror_lady()
 	assert_true(dealer != null, "Mirror Lady should load")
@@ -147,3 +148,11 @@ func _template_ids(encounter: EncounterDefinition) -> Array[StringName]:
 	for rule in encounter.rules:
 		ids.append(rule.template.id)
 	return ids
+
+func _assert_reverse_table_public_name(
+	encounter: EncounterDefinition,
+	context: String
+) -> void:
+	for rule in encounter.rules:
+		if rule.template.id == &"rule_reverse_table":
+			assert_equal(rule.display_name, "反向台", "%s uses canonical public name" % context)

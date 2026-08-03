@@ -10,6 +10,11 @@ func run() -> void:
 	var identities := BuildIdentities.new()
 	assert_equal(catalog.validate(cards), [], "expedition configs should be valid")
 	assert_equal(catalog.all_decks().size(), 3, "three starting decks should be public")
+	assert_equal(
+		catalog.recommended_deck_id(),
+		&"dice_control",
+		"the first expedition should have one stable recommended deck"
+	)
 	assert_equal(catalog.all_challenges().size(), 6, "six challenges should be public")
 
 	for deck in catalog.all_decks():

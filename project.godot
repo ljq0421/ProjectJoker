@@ -10,7 +10,8 @@ config_version=5
 
 [application]
 
-config/name="project-joker"
+config/name="六面诡局 Demo"
+config/version="0.1.0-demo.1"
 run/main_scene="res://scenes/run/main_menu_screen.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"

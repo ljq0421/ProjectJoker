@@ -16,8 +16,14 @@ func _ready() -> void:
 	_guide_load_warning_pending = guide_store.initial_load_error() != OK
 	guide_overlay.acknowledged.connect(_on_guide_acknowledged)
 	guide_overlay.dismiss_all_requested.connect(_on_guide_dismiss_all_requested)
+	guide_overlay.visibility_changed.connect(_sync_guide_chrome_visibility)
 	super._ready()
+	_sync_guide_chrome_visibility()
 	encounter_screen.view_refreshed.connect(guide_overlay.refresh_targets)
+
+func _sync_guide_chrome_visibility() -> void:
+	if is_instance_valid(navigation_bar):
+		navigation_bar.visible = not guide_overlay.is_open()
 
 func build_area_definition() -> AreaDefinition:
 	return AreaCatalog.new().gold_corridor()
@@ -86,12 +92,8 @@ func _resolve_guide_target(target_id: StringName) -> Control:
 			return encounter_screen.get_node_or_null("%DealerPanel")
 		&"resolution_panel":
 			return encounter_screen.get_node_or_null("%ResolutionPanel")
-		&"reward_offers":
-			return reward_panel.get_node_or_null("%OfferRow")
-		&"reward_dice":
-			return reward_panel.get_node_or_null("%DieRow")
-		&"reward_faces":
-			return reward_panel.get_node_or_null("%FaceGrid")
+		&"reward_modes":
+			return reward_panel.get_node_or_null("%RewardModeRow")
 	return null
 
 func _on_guide_acknowledged(checkpoint_id: StringName) -> void:

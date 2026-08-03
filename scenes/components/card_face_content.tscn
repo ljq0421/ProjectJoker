@@ -1,0 +1,281 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/card_face_content.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="ArtworkFrameStyle"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.055, 0.043, 0.15, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.349, 0.902, 0.859, 0.28)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="SelectionFrameStyle"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.58, 1, 0.96, 0.95)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.349, 0.902, 0.859, 0.45)
+shadow_size = 4
+
+[node name="CardFaceContent" type="Control"]
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="FullCardArtwork" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 6
+
+[node name="FallbackMargin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 9
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 9
+theme_override_constants/margin_bottom = 7
+
+[node name="Layout" type="VBoxContainer" parent="FallbackMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Header" type="HBoxContainer" parent="FallbackMargin/Layout"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="CardIdentity" type="Label" parent="FallbackMargin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.349, 0.902, 0.859, 1)
+theme_override_font_sizes/font_size = 13
+text = "♣1"
+vertical_alignment = 1
+
+[node name="CardName" type="Label" parent="FallbackMargin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.957, 0.941, 1, 1)
+theme_override_constants/outline_size = 1
+theme_override_colors/font_outline_color = Color(0.055, 0.043, 0.15, 0.95)
+theme_override_font_sizes/font_size = 16
+text = "手法牌"
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="RarityTrack" type="HBoxContainer" parent="FallbackMargin/Layout/Header"]
+custom_minimum_size = Vector2(46, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = -1
+
+[node name="RaritySlot1" type="Label" parent="FallbackMargin/Layout/Header/RarityTrack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.349, 0.902, 0.859, 1)
+theme_override_font_sizes/font_size = 13
+text = "◆"
+
+[node name="RaritySlot2" type="Label" parent="FallbackMargin/Layout/Header/RarityTrack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.34, 0.31, 0.47, 0.82)
+theme_override_font_sizes/font_size = 13
+text = "◇"
+
+[node name="RaritySlot3" type="Label" parent="FallbackMargin/Layout/Header/RarityTrack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.34, 0.31, 0.47, 0.82)
+theme_override_font_sizes/font_size = 13
+text = "◇"
+
+[node name="Body" type="HBoxContainer" parent="FallbackMargin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/separation = 7
+
+[node name="ArtworkFrame" type="PanelContainer" parent="FallbackMargin/Layout/Body"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(76, 78)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("ArtworkFrameStyle")
+
+[node name="Artwork" type="TextureRect" parent="FallbackMargin/Layout/Body/ArtworkFrame"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CopyColumn" type="VBoxContainer" parent="FallbackMargin/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="EffectSummary" type="Label" parent="FallbackMargin/Layout/Body/CopyColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.957, 0.941, 1, 1)
+theme_override_constants/outline_size = 1
+theme_override_colors/font_outline_color = Color(0.055, 0.043, 0.15, 0.95)
+theme_override_font_sizes/font_size = 15
+text = "骰值 -1"
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="EffectDetail" type="Label" parent="FallbackMargin/Layout/Body/CopyColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.7, 0.84, 1)
+theme_override_font_sizes/font_size = 12
+text = "范围 1–6"
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="FallbackMargin/Layout/Body/CopyColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="TargetRow" type="HBoxContainer" parent="FallbackMargin/Layout/Body/CopyColumn"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="TargetIcon" type="TextureRect" parent="FallbackMargin/Layout/Body/CopyColumn/TargetRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TargetCopy" type="Label" parent="FallbackMargin/Layout/Body/CopyColumn/TargetRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.6, 0.94, 0.91, 1)
+theme_override_font_sizes/font_size = 12
+text = "1颗骰子"
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="CommerceRow" type="HBoxContainer" parent="FallbackMargin/Layout/Body/CopyColumn"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="ContextCopy" type="Label" parent="FallbackMargin/Layout/Body/CopyColumn/CommerceRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.7, 0.84, 1)
+theme_override_font_sizes/font_size = 11
+text = "骰值控制"
+text_overrun_behavior = 3
+
+[node name="PriceCopy" type="Label" parent="FallbackMargin/Layout/Body/CopyColumn/CommerceRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.79, 0.3, 1)
+theme_override_constants/outline_size = 1
+theme_override_colors/font_outline_color = Color(0.055, 0.043, 0.15, 0.95)
+theme_override_font_sizes/font_size = 12
+text = "1 情报券"
+
+[node name="SelectionFrame" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("SelectionFrameStyle")
+
+[node name="DynamicPriceBadge" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_top = 2
+
+[node name="DynamicPriceCopy" type="Label" parent="DynamicPriceBadge"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.79, 0.3, 1)
+theme_override_constants/outline_size = 1
+theme_override_colors/font_outline_color = Color(0.055, 0.043, 0.15, 0.95)
+theme_override_font_sizes/font_size = 13
+text = "1 情报券"
+horizontal_alignment = 1
+vertical_alignment = 1

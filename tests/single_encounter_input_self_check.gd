@@ -27,6 +27,16 @@ func _run() -> void:
 		== [&"d1", &""],
 		"real drag should assign d1 to the chosen left slot"
 	)
+	await _right_click(_find_die(&"d1"))
+	_assert_true(
+		screen.session.controller.state.assigned_die_ids(&"left").is_empty(),
+		"right-clicking an assigned die should return it to the tray"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assigned_die_ids(&"left") == [&"d1"],
+		"undo should restore a die returned by right-click"
+	)
 
 	var tray: Control = screen.get_node("%DiceTray")
 	var tray_drop_point := tray.get_global_rect().position + Vector2(12.0, tray.size.y * 0.5)
@@ -185,6 +195,25 @@ func _click(control: Control) -> void:
 		return
 	var point := control.get_global_rect().get_center()
 	await _click_at_point(point)
+
+func _right_click(control: Control) -> void:
+	_assert_true(control != null, "right-click target should exist")
+	if control == null:
+		return
+	var point := control.get_global_rect().get_center()
+	await _move_pointer(point)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_RIGHT
+	press.pressed = true
+	press.position = point
+	root.push_input(press, true)
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_RIGHT
+	release.pressed = false
+	release.position = point
+	root.push_input(release, true)
+	await process_frame
 
 func _click_lane(lane: Control) -> void:
 	var point := lane.get_global_rect().position + Vector2(18.0, 18.0)

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/settings_layer.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/components/rule_reference_overlay.tscn" id="3_rule_reference"]
 
 [node name="SettingsLayer" type="CanvasLayer"]
 layer = 0
@@ -33,6 +34,25 @@ grow_horizontal = 0
 mouse_filter = 0
 text = "设置"
 tooltip_text = "打开声音、显示与无障碍设置"
+
+[node name="RuleReferenceButton" type="Button" parent="SettingsRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -224.0
+offset_top = 24.0
+offset_right = -128.0
+offset_bottom = 72.0
+grow_horizontal = 0
+mouse_filter = 0
+text = "规则"
+tooltip_text = "随时查阅当前牌局和全部十八种规则台（F1）"
+
+[node name="RuleReferenceOverlay" parent="SettingsRoot" instance=ExtResource("3_rule_reference")]
+unique_name_in_owner = true
 
 [node name="SettingsOverlay" type="Control" parent="SettingsRoot"]
 unique_name_in_owner = true

@@ -61,6 +61,8 @@ func _check_size(viewport_size: Vector2i) -> void:
 
 	var entry: Button = layer.get_node("%SettingsButton")
 	var entry_rect := entry.get_global_rect()
+	var rule_entry: Button = layer.get_node("%RuleReferenceButton")
+	var rule_entry_rect := rule_entry.get_global_rect()
 	_assert_inside_viewport(
 		entry_rect,
 		viewport_size,
@@ -74,6 +76,16 @@ func _check_size(viewport_size: Vector2i) -> void:
 	_assert_true(
 		absf(entry_rect.position.y - 24.0) < 1.0,
 		"settings entry should keep 24px top margin at %s" % viewport_size
+	)
+	_assert_inside_viewport(
+		rule_entry_rect,
+		viewport_size,
+		"rule reference entry",
+		viewport_size
+	)
+	_assert_true(
+		absf(rule_entry_rect.end.x - entry_rect.position.x + 8.0) < 1.0,
+		"utility entries should keep an eight pixel gap at %s" % viewport_size
 	)
 
 	layer.open_settings()
@@ -150,6 +162,58 @@ func _check_size(viewport_size: Vector2i) -> void:
 	)
 	confirmation.visible = false
 	layer.close_settings()
+	layer.open_rule_reference()
+	await process_frame
+	var rule_overlay: Control = layer.get_node("%RuleReferenceOverlay")
+	var rule_overlay_rect := rule_overlay.get_global_rect()
+	_assert_true(
+		rule_overlay_rect == overlay_rect,
+		"rule reference should cover the viewport at %s" % viewport_size
+	)
+	for node_name in [
+		"CloseRuleReferenceButton",
+		"Archive01Button",
+		"Archive02Button",
+		"Archive03Button",
+		"Archive04Button",
+		"Archive05Button",
+		"Archive06Button",
+		"Rule01Button",
+		"Rule02Button",
+		"Rule03Button",
+		"ArchiveContextLabel",
+		"ArchiveSummaryLabel",
+		"RuleDetailTitle",
+		"RuleDetailFormula",
+		"RuleDetailDescription",
+		"RuleDetailMetrics",
+		"RuleDetailTiming",
+	]:
+		var control: Control = rule_overlay.get_node("%%%s" % node_name)
+		_assert_rect_inside(
+			control.get_global_rect(),
+			rule_overlay_rect,
+			node_name,
+			viewport_size
+		)
+	var spine: Control = rule_overlay.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel"
+	)
+	var index: Control = rule_overlay.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel"
+	)
+	var detail: Control = rule_overlay.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel"
+	)
+	_assert_true(
+		spine.get_global_rect().end.x < index.get_global_rect().position.x,
+		"archive spine and rule index should not overlap at %s" % viewport_size
+	)
+	_assert_true(
+		index.get_global_rect().end.x < detail.get_global_rect().position.x,
+		"rule index and detail should not overlap at %s" % viewport_size
+	)
+	layer.close_rule_reference()
 	layer.free()
 	test_viewport.free()
 	await process_frame

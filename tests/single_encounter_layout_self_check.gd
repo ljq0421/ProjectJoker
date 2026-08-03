@@ -20,8 +20,11 @@ func _run() -> void:
 	var left_gap: Control = screen.get_node("%LeftGap")
 	var right_gap: Control = screen.get_node("%RightGap")
 	var tray: Control = screen.get_node("%DiceTray")
+	var tray_empty_label: Label = screen.get_node_or_null("%DiceTrayEmptyLabel")
 	var resolution: Control = screen.get_node("%ResolutionPanel")
 	var hand: Control = screen.get_node("%Hand")
+	var card_detail: Control = screen.get_node_or_null("%CardDetailPanel")
+	var card_detail_text: Label = screen.get_node_or_null("%CardDetailText")
 	var replay_tutorial: Control = screen.get_node("%ReplayTutorialButton")
 	var replay_advanced: Control = screen.get_node("%ReplayAdvancedGuideButton")
 	var replay_gold_corridor: Control = screen.get_node("%ReplayGoldCorridorGuideButton")
@@ -53,6 +56,64 @@ func _run() -> void:
 		right.get_global_rect().end.x < resolution.get_global_rect().position.x,
 		"lanes must not overlap resolution"
 	)
+	_assert_true(
+		card_detail != null and card_detail.visible,
+		"card detail space should remain reserved before a card is selected"
+	)
+	_assert_true(
+		card_detail_text != null and "选择一张手法牌" in card_detail_text.text,
+		"reserved card detail space should explain how to use it"
+	)
+	_assert_true(
+		tray_empty_label != null and not tray_empty_label.visible,
+		"dice tray empty state should stay hidden while dice remain unassigned"
+	)
+
+	var left_rect_before_selection := left.get_global_rect()
+	var detail_rect_before_selection := card_detail.get_global_rect()
+	_assert_true(screen.session.activate_card(0), "layout check should select a hand card")
+	screen.refresh_from_session()
+	await process_frame
+	await process_frame
+	_assert_rect_approx(
+		left.get_global_rect(),
+		left_rect_before_selection,
+		"selecting a card must not resize or move the rule lanes"
+	)
+	_assert_rect_approx(
+		card_detail.get_global_rect(),
+		detail_rect_before_selection,
+		"selected-card details must use the already reserved space"
+	)
+	_assert_true(
+		screen.session.hand[0].rule_text in card_detail_text.text,
+		"selected-card detail space should show the complete rule"
+	)
+
+	screen.session.cancel_selection()
+	var assignments := [
+		[&"d1", &"left"],
+		[&"d6", &"left"],
+		[&"d2", &"middle"],
+		[&"d3", &"middle"],
+		[&"d4", &"middle"],
+		[&"d5", &"right"],
+	]
+	for assignment in assignments:
+		_assert_true(
+			screen.session.activate_die(assignment[0])
+			and screen.session.activate_table(assignment[1]),
+			"layout check should assign every die"
+		)
+	screen.refresh_from_session()
+	await process_frame
+	await process_frame
+	_assert_true(
+		tray_empty_label != null
+		and tray_empty_label.visible
+		and "全部已入台" in tray_empty_label.text,
+		"empty dice tray should identify its purpose and completed state"
+	)
 
 	screen.queue_free()
 	await process_frame
@@ -68,6 +129,13 @@ func _assert_inside(parent_rect: Rect2, child_rect: Rect2, label: String) -> voi
 	_assert_true(
 		parent_rect.encloses(child_rect),
 		"%s must remain inside 1920x1080 root" % label
+	)
+
+func _assert_rect_approx(actual: Rect2, expected: Rect2, message: String) -> void:
+	_assert_true(
+		actual.position.is_equal_approx(expected.position)
+		and actual.size.is_equal_approx(expected.size),
+		"%s (before=%s, after=%s)" % [message, expected, actual]
 	)
 
 func _assert_true(value: bool, message: String) -> void:

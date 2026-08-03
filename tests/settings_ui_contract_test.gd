@@ -3,6 +3,8 @@ extends "res://tests/test_case.gd"
 const SETTINGS_SCENE_PATH := "res://scenes/components/settings_layer.tscn"
 const HOST_SCENES := [
 	"res://scenes/run/main_menu_screen.tscn",
+	"res://scenes/run/expedition_setup_screen.tscn",
+	"res://scenes/run/expedition_run_screen.tscn",
 	"res://scenes/run/single_encounter_screen.tscn",
 	"res://scenes/run/three_round_run_screen.tscn",
 	"res://scenes/run/area_run_screen.tscn",
@@ -27,6 +29,7 @@ func _test_settings_scene_contract() -> void:
 	tree.root.add_child(layer)
 
 	var settings_button: Button = layer.get_node("%SettingsButton")
+	var rule_reference_button: Button = layer.get_node("%RuleReferenceButton")
 	assert_equal(
 		settings_button.custom_minimum_size,
 		Vector2(96, 48),
@@ -41,6 +44,28 @@ func _test_settings_scene_contract() -> void:
 		settings_button.offset_right,
 		-24.0,
 		"settings entry should retain the right safe margin"
+	)
+	assert_equal(
+		rule_reference_button.custom_minimum_size,
+		Vector2(96, 48),
+		"rule reference entry should match the settings slot"
+	)
+	assert_equal(
+		rule_reference_button.offset_right,
+		-128.0,
+		"rule reference entry should sit beside settings with an eight pixel gap"
+	)
+	assert_true(
+		layer.has_method("open_rule_reference"),
+		"shared utility layer should open the rule reference overlay"
+	)
+	assert_true(
+		layer.has_method("close_rule_reference"),
+		"shared utility layer should close the rule reference overlay"
+	)
+	assert_true(
+		layer.get_node_or_null("%RuleReferenceOverlay") != null,
+		"shared utility layer should own the rule reference overlay"
 	)
 	var overlay: Control = layer.get_node("%SettingsOverlay")
 	assert_equal(
@@ -104,12 +129,15 @@ func _test_nested_host_has_one_active_entry() -> void:
 	tree.root.add_child(host)
 	var settings_layer_count := 0
 	var visible_entry_count := 0
+	var visible_rule_entry_count := 0
 	for node in host.find_children("*", "CanvasLayer", true, false):
 		if node is not SettingsLayer:
 			continue
 		settings_layer_count += 1
 		if node.get_node("%SettingsButton").visible:
 			visible_entry_count += 1
+		if node.get_node("%RuleReferenceButton").visible:
+			visible_rule_entry_count += 1
 	assert_true(
 		settings_layer_count >= 3,
 		"nested run fixture should exercise duplicate settings layers"
@@ -118,6 +146,11 @@ func _test_nested_host_has_one_active_entry() -> void:
 		visible_entry_count,
 		1,
 		"nested run should expose exactly one active settings entry"
+	)
+	assert_equal(
+		visible_rule_entry_count,
+		1,
+		"nested run should expose exactly one active rule reference entry"
 	)
 	host.free()
 

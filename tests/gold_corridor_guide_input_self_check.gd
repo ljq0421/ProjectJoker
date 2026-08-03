@@ -265,6 +265,7 @@ func _verify_real_checkpoint_path() -> void:
 	)
 
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")
+	await _click(reward.get_node("%EngravingRewardModeButton"))
 	var engraving_id: StringName = run_screen.area_session.engraving_offer_ids[0]
 	await _click(_find_engraving_option(engraving_id))
 	await _click(_find_reward_button(&"die_id", &"d1"))
@@ -514,12 +515,13 @@ func _open_fresh_screen(path: String) -> void:
 
 func _complete_three_rounds() -> void:
 	run_screen.area_session.encounter_session.target_total = 0
-	for round_number in range(1, 4):
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
 		await _click(encounter.get_node("%ConfirmButton"))
 		encounter.resolution_panel.finish_playback()
 		await _settle()
-		if round_number < 3:
+		if round_index < round_count - 1:
 			await _click(
 				run_screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton")
 			)
@@ -527,25 +529,27 @@ func _complete_three_rounds() -> void:
 
 func _complete_three_rounds_direct() -> void:
 	run_screen.area_session.encounter_session.target_total = 0
-	for round_number in range(1, 4):
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var report := (
 			run_screen.area_session.encounter_session.current_session.commit()
 		)
 		run_screen._on_round_committed(report)
 		await _settle()
-		if round_number < 3:
+		if round_index < round_count - 1:
 			run_screen._on_next_round_requested()
 			await _settle()
 
 func _fail_three_rounds_direct() -> void:
 	run_screen.area_session.encounter_session.target_total = 999999
-	for round_number in range(1, 4):
+	var round_count := run_screen.area_session.encounter_session.round_count
+	for round_index in range(round_count):
 		var report := (
 			run_screen.area_session.encounter_session.current_session.commit()
 		)
 		run_screen._on_round_committed(report)
 		await _settle()
-		if round_number < 3:
+		if round_index < round_count - 1:
 			run_screen._on_next_round_requested()
 			await _settle()
 

@@ -16,6 +16,11 @@ func run() -> void:
 		"ReturnFromSetupButton",
 		"RunHistoryList",
 		"SetupErrorLabel",
+		"SetupSubtitle",
+		"DeckRecommendationLabel",
+		"SelectionSummaryLabel",
+		"FirstRunJourneyPanel",
+		"HistoryPanel",
 	]:
 		assert_true(
 			screen.get_node_or_null("%" + node_name) != null,
