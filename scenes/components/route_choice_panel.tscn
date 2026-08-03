@@ -105,18 +105,21 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
 [node name="RouteTitle" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader/HeaderCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "金线回廊 · 路线账簿"
 theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
 theme_override_font_sizes/font_size = 34
 
 [node name="RouteInstruction" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader/HeaderCopy"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "公开比较条件、目标与现有牌组呼应；选定后进入三轮解析。"
 theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
 theme_override_font_sizes/font_size = 17
 
 [node name="LedgerMark" type="Label" parent="SafeArea/RouteLedger/LedgerColumn/LedgerHeader"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "AREA 01  /  OPEN LEDGER"
 theme_override_colors/font_color = Color(0.45, 0.905, 0.845, 1)

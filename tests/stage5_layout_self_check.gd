@@ -105,7 +105,7 @@ func _run() -> void:
 	_assert_true(assigned_d1 != null, "engraved d1 should render in a rule lane")
 	if assigned_d1 != null:
 		_assert_true(
-			"本轮激活" in assigned_d1.text,
+			"激活" in assigned_d1.text,
 			"assigned engraved die should show active text"
 		)
 

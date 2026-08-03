@@ -33,7 +33,11 @@ func run() -> void:
 	assert_true(panel.has_method("bind_report"), "resolution panel should bind reports")
 	var die_state := DieState.new(&"d5", 5)
 	die.bind_die(die_state, false, 3)
-	assert_equal(die.text, "3", "die face should directly show the card-adjusted value")
+	assert_equal(
+		die.face_icon_path(3),
+		"res://resources/ui/dream_glass/icons/dice/die_3.svg",
+		"die face icon should directly show the card-adjusted value"
+	)
 	assert_true(
 		die.tooltip_text.contains("初始 5，手法牌后 3"),
 		"die tooltip should explain the initial and card-adjusted values"

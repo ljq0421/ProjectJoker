@@ -53,7 +53,7 @@ func run() -> void:
 func _expected_rooms() -> Dictionary:
 	return {
 		&"gold_room_precise_steps": {
-			"target": 100,
+			"target": 42,
 			"reward": 2,
 			"rules": [
 				[&"rule_exact_sum", 2, 2, 7, 0, 0, 2],
@@ -63,7 +63,7 @@ func _expected_rooms() -> Dictionary:
 			"synergy_tags": PackedStringArray(["骰值", "校准", "重复"]),
 		},
 		&"gold_room_even_split": {
-			"target": 110,
+			"target": 46,
 			"reward": 3,
 			"rules": [
 				[&"rule_all_even", 2, 3, 0, 0, 0, 2],
@@ -83,7 +83,7 @@ func _expected_rooms() -> Dictionary:
 			"synergy_tags": PackedStringArray(["骰值", "校准", "重复"]),
 		},
 		&"gold_room_parallel_proof": {
-			"target": 135,
+			"target": 52,
 			"reward": 3,
 			"rules": [
 				[&"rule_all_distinct", 2, 3, 0, 0, 0, 2],

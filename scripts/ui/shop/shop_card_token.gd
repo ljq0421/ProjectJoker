@@ -2,6 +2,7 @@ class_name ShopCardToken
 extends Button
 
 const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
+const Formatter = preload("res://scripts/ui/card_display_formatter.gd")
 
 signal card_selected(card_id: StringName, role: StringName)
 
@@ -22,27 +23,17 @@ func bind_card(
 	role = p_role
 	button_pressed = selected
 	disabled = p_disabled
-	var price_copy := "" if price < 0 else "\n售价：%d 情报券" % price
 	var identities := BuildIdentities.new()
-	text = "%s｜%s\n目标：%s\n%s%s" % [
-		card.display_name,
+	var formatter := Formatter.new()
+	text = formatter.shop_compact_copy(
+		card,
 		identities.display_name(identities.identity_for_card(card)),
-		_target_copy(card.target_type),
-		card.rule_text,
-		price_copy,
-	]
+		price
+	)
+	icon = load(formatter.effect_icon_path(card))
 	tooltip_text = "%s；%s" % [card.display_name, card.rule_text]
 	set_meta("shop_role", role)
 	set_meta("card_id", card_id)
 
 func _target_copy(target_type: CardDefinition.TargetType) -> String:
-	match target_type:
-		CardDefinition.TargetType.DIE:
-			return "骰子"
-		CardDefinition.TargetType.TABLE:
-			return "规则台"
-		CardDefinition.TargetType.GAP:
-			return "桌间"
-		CardDefinition.TargetType.GLOBAL:
-			return "全局"
-	return "未知"
+	return Formatter.new().target_copy(target_type)

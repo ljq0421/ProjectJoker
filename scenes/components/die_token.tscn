@@ -6,5 +6,10 @@
 custom_minimum_size = Vector2(82, 82)
 toggle_mode = true
 focus_mode = 1
-autowrap_mode = 2
+clip_text = true
+autowrap_mode = 0
+expand_icon = true
+theme_override_constants/h_separation = 4
+theme_override_constants/icon_max_width = 68
+theme_override_font_sizes/font_size = 14
 script = ExtResource("1")

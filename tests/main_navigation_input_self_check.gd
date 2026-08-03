@@ -14,14 +14,17 @@ func _run() -> void:
 		{
 			"button": "GoldCorridorButton",
 			"screen": GoldCorridorRunScreen,
+			"route_title": "金线回廊 · 路线账簿",
 		},
 		{
 			"button": "MirrorHallButton",
 			"screen": MirrorHallRunScreen,
+			"route_title": "反照牌厅 · 路线账簿",
 		},
 		{
 			"button": "FacelessHubButton",
 			"screen": FacelessHubRunScreen,
+			"route_title": "无面中枢 · 路线账簿",
 		},
 	]:
 		var menu := current_scene
@@ -42,6 +45,14 @@ func _run() -> void:
 		)
 		if area == null:
 			break
+		var route_title: Label = area.get_node(
+			"%RouteChoicePanel"
+		).get_node("%RouteTitle")
+		_assert(
+			route_title.text == route.route_title,
+			"%s should bind the requested area title, got: %s"
+			% [route.button, route_title.text]
+		)
 		await _click(area.get_node("%HomeButton") as Button)
 		await _settle()
 		_assert(

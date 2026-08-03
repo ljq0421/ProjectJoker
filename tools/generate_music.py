@@ -15,7 +15,7 @@ import wave
 
 
 SAMPLE_RATE = 32000
-GENERATOR_VERSION = "1.0.0"
+GENERATOR_VERSION = "1.1.0"
 MASTER_SEED = 31072026
 PEAK_AMPLITUDE = 10 ** (-6.0 / 20.0)
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +26,7 @@ RECIPES = {
         "title": "Glass Antechamber",
         "context": "menu",
         "profile": "luminous_menu",
+		"seed_offset": 0,
         "tempo_bpm": 72,
         "bars": 8,
         "chords": [
@@ -45,6 +46,7 @@ RECIPES = {
         "title": "Masked Table",
         "context": "journey",
         "profile": "measured_journey",
+		"seed_offset": 2018,
         "tempo_bpm": 84,
         "bars": 8,
         "chords": [
@@ -64,6 +66,7 @@ RECIPES = {
         "title": "Loaded Dice",
         "context": "encounter",
         "profile": "restrained_tension",
+		"seed_offset": 1009,
         "tempo_bpm": 96,
         "bars": 8,
         "chords": [
@@ -78,6 +81,66 @@ RECIPES = {
         ],
         "lead": [74, 77, 76, 72, 73, 76, 69, 72, 70, 74, 73, 67, 69, 73, 72, 68],
         "bass": [38, 38, 34, 34, 31, 31, 33, 33],
+    },
+    "gold_contract.wav": {
+        "title": "Gold Contract",
+        "context": "encounter_gold_corridor",
+        "profile": "gold_contract",
+		"seed_offset": 3027,
+        "tempo_bpm": 104,
+        "bars": 8,
+        "chords": [
+            [50, 57, 62, 66],
+            [50, 57, 61, 66],
+            [45, 52, 57, 62],
+            [45, 52, 56, 61],
+            [47, 54, 59, 64],
+            [47, 54, 58, 63],
+            [43, 50, 55, 59],
+            [43, 50, 57, 62],
+        ],
+        "lead": [74, 78, 81, 78, 74, 73, 69, 73, 76, 80, 83, 80, 76, 74, 71, 74],
+        "bass": [38, 38, 33, 33, 35, 35, 31, 31],
+    },
+    "mirror_refraction.wav": {
+        "title": "Mirror Refraction",
+        "context": "encounter_mirror_hall",
+        "profile": "mirror_refraction",
+		"seed_offset": 4036,
+        "tempo_bpm": 88,
+        "bars": 8,
+        "chords": [
+            [48, 55, 60, 64],
+            [47, 54, 59, 63],
+            [45, 52, 57, 62],
+            [43, 50, 55, 60],
+            [43, 50, 55, 60],
+            [45, 52, 57, 62],
+            [47, 54, 59, 63],
+            [48, 55, 60, 64],
+        ],
+        "lead": [72, 75, 79, 76, 74, 71, 69, 67, 67, 69, 71, 74, 76, 79, 75, 72],
+        "bass": [36, 35, 33, 31, 31, 33, 35, 36],
+    },
+    "faceless_protocol.wav": {
+        "title": "Faceless Protocol",
+        "context": "encounter_faceless_hub",
+        "profile": "faceless_protocol",
+		"seed_offset": 5045,
+        "tempo_bpm": 100,
+        "bars": 8,
+        "chords": [
+            [49, 56, 60, 65],
+            [49, 55, 60, 64],
+            [44, 51, 56, 61],
+            [46, 53, 58, 63],
+            [42, 49, 54, 59],
+            [45, 52, 57, 62],
+            [47, 54, 59, 64],
+            [44, 51, 56, 61],
+        ],
+        "lead": [73, 76, 80, 75, 78, 71, 74, 69, 72, 77, 70, 73, 68, 75, 71, 66],
+        "bass": [37, 37, 32, 34, 30, 33, 35, 32],
     },
 }
 
@@ -274,7 +337,11 @@ def render_recipe(recipe: dict, seed: int) -> tuple[list[float], list[float]]:
             rng.random() * math.tau,
         )
 
-    pulse_division = 2 if profile != "restrained_tension" else 1
+    pulse_division = (
+        1
+        if profile in {"restrained_tension", "gold_contract"}
+        else (3 if profile == "faceless_protocol" else 2)
+    )
     for beat in range(recipe["bars"] * 4):
         if beat % pulse_division != 0:
             continue
@@ -333,7 +400,7 @@ def write_wave(path: Path, channels: tuple[list[float], list[float]]) -> None:
 def write_manifest(output_dir: Path, generated: list[dict]) -> None:
     manifest = {
         "schema_version": 1,
-        "generated_on": "2026-07-31",
+        "generated_on": "2026-08-03",
         "generator": {
             "path": "tools/generate_music.py",
             "version": GENERATOR_VERSION,
@@ -379,7 +446,7 @@ def generate(output_dir: Path, include_manifest: bool) -> None:
     generated: list[dict] = []
     for index, file_name in enumerate(sorted(RECIPES)):
         recipe = RECIPES[file_name]
-        seed = MASTER_SEED + index * 1009
+        seed = MASTER_SEED + int(recipe.get("seed_offset", index * 1009))
         channels = render_recipe(recipe, seed)
         path = output_dir / file_name
         write_wave(path, channels)
@@ -387,7 +454,7 @@ def generate(output_dir: Path, include_manifest: bool) -> None:
         parameters = {
             key: value
             for key, value in recipe.items()
-            if key not in {"title", "context"}
+            if key not in {"title", "context", "seed_offset"}
         }
         generated.append(
             {

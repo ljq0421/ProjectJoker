@@ -14,11 +14,23 @@ const MASKED_TABLE := preload(
 const LOADED_DICE := preload(
 	"res://resources/audio/music/loaded_dice.wav"
 )
+const GOLD_CONTRACT := preload(
+	"res://resources/audio/music/gold_contract.wav"
+)
+const MIRROR_REFRACTION := preload(
+	"res://resources/audio/music/mirror_refraction.wav"
+)
+const FACELESS_PROTOCOL := preload(
+	"res://resources/audio/music/faceless_protocol.wav"
+)
 
 const TRACK_ORDER: Array[StringName] = [
 	&"menu",
 	&"journey",
 	&"encounter",
+	&"encounter_gold_corridor",
+	&"encounter_mirror_hall",
+	&"encounter_faceless_hub",
 ]
 const TRACKS := {
 	&"menu": {
@@ -33,6 +45,21 @@ const TRACKS := {
 	},
 	&"encounter": {
 		"stream": LOADED_DICE,
+		"bus": &"Music",
+		"volume_db": -2.5,
+	},
+	&"encounter_gold_corridor": {
+		"stream": GOLD_CONTRACT,
+		"bus": &"Music",
+		"volume_db": -2.5,
+	},
+	&"encounter_mirror_hall": {
+		"stream": MIRROR_REFRACTION,
+		"bus": &"Music",
+		"volume_db": -2.5,
+	},
+	&"encounter_faceless_hub": {
+		"stream": FACELESS_PROTOCOL,
 		"bus": &"Music",
 		"volume_db": -2.5,
 	},
@@ -91,7 +118,10 @@ func context_for_scene_path(scene_path: String) -> StringName:
 		return &"encounter"
 	return &""
 
-func context_for_area_phase(phase_name: StringName) -> StringName:
+func context_for_area_phase(
+	phase_name: StringName,
+	area_id: StringName = &""
+) -> StringName:
 	if phase_name in [
 		&"route_choice",
 		&"shop",
@@ -101,11 +131,21 @@ func context_for_area_phase(phase_name: StringName) -> StringName:
 	]:
 		return &"journey"
 	if phase_name in [&"normal_room", &"dealer"]:
+		match area_id:
+			&"gold_corridor":
+				return &"encounter_gold_corridor"
+			&"mirror_hall":
+				return &"encounter_mirror_hall"
+			&"faceless_hub":
+				return &"encounter_faceless_hub"
 		return &"encounter"
 	return &""
 
-func play_area_phase(phase_name: StringName) -> bool:
-	var context := context_for_area_phase(phase_name)
+func play_area_phase(
+	phase_name: StringName,
+	area_id: StringName = &""
+) -> bool:
+	var context := context_for_area_phase(phase_name, area_id)
 	if context == &"":
 		return false
 	var current_scene := get_tree().current_scene

@@ -14,6 +14,7 @@ signal die_drop_to_slot_requested(
 const SLOT_SCENE = preload("res://scenes/components/rule_slot.tscn")
 
 @onready var title_label: Label = %Title
+@onready var formula_label: Label = %Formula
 @onready var condition_label: Label = %Condition
 @onready var slots: HBoxContainer = %Slots
 
@@ -42,6 +43,7 @@ func bind_lane(
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
+	formula_label.text = rule_formula_copy(rule)
 	var slot_count := (
 		rule.slot_count
 		if effective_slot_count < 0
@@ -55,6 +57,7 @@ func bind_lane(
 	)
 	if not condition_summary.is_empty():
 		condition_label.text += "\n条件变化：%s" % condition_summary
+	tooltip_text = _rule_detail_copy(rule)
 	for child in slots.get_children():
 		child.queue_free()
 	for slot_index in range(slot_count):
@@ -111,6 +114,67 @@ func effective_rule_copy(
 	if p_resolution_count > 1:
 		copy += " · 结算 %d 次" % p_resolution_count
 	return copy
+
+func rule_formula_copy(rule: RuleDefinition) -> String:
+	if rule.template == null:
+		match rule.condition_type:
+			RuleDefinition.ConditionType.EXACT_SUM:
+				return "Σ = %d" % rule.target_value
+			RuleDefinition.ConditionType.ALL_EVEN:
+				return "全部偶数"
+			RuleDefinition.ConditionType.CONSECUTIVE:
+				return "连续数列"
+		return rule.display_name
+	match rule.template.condition_kind:
+		RuleTableTemplate.ConditionKind.ANY_FILLED:
+			return _distortion_formula(rule.template.post_pass_effect)
+		RuleTableTemplate.ConditionKind.EXACT_SUM:
+			return "Σ = %d" % rule.target_value
+		RuleTableTemplate.ConditionKind.MINIMUM_SUM:
+			return "Σ ≥ %d" % rule.minimum_value
+		RuleTableTemplate.ConditionKind.MAXIMUM_SUM:
+			return "Σ ≤ %d" % rule.maximum_value
+		RuleTableTemplate.ConditionKind.SUM_RANGE:
+			return "%d ≤ Σ ≤ %d" % [rule.minimum_value, rule.maximum_value]
+		RuleTableTemplate.ConditionKind.ALL_EQUAL:
+			return "全部同点"
+		RuleTableTemplate.ConditionKind.ALL_DISTINCT:
+			return "互不相同"
+		RuleTableTemplate.ConditionKind.ALL_EVEN:
+			return "全部偶数"
+		RuleTableTemplate.ConditionKind.ALL_ODD:
+			return "全部奇数"
+		RuleTableTemplate.ConditionKind.SAME_PARITY:
+			return "同一奇偶"
+		RuleTableTemplate.ConditionKind.CONSECUTIVE:
+			return "连续数列"
+		RuleTableTemplate.ConditionKind.FIXED_DIFFERENCE:
+			return "相邻差 = %d" % rule.difference
+		RuleTableTemplate.ConditionKind.STRICT_ASCENDING:
+			return "严格递增 ↗"
+		RuleTableTemplate.ConditionKind.STRICT_DESCENDING:
+			return "严格递减 ↘"
+		RuleTableTemplate.ConditionKind.MIRRORED:
+			return "首尾镜像"
+		RuleTableTemplate.ConditionKind.SLOT_TARGETS:
+			return "指定槽位 %s" % str(Array(rule.slot_targets))
+	return rule.display_name
+
+func _distortion_formula(effect: RuleTableTemplate.PostPassEffect) -> String:
+	match effect:
+		RuleTableTemplate.PostPassEffect.ECHO_SELF:
+			return "通过 → 重复结算"
+		RuleTableTemplate.PostPassEffect.REVERSE_DIRECTION:
+			return "通过 → 反转方向"
+		RuleTableTemplate.PostPassEffect.BRIDGE_FORWARD:
+			return "通过 → 传递相邻台"
+	return "填入即通过"
+
+func _rule_detail_copy(rule: RuleDefinition) -> String:
+	var detail := "%s；%s" % [rule.display_name, rule_formula_copy(rule)]
+	if rule.template != null and not rule.template.description.is_empty():
+		detail += "；%s" % rule.template.description
+	return detail
 
 func set_target_state(active: bool, legal: bool) -> void:
 	if not active:

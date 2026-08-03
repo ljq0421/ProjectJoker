@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
 [ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="3_profile"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="4_rule"]
+[ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/solo_verdict.tres" id="5_restriction"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_sum_range.tres" id="6_range"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_bridge_table.tres" id="7_bridge"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_strict_descending.tres" id="8_descending"]
@@ -49,6 +50,7 @@ id = &"faceless_room_crossed_archive"
 display_name = "交叉档案"
 description = "从左向右读取三种复合条件，再规划骰值、条件宽限和规则台收益。"
 encounter = SubResource("Encounter")
+restriction = ExtResource("5_restriction")
 build_identity_id = &"table_chain"
 target_total = 135
 success_intel_reward = 7

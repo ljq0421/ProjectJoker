@@ -212,7 +212,8 @@ func _show_route_choice() -> void:
 		area_session.area_definition,
 		area_session.deck_ids,
 		area_session.card_catalog,
-		area_session.challenge_ids
+		area_session.challenge_ids,
+		area_session.room_index
 	)
 	if not bound:
 		encounter_screen.visible = true
@@ -261,7 +262,7 @@ func bind_current_encounter() -> void:
 			)
 		)
 	else:
-		encounter_screen.bind_dealer(null)
+		encounter_screen.bind_area_brief(area_session.area_definition.id)
 	encounter_screen.bind_external_session(
 		area_session.encounter_session.current_session,
 		_area_copy(),
@@ -589,7 +590,12 @@ func _show_restored_completion() -> void:
 func _request_music_for_phase(phase_name: StringName) -> void:
 	var service := get_tree().root.get_node_or_null("MusicService")
 	if service != null and service.has_method("play_area_phase"):
-		service.call("play_area_phase", phase_name)
+		var area_id: StringName = (
+			area_session.area_definition.id
+			if area_session != null and area_session.area_definition != null
+			else &""
+		)
+		service.call("play_area_phase", phase_name, area_id)
 
 func _emit_expedition_checkpoint() -> void:
 	if not _expedition_mode or area_session == null:

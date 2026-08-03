@@ -25,8 +25,18 @@ EXPECTED_FILES = {
     "glass_antechamber.wav",
     "masked_table.wav",
     "loaded_dice.wav",
+    "gold_contract.wav",
+    "mirror_refraction.wav",
+    "faceless_protocol.wav",
 }
-EXPECTED_CONTEXTS = {"menu", "journey", "encounter"}
+EXPECTED_CONTEXTS = {
+    "menu",
+    "journey",
+    "encounter",
+    "encounter_gold_corridor",
+    "encounter_mirror_hall",
+    "encounter_faceless_hub",
+}
 FORBIDDEN_AUDIO_SUFFIXES = {".wav", ".ogg", ".mp3", ".flac"}
 MAX_PCM_PEAK = round(32767 * (10 ** (-5.8 / 20.0))) + 1
 
@@ -302,7 +312,7 @@ def main() -> int:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1
     print(
-        "PASS: verified 3 commercial-provenance music assets"
+        f"PASS: verified {len(EXPECTED_FILES)} commercial-provenance music assets"
         + (" with reproducible hashes." if args.reproduce else ".")
     )
     return 0

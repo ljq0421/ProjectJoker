@@ -8,6 +8,7 @@ signal card_selected(card_index: int, card: CardDefinition, token: Control)
 
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
+const CardFormatter = preload("res://scripts/ui/card_display_formatter.gd")
 const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 const TUTORIAL_CONFIG_META := "tutorial_config_path"
 const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
@@ -22,6 +23,9 @@ const AreaPresentation = preload(
 @onready var lanes: Array[RuleLane] = [%LeftLane, %MiddleLane, %RightLane]
 @onready var dice_tray: DiceTray = %DiceTray
 @onready var hand_container: HBoxContainer = %Hand
+@onready var card_detail_panel: PanelContainer = %CardDetailPanel
+@onready var card_detail_icon: TextureRect = %CardDetailIcon
+@onready var card_detail_text: Label = %CardDetailText
 @onready var resolution_panel: ResolutionPanel = %ResolutionPanel
 @onready var error_label: Label = %ErrorLabel
 @onready var calibration_label: Label = %CalibrationLabel
@@ -49,6 +53,8 @@ const AreaPresentation = preload(
 var session: SingleEncounterSession
 var dealer_definition: DealerDefinition
 var owns_session := true
+var _area_id: StringName = &""
+var _directive_tween: Tween
 
 func _ready() -> void:
 	_apply_tutorial_launch_path()
@@ -138,6 +144,7 @@ func apply_area_presentation(area_id: StringName) -> void:
 	var presentation: Dictionary = AreaPresentation.new().find(area_id)
 	if presentation.is_empty():
 		return
+	_area_id = area_id
 	background.color = presentation["background"]
 	area_identity_bar.color = presentation["primary"]
 	area_label.add_theme_color_override("font_color", presentation["secondary"])
@@ -147,18 +154,31 @@ func apply_area_presentation(area_id: StringName) -> void:
 	)
 	area_atmosphere.configure(area_id)
 	dealer_sigil.configure(area_id)
+	%AreaDirectivePanel.visible = true
+	%AreaDirectiveTitle.text = presentation["directive_title"]
 
 func bind_dealer(dealer: DealerDefinition) -> void:
 	dealer_definition = dealer
 	if dealer == null:
-		%DealerEyebrow.text = "规则监理 / MIRROR-01"
-		%DealerName.text = "镜面夫人"
-		%DealerRule.text = "本场规则\n从左向右逐轨解析。所有变化都会先出现在结算轨迹中。"
+		%DealerEyebrow.text = "普通遭遇 / OPEN RULES"
+		%DealerName.text = "规则监理"
+		%DealerRule.text = "本场规则\n先读取公开条件和结算方向，再安排骰子与手法牌。"
 		%DealerHint.text = "把骰子拖入规则轨，或先选骰子再选规则轨。"
 		return
 	%DealerEyebrow.text = "庄家挑战 / %s" % String(dealer.id).to_upper()
 	%DealerName.text = dealer.display_name
 	%DealerRule.text = dealer.rule_text
+
+func bind_area_brief(area_id: StringName) -> void:
+	dealer_definition = null
+	var presentation: Dictionary = AreaPresentation.new().find(area_id)
+	if presentation.is_empty():
+		bind_dealer(null)
+		return
+	%DealerEyebrow.text = presentation["ordinary_eyebrow"]
+	%DealerName.text = presentation["ordinary_title"]
+	%DealerRule.text = presentation["ordinary_rule"]
+	%DealerHint.text = "把骰子拖入规则轨，或先选骰子再选规则轨。"
 
 func bind_verification(engraving: EngravingDefinition) -> void:
 	dealer_definition = null
@@ -272,6 +292,7 @@ func refresh_from_session() -> void:
 			"" if card_used else card_start_block_reason
 		)
 		card_token.card_activated.connect(_on_card_activated)
+	_refresh_card_detail()
 
 	var gap_is_target := selected_target_type == CardDefinition.TargetType.GAP
 	%LeftGap.self_modulate = (
@@ -296,6 +317,7 @@ func refresh_from_session() -> void:
 	error_label.text = session.last_error
 	selection_hint_label.text = session.selected_card_target_hint()
 	_refresh_active_restriction(state)
+	_refresh_area_directive(state, preview)
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed
 	%UndoButton.disabled = session.controller.committed or not session.undo_allowed
@@ -307,6 +329,25 @@ func refresh_from_session() -> void:
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	view_refreshed.emit()
+
+func _refresh_card_detail() -> void:
+	if (
+		session.selection.kind != InteractionState.Kind.CARD
+		or session.selection.card_index < 0
+		or session.selection.card_index >= session.hand.size()
+	):
+		card_detail_panel.visible = false
+		card_detail_icon.texture = null
+		card_detail_text.text = ""
+		return
+	var card: CardDefinition = session.hand[session.selection.card_index]
+	var formatter := CardFormatter.new()
+	card_detail_panel.visible = true
+	card_detail_icon.texture = load(formatter.effect_icon_path(card))
+	card_detail_text.text = formatter.detail_copy(
+		card,
+		session.selected_card_target_hint()
+	)
 
 func _refresh_active_restriction(state: RoundState) -> void:
 	var restrictions := session.controller.active_restrictions
@@ -342,6 +383,76 @@ func _refresh_direction(report: ResolutionReport) -> void:
 			== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
 		else "→ 从左向右结算"
 	)
+
+func _refresh_area_directive(
+	state: RoundState,
+	report: ResolutionReport
+) -> void:
+	if _area_id == &"" or not is_instance_valid(%AreaDirectiveStatus):
+		return
+	var rule_count := session.controller.encounter.rules.size()
+	var satisfied_count := maxi(0, rule_count - report.rule_failures.size())
+	var next_status := ""
+	match _area_id:
+		&"gold_corridor":
+			next_status = (
+				"单轮定案 · 条件满足 %d/%d · 校准 %d"
+				% [satisfied_count, rule_count, state.calibration_points]
+			)
+		&"mirror_hall":
+			var mirror_count := 0
+			for played_card in state.played_cards:
+				if played_card.is_mirror_copy:
+					mirror_count += 1
+			var direction := (
+				"右 → 左"
+				if report.resolution_direction
+					== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
+				else "左 → 右"
+			)
+			next_status = "镜像额度 %d/1 · 结算 %s" % [
+				mirror_count,
+				direction,
+			]
+		&"faceless_hub":
+			var restriction_names: Array[String] = []
+			for restriction in session.controller.active_restrictions:
+				restriction_names.append(restriction.display_name)
+			var protocol := (
+				"三轮议程"
+				if restriction_names.is_empty()
+				else " / ".join(restriction_names)
+			)
+			next_status = "%s · 条件满足 %d/%d" % [
+				protocol,
+				satisfied_count,
+				rule_count,
+			]
+	if next_status != %AreaDirectiveStatus.text:
+		%AreaDirectiveStatus.text = next_status
+		_animate_directive_update()
+
+func _animate_directive_update() -> void:
+	if not _motion_allowed():
+		%AreaDirectiveAccent.modulate = Color.WHITE
+		return
+	if _directive_tween != null and _directive_tween.is_valid():
+		_directive_tween.kill()
+	%AreaDirectiveAccent.modulate = Color(1.0, 1.0, 1.0, 0.35)
+	_directive_tween = create_tween()
+	_directive_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_directive_tween.tween_property(
+		%AreaDirectiveAccent,
+		"modulate",
+		Color.WHITE,
+		0.22
+	)
+
+func _motion_allowed() -> bool:
+	var settings := get_tree().root.get_node_or_null("SettingsService")
+	if settings == null or not settings.has_method("accessibility_value"):
+		return true
+	return not bool(settings.call("accessibility_value", &"reduce_flashes"))
 
 func _refresh_mirror_layers(state: RoundState) -> void:
 	%LeftMirrorLayer.visible = false

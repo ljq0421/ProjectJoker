@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/single_encounter_screen.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
@@ -9,6 +9,22 @@
 [ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="7"]
 [ext_resource type="Script" path="res://scripts/ui/area_atmosphere.gd" id="8_atmosphere"]
 [ext_resource type="Script" path="res://scripts/ui/dealer_sigil.gd" id="9_sigil"]
+
+[sub_resource type="StyleBoxFlat" id="DirectivePanelStyle"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.035, 0.045, 0.13, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.84, 0.78, 0.65)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
 
 [node name="SingleEncounterScreen" type="Control"]
 layout_mode = 3
@@ -68,7 +84,7 @@ grow_vertical = 2
 
 [node name="RootColumn" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="TopBar" type="HBoxContainer" parent="SafeArea/RootColumn"]
 layout_mode = 2
@@ -105,6 +121,38 @@ theme_override_font_sizes/font_size = 16
 unique_name_in_owner = true
 layout_mode = 2
 text = "解析目标：0 / 100　轮次 1 / 3"
+
+[node name="AreaDirectivePanel" type="PanelContainer" parent="SafeArea/RootColumn"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("DirectivePanelStyle")
+
+[node name="DirectiveRow" type="HBoxContainer" parent="SafeArea/RootColumn/AreaDirectivePanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AreaDirectiveAccent" type="ColorRect" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(7, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.55, 1, 0.94, 1)
+
+[node name="AreaDirectiveTitle" type="Label" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+text = "区域指令"
+theme_override_font_sizes/font_size = 17
+
+[node name="AreaDirectiveStatus" type="Label" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "读取当前区域规则"
+theme_override_colors/font_color = Color(0.78, 0.84, 0.94, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="RunStatusSlot" type="CenterContainer" parent="SafeArea/RootColumn"]
 unique_name_in_owner = true
@@ -358,6 +406,33 @@ unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 10
+
+[node name="CardDetailPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body/Center"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+
+[node name="CardDetailRow" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="CardDetailIcon" type="TextureRect" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel/CardDetailRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="CardDetailText" type="Label" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel/CardDetailRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "所选手法牌的完整规则"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 15
 
 [node name="ActionBar" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
 layout_mode = 2

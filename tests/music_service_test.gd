@@ -4,6 +4,9 @@ const EXPECTED_TRACKS: Array[StringName] = [
 	&"menu",
 	&"journey",
 	&"encounter",
+	&"encounter_gold_corridor",
+	&"encounter_mirror_hall",
+	&"encounter_faceless_hub",
 ]
 
 func run() -> void:
@@ -20,7 +23,7 @@ func run() -> void:
 	assert_equal(
 		service.registered_track_ids(),
 		EXPECTED_TRACKS,
-		"music service should expose the three approved contexts"
+		"music service should expose shared and area-specific contexts"
 	)
 	for track_id in EXPECTED_TRACKS:
 		var definition: Dictionary = service.track_definition(track_id)
@@ -86,6 +89,21 @@ func run() -> void:
 			service.context_for_area_phase(phase_name),
 			&"encounter",
 			"%s should use encounter music" % phase_name
+		)
+	for entry in [
+		[&"gold_corridor", &"encounter_gold_corridor"],
+		[&"mirror_hall", &"encounter_mirror_hall"],
+		[&"faceless_hub", &"encounter_faceless_hub"],
+	]:
+		assert_equal(
+			service.context_for_area_phase(&"normal_room", entry[0]),
+			entry[1],
+			"%s should use its own encounter track" % entry[0]
+		)
+		assert_equal(
+			service.context_for_area_phase(&"route_choice", entry[0]),
+			&"journey",
+			"%s route choice should keep the shared journey track" % entry[0]
 		)
 	assert_equal(
 		service.context_for_area_phase(&"unknown"),

@@ -3,6 +3,8 @@ extends Button
 
 signal die_activated(die_id: StringName)
 
+const FACE_ICON_ROOT := "res://resources/ui/dream_glass/icons/dice/"
+
 var die_id: StringName
 
 func _ready() -> void:
@@ -17,7 +19,9 @@ func bind_die(
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
 	)
-	text = str(displayed_effective)
+	text = ""
+	var icon_path := face_icon_path(displayed_effective)
+	icon = load(icon_path) if not icon_path.is_empty() else null
 	button_pressed = selected
 	tooltip_text = (
 		"骰子 %s：初始 %d，手法牌后 %d"
@@ -25,6 +29,11 @@ func bind_die(
 		if displayed_effective != state.value
 		else "骰子 %s：点数 %d" % [state.id, state.value]
 	)
+
+func face_icon_path(value: int) -> String:
+	if value < 1 or value > 6:
+		return ""
+	return "%sdie_%d.svg" % [FACE_ICON_ROOT, value]
 
 func bind_die_with_engravings(
 	state: DieState,
@@ -46,19 +55,7 @@ func bind_die_with_engravings(
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
 	)
-	var value_copy := ""
-	if displayed_effective != state.value:
-		value_copy = str(displayed_effective)
-	elif state.value == state.rolled_value:
-		value_copy = str(state.value)
-	else:
-		value_copy = "%d（原 %d）" % [state.value, state.rolled_value]
-	text = "%s\n%s · %d 面\n%s" % [
-		value_copy,
-		engraving.display_name,
-		state.engraved_face,
-		"本轮激活" if active else ("刻印面命中" if face_hit else "未激活"),
-	]
+	text = "激活" if active else ("命中" if face_hit else "刻印")
 	tooltip_text = (
 		"骰子 %s：掷出 %d，初始 %d，手法牌后 %d；%s" % [
 			state.id,
@@ -88,8 +85,10 @@ func set_target_state(active: bool, legal: bool) -> void:
 		self_modulate = Color(0.48, 0.48, 0.58, 0.58)
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	var preview := Label.new()
-	preview.text = text
-	preview.add_theme_font_size_override("font_size", 28)
+	var preview := TextureRect.new()
+	preview.custom_minimum_size = Vector2(68, 68)
+	preview.texture = icon
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	set_drag_preview(preview)
 	return {"kind": "die", "die_id": die_id}

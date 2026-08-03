@@ -2,6 +2,111 @@
   "assets": [
     {
       "commercial_review": "procedural_no_external_samples",
+      "context": "encounter_faceless_hub",
+      "file": "faceless_protocol.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 19200.0,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 614400,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          37,
+          37,
+          32,
+          34,
+          30,
+          33,
+          35,
+          32
+        ],
+        "chords": [
+          [
+            49,
+            56,
+            60,
+            65
+          ],
+          [
+            49,
+            55,
+            60,
+            64
+          ],
+          [
+            44,
+            51,
+            56,
+            61
+          ],
+          [
+            46,
+            53,
+            58,
+            63
+          ],
+          [
+            42,
+            49,
+            54,
+            59
+          ],
+          [
+            45,
+            52,
+            57,
+            62
+          ],
+          [
+            47,
+            54,
+            59,
+            64
+          ],
+          [
+            44,
+            51,
+            56,
+            61
+          ]
+        ],
+        "lead": [
+          73,
+          76,
+          80,
+          75,
+          78,
+          71,
+          74,
+          69,
+          72,
+          77,
+          70,
+          73,
+          68,
+          75,
+          71,
+          66
+        ],
+        "profile": "faceless_protocol",
+        "tempo_bpm": 100
+      },
+      "parameters_sha256": "b689873fb6141d3134cc13834fa73d1a9b3a37f11bba33d87661ae34bd448736",
+      "seed": 31077071,
+      "sha256": "8488ad9769b47b762f6ce212788c57e0cf8f85e79b0bc94e951df43d9ae0ab8c",
+      "third_party_samples": false,
+      "title": "Faceless Protocol"
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
       "context": "menu",
       "file": "glass_antechamber.wav",
       "format": {
@@ -104,6 +209,111 @@
       "sha256": "93e3bc3c34ef96065f29eb858a0bd59effa640127fcab1375e8dcd9d057400e1",
       "third_party_samples": false,
       "title": "Glass Antechamber"
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "context": "encounter_gold_corridor",
+      "file": "gold_contract.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 18461.531,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 590769,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          38,
+          38,
+          33,
+          33,
+          35,
+          35,
+          31,
+          31
+        ],
+        "chords": [
+          [
+            50,
+            57,
+            62,
+            66
+          ],
+          [
+            50,
+            57,
+            61,
+            66
+          ],
+          [
+            45,
+            52,
+            57,
+            62
+          ],
+          [
+            45,
+            52,
+            56,
+            61
+          ],
+          [
+            47,
+            54,
+            59,
+            64
+          ],
+          [
+            47,
+            54,
+            58,
+            63
+          ],
+          [
+            43,
+            50,
+            55,
+            59
+          ],
+          [
+            43,
+            50,
+            57,
+            62
+          ]
+        ],
+        "lead": [
+          74,
+          78,
+          81,
+          78,
+          74,
+          73,
+          69,
+          73,
+          76,
+          80,
+          83,
+          80,
+          76,
+          74,
+          71,
+          74
+        ],
+        "profile": "gold_contract",
+        "tempo_bpm": 104
+      },
+      "parameters_sha256": "04f4592be69a7385345d3d9ffc4fe55b71fc9f9f7197fe57e09a44ed76fa4827",
+      "seed": 31075053,
+      "sha256": "700ae9dae3b95d63366b48f8ce3cbd78545384e10b88e0a214f2a2d69e9d99d0",
+      "third_party_samples": false,
+      "title": "Gold Contract"
     },
     {
       "commercial_review": "procedural_no_external_samples",
@@ -314,14 +524,119 @@
       "sha256": "fcc6b3684683dcdd16af97be81441cd03321b0b934d5e34cd39d8ecc39b09183",
       "third_party_samples": false,
       "title": "Masked Table"
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "context": "encounter_mirror_hall",
+      "file": "mirror_refraction.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 2,
+        "duration_ms": 21818.188,
+        "sample_rate": 32000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "loop": {
+        "begin_frame": 0,
+        "end_frame": 698182,
+        "mode": "forward"
+      },
+      "parameters": {
+        "bars": 8,
+        "bass": [
+          36,
+          35,
+          33,
+          31,
+          31,
+          33,
+          35,
+          36
+        ],
+        "chords": [
+          [
+            48,
+            55,
+            60,
+            64
+          ],
+          [
+            47,
+            54,
+            59,
+            63
+          ],
+          [
+            45,
+            52,
+            57,
+            62
+          ],
+          [
+            43,
+            50,
+            55,
+            60
+          ],
+          [
+            43,
+            50,
+            55,
+            60
+          ],
+          [
+            45,
+            52,
+            57,
+            62
+          ],
+          [
+            47,
+            54,
+            59,
+            63
+          ],
+          [
+            48,
+            55,
+            60,
+            64
+          ]
+        ],
+        "lead": [
+          72,
+          75,
+          79,
+          76,
+          74,
+          71,
+          69,
+          67,
+          67,
+          69,
+          71,
+          74,
+          76,
+          79,
+          75,
+          72
+        ],
+        "profile": "mirror_refraction",
+        "tempo_bpm": 88
+      },
+      "parameters_sha256": "e67ffb1d0a21661ca1640e0d610a08fc3ff9f50e5b5b0f617f77ed7a09c4d0c4",
+      "seed": 31076062,
+      "sha256": "12efd64b506a4c7412286619e6bf83698cafd7cdd5175a3780f90866e5a0ba07",
+      "third_party_samples": false,
+      "title": "Mirror Refraction"
     }
   ],
-  "generated_on": "2026-07-31",
+  "generated_on": "2026-08-03",
   "generator": {
     "master_seed": 31072026,
     "path": "tools/generate_music.py",
     "runtime_dependencies": [],
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "schema_version": 1
 }

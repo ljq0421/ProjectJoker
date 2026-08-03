@@ -1,6 +1,8 @@
 class_name CardToken
 extends Button
 
+const Formatter = preload("res://scripts/ui/card_display_formatter.gd")
+
 signal card_activated(card_index: int)
 
 var card_index: int
@@ -17,13 +19,9 @@ func bind_card(
 	disabled_reason: String = ""
 ) -> void:
 	card_index = index
-	text = "%s · %s\n%s · %s\n%s" % [
-		definition.suit_copy(),
-		definition.rank_label,
-		definition.display_name,
-		target_copy_for(definition),
-		definition.rule_text,
-	]
+	var formatter := Formatter.new()
+	text = formatter.compact_copy(definition)
+	icon = load(formatter.effect_icon_path(definition))
 	button_pressed = selected
 	disabled = used or not disabled_reason.is_empty()
 	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
@@ -38,24 +36,7 @@ func bind_card(
 		tooltip_text += "；当前不可用：%s" % disabled_reason
 
 func target_copy_for(definition: CardDefinition) -> String:
-	var copy := _target_copy(definition.target_type)
-	if (
-		definition.target_type == CardDefinition.TargetType.GAP
-		and not definition.mirror_effects.is_empty()
-	):
-		copy += " · 可镜像"
-	return copy
+	return Formatter.new().target_copy_for(definition)
 
 func _target_copy(target_type: CardDefinition.TargetType) -> String:
-	match target_type:
-		CardDefinition.TargetType.DIE:
-			return "骰子"
-		CardDefinition.TargetType.TABLE:
-			return "规则台"
-		CardDefinition.TargetType.GAP:
-			return "桌间"
-		CardDefinition.TargetType.GLOBAL:
-			return "全局"
-		CardDefinition.TargetType.DICE_PAIR:
-			return "双骰"
-	return "未知"
+	return Formatter.new().target_copy(target_type)

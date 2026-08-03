@@ -3,9 +3,14 @@
 [ext_resource type="Script" path="res://scripts/ui/card_token.gd" id="1"]
 
 [node name="CardToken" type="Button"]
-custom_minimum_size = Vector2(164, 112)
+custom_minimum_size = Vector2(190, 126)
 toggle_mode = true
 focus_mode = 1
 text = "手法牌"
 autowrap_mode = 2
+icon_max_width = 32
+expand_icon = true
+theme_override_constants/icon_max_width = 32
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 15
 script = ExtResource("1")

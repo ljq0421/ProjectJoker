@@ -12,7 +12,20 @@ func run() -> void:
 	for area_id in [&"gold_corridor", &"mirror_hall", &"faceless_hub"]:
 		var presentation: Dictionary = catalog.find(area_id)
 		assert_true(not presentation.is_empty(), "%s should have presentation data" % area_id)
-		for key in ["primary", "secondary", "background", "pattern", "sigil", "eyebrow"]:
+		for key in [
+			"primary",
+			"secondary",
+			"background",
+			"pattern",
+			"sigil",
+			"eyebrow",
+			"route_code",
+			"route_instruction",
+			"ordinary_eyebrow",
+			"ordinary_title",
+			"ordinary_rule",
+			"directive_title",
+		]:
 			assert_true(presentation.has(key), "%s should define %s" % [area_id, key])
 		signatures[presentation.get("pattern")] = true
 		signatures[presentation.get("sigil")] = true
@@ -22,3 +35,22 @@ func run() -> void:
 		"all three patterns and dealer sigils should be distinct"
 	)
 	assert_equal(catalog.find(&"unknown"), {}, "unknown areas should fail closed")
+	assert_equal(
+		catalog.find(&"gold_corridor").route_code,
+		"区域 01",
+		"gold route code should identify the first area"
+	)
+	assert_true(
+		"单轮" in catalog.find(&"gold_corridor").route_instruction,
+		"gold route copy should disclose its single-round contract"
+	)
+	assert_equal(
+		catalog.find(&"mirror_hall").ordinary_title,
+		"镜面监理",
+		"mirror ordinary rooms should have a non-dealer identity"
+	)
+	assert_equal(
+		catalog.find(&"faceless_hub").ordinary_title,
+		"无名协议",
+		"faceless ordinary rooms should have a non-dealer identity"
+	)

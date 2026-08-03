@@ -3,6 +3,8 @@ extends "res://tests/test_case.gd"
 const ROUTE_NODES := [
 	"RouteDimmer",
 	"RouteLedger",
+	"RouteTitle",
+	"LedgerMark",
 	"LeftRouteName",
 	"LeftRouteDescription",
 	"LeftRouteGoal",
@@ -92,6 +94,62 @@ func _test_route_panel_contract() -> void:
 	assert_false(panel.get_node("%RightRouteName").text.is_empty(), "right route should bind")
 	assert_false(panel.get_node("%LeftLaneOne").text.is_empty(), "left lanes should bind")
 	assert_false(panel.get_node("%RightRouteSynergy").text.is_empty(), "synergy should bind")
+	assert_equal(
+		panel.get_node("%RouteTitle").text,
+		"金线回廊 · 路线账簿",
+		"gold route title should use the bound area name"
+	)
+	assert_equal(
+		panel.get_node("%LedgerMark").text,
+		"区域 01 / 选路 1/2",
+		"gold first route should show its actual area and route index"
+	)
+	assert_true(
+		"单轮" in panel.get_node("%RouteInstruction").text,
+		"gold route instruction should disclose the single-round contract"
+	)
+	var mirror_area := AreaCatalog.new().mirror_hall()
+	var no_challenges: Array[StringName] = []
+	assert_true(
+		panel.bind_routes(
+			mirror_area.first_route_ids,
+			mirror_area,
+			mirror_area.starting_deck_ids,
+			CardCatalog.new(),
+			no_challenges,
+			1
+		),
+		"mirror routes should bind"
+	)
+	assert_equal(
+		panel.get_node("%RouteTitle").text,
+		"反照牌厅 · 路线账簿",
+		"mirror route title should use the bound area name"
+	)
+	assert_equal(
+		panel.get_node("%LedgerMark").text,
+		"区域 02 / 选路 2/2",
+		"mirror second route should show its actual area and route index"
+	)
+	assert_true(
+		"三轮反照" in panel.get_node("%RouteInstruction").text,
+		"mirror route instruction should disclose the reflection structure"
+	)
+	var faceless_area := AreaCatalog.new().faceless_hub()
+	assert_true(
+		panel.bind_routes(
+			faceless_area.first_route_ids,
+			faceless_area,
+			faceless_area.starting_deck_ids,
+			CardCatalog.new()
+		),
+		"faceless routes should bind"
+	)
+	assert_equal(
+		panel.get_node("%RouteTitle").text,
+		"无面中枢 · 路线账簿",
+		"faceless route title should use the bound area name"
+	)
 
 	var selected := {"id": &""}
 	panel.route_selected.connect(func(room_id: StringName) -> void: selected.id = room_id)

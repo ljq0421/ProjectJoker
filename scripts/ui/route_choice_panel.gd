@@ -3,6 +3,12 @@ extends Control
 
 signal route_selected(room_id: StringName)
 
+const AreaPresentation = preload(
+	"res://scripts/ui/area_presentation_catalog.gd"
+)
+
+var _open_tween: Tween
+
 func _ready() -> void:
 	%LeftRouteButton.pressed.connect(_on_route_pressed.bind(%LeftRouteButton))
 	%RightRouteButton.pressed.connect(_on_route_pressed.bind(%RightRouteButton))
@@ -13,12 +19,15 @@ func bind_routes(
 	room_catalog,
 	deck_ids: Array[StringName],
 	card_catalog: CardCatalog,
-	challenge_ids: Array[StringName] = []
+	challenge_ids: Array[StringName] = [],
+	route_index: int = 0
 ) -> bool:
 	if room_catalog == null or card_catalog == null:
 		return _fail_closed("路线资料目录不可用")
 	if p_route_ids.size() != 2 or p_route_ids[0] == p_route_ids[1]:
 		return _fail_closed("路线选择必须包含两个不同房间")
+	if route_index not in [0, 1]:
+		return _fail_closed("选路段次必须为第一组或第二组")
 	for card_id in deck_ids:
 		if card_catalog.find_card(card_id) == null:
 			return _fail_closed("当前牌组包含未知手法牌：%s" % card_id)
@@ -27,6 +36,13 @@ func bind_routes(
 	if left == null or right == null:
 		return _fail_closed("路线选择包含未知房间")
 
+	%RouteTitle.text = "%s · 路线账簿" % room_catalog.display_name
+	var presentation := AreaPresentation.new().find(room_catalog.id)
+	%LedgerMark.text = "%s / 选路 %d/2" % [
+		presentation.get("route_code", "未知区域"),
+		route_index + 1,
+	]
+	%RouteInstruction.text = presentation["route_instruction"]
 	_bind_route("Left", left, deck_ids, card_catalog, challenge_ids)
 	_bind_route("Right", right, deck_ids, card_catalog, challenge_ids)
 	%LeftRouteButton.set_meta("room_id", left.id)
@@ -34,7 +50,32 @@ func bind_routes(
 	%RouteErrorLabel.text = ""
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	call_deferred("_play_open_motion")
 	return true
+
+func _play_open_motion() -> void:
+	var ledger := %RouteLedger as Control
+	if not is_instance_valid(ledger):
+		return
+	if _open_tween != null and _open_tween.is_valid():
+		_open_tween.kill()
+	ledger.pivot_offset = ledger.size * 0.5
+	if not _motion_allowed():
+		ledger.modulate = Color.WHITE
+		ledger.scale = Vector2.ONE
+		return
+	ledger.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	ledger.scale = Vector2(0.985, 0.985)
+	_open_tween = create_tween().set_parallel(true)
+	_open_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_open_tween.tween_property(ledger, "modulate", Color.WHITE, 0.2)
+	_open_tween.tween_property(ledger, "scale", Vector2.ONE, 0.24)
+
+func _motion_allowed() -> bool:
+	var settings := get_tree().root.get_node_or_null("SettingsService")
+	if settings == null or not settings.has_method("accessibility_value"):
+		return true
+	return not bool(settings.call("accessibility_value", &"reduce_flashes"))
 
 func show_error(message: String) -> void:
 	%RouteErrorLabel.text = message

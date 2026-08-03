@@ -6,6 +6,7 @@ signal intel_view_requested(snapshot: ShopIntelSnapshot)
 signal state_changed
 
 const CARD_SCENE = preload("res://scenes/components/shop_card_token.tscn")
+const CardFormatter = preload("res://scripts/ui/card_display_formatter.gd")
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
@@ -16,6 +17,8 @@ const AreaPresentation = preload(
 @onready var offer_column: VBoxContainer = %OfferColumn
 @onready var ticket_label: Label = %TicketLabel
 @onready var selection_label: Label = %ShopSelectionLabel
+@onready var card_detail_panel: PanelContainer = %ShopCardDetailPanel
+@onready var card_detail_text: Label = %ShopCardDetailText
 @onready var service_status_label: Label = %ShopServiceStatusLabel
 @onready var error_label: Label = %ShopErrorLabel
 @onready var confirm_button: Button = %ConfirmReplacementButton
@@ -91,6 +94,7 @@ func _refresh() -> void:
 		_card_name(selected_offer_id),
 		_card_name(selected_deck_id),
 	]
+	_refresh_card_detail()
 	confirm_button.disabled = selected_offer_id == &"" or selected_deck_id == &""
 	var show_services := shop_session.services_enabled
 	service_status_label.visible = show_services
@@ -114,6 +118,27 @@ func _refresh() -> void:
 			if shop_session.intel_unlocked
 			else "购买%s（%d 情报券）" % [intel_name, shop_session.intel_price()]
 		)
+
+func _refresh_card_detail() -> void:
+	var has_offer := selected_offer_id != &""
+	var has_deck := selected_deck_id != &""
+	card_detail_panel.visible = has_offer or has_deck
+	if not card_detail_panel.visible:
+		card_detail_text.text = ""
+		return
+	var formatter := CardFormatter.new()
+	var lines: PackedStringArray = []
+	if has_offer:
+		lines.append(formatter.comparison_copy(
+			"候选",
+			catalog.find_card(selected_offer_id)
+		))
+	if has_deck:
+		lines.append(formatter.comparison_copy(
+			"替换",
+			catalog.find_card(selected_deck_id)
+		))
+	card_detail_text.text = "\n".join(lines)
 
 func _add_card(
 	parent: Control,

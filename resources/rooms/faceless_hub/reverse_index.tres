@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/resolution/encounter_definition.gd" id="2_encounter"]
 [ext_resource type="Script" path="res://scripts/resolution/encounter_rule_profile.gd" id="3_profile"]
 [ext_resource type="Script" path="res://scripts/rules/rule_definition.gd" id="4_rule"]
+[ext_resource type="Resource" path="res://resources/restrictions/faceless_hub/three_seats_present.tres" id="5_restriction"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_reverse_table.tres" id="6_reverse"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_all_distinct.tres" id="7_distinct"]
 [ext_resource type="Resource" path="res://resources/rules/templates/rule_slot_targets.tres" id="8_targets"]
@@ -49,6 +50,7 @@ id = &"faceless_room_reverse_index"
 display_name = "反向索引"
 description = "从右向左结算，重新判断桌间传递、重复与高系数规则台的优先级。"
 encounter = SubResource("Encounter")
+restriction = ExtResource("5_restriction")
 build_identity_id = &"dice_control"
 target_total = 145
 success_intel_reward = 8
