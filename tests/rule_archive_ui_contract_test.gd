@@ -2,36 +2,36 @@ extends "res://tests/test_case.gd"
 
 func run() -> void:
 	var packed := load("res://scenes/run/rule_archive_screen.tscn")
-	assert_true(packed != null, "rule archive scene should load")
+	assert_true(packed != null, "rule handbook scene should load")
 	if packed == null:
 		return
 	var screen: RuleArchiveScreen = packed.instantiate()
 	assert_true(
-		screen.has_method("open_archive"),
-		"rule archive screen should open a selected exercise"
+		screen.has_method("start_practice"),
+		"rule handbook should start a selected exercise"
 	)
 	assert_true(
 		screen.has_method("retry_current"),
-		"rule archive screen should expose unlimited retry"
+		"rule handbook practice should expose unlimited retry"
 	)
 	assert_true(
-		screen.has_method("show_archive"),
-		"rule archive screen should return to its selection page"
+		screen.has_method("show_handbook"),
+		"rule exercise should return to the shared handbook"
 	)
 	for node_name in [
-		"SelectionPanel",
+		"HandbookPanel",
 		"EncounterScreen",
 		"NavigationBar",
 		"HomeButton",
-		"BackToArchiveButton",
+		"BackToHandbookButton",
 		"CompletionPanel",
-		"RetryArchiveButton",
-		"CompletionArchiveButton",
+		"RetryPracticeButton",
+		"CompletionHandbookButton",
 		"CompletionHomeButton",
 	]:
 		assert_true(
 			screen.get_node_or_null("%" + node_name) != null,
-			"rule archive should expose %s" % node_name
+			"rule handbook should expose %s" % node_name
 		)
 	for node_name in [
 		"Archive01Button",
@@ -42,7 +42,7 @@ func run() -> void:
 		"Archive06Button",
 	]:
 		assert_true(
-			screen.get_node_or_null("%" + node_name) != null,
-			"all six archive exercises should be visible"
+			screen.get_node("HandbookPanel").get_node_or_null("%" + node_name) != null,
+			"the shared handbook should expose all six rule categories"
 		)
 	screen.free()

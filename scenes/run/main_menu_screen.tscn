@@ -16,6 +16,7 @@ script = ExtResource("1_script")
 
 [node name="SettingsLayer" parent="." instance=ExtResource("3_settings")]
 unique_name_in_owner = true
+show_rule_entry = false
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -314,11 +315,11 @@ layout_mode = 2
 text = "重播新手引导"
 tooltip_text = "重置基础教学进度并从第一步重新开始"
 
-[node name="RuleArchiveButton" type="Button" parent="SafeArea/Content/PracticeRow"]
+[node name="RuleHandbookButton" type="Button" parent="SafeArea/Content/PracticeRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "规则档案室"
-tooltip_text = "进入六组固定单轮练习，查看全部十八种规则台"
+text = "规则手册"
+tooltip_text = "查看全部十八种规则台，并可选择固定单轮演练"
 
 [node name="PracticeButton" type="Button" parent="SafeArea/Content/PracticeRow"]
 unique_name_in_owner = true

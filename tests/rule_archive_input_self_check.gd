@@ -10,15 +10,17 @@ func _run() -> void:
 	root.size = Vector2i(1920, 1080)
 	change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
 	await _settle()
-	await _click(current_scene.get_node("%RuleArchiveButton"))
+	await _click(current_scene.get_node("%RuleHandbookButton"))
 	await _settle()
 	var archive := current_scene as RuleArchiveScreen
-	_assert_true(archive != null, "main-menu pointer click should open rule archive")
+	_assert_true(archive != null, "main-menu pointer click should open rule handbook")
 	if archive == null:
 		_finish()
 		return
+	var handbook := archive.handbook_panel
 
-	await _click(archive.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%PracticeArchiveButton"))
 	await _settle()
 	_assert_true(
 		archive.current_definition.id == &"archive_06",
@@ -30,31 +32,33 @@ func _run() -> void:
 		"commit should open the archive completion page"
 	)
 
-	await _click(archive.get_node("%RetryArchiveButton"))
+	await _click(archive.get_node("%RetryPracticeButton"))
 	await _settle()
 	_assert_true(
 		not archive.get_node("%CompletionPanel").visible
 		and not archive.encounter_screen.session.controller.committed,
 		"retry should rebuild the same archive without persistence"
 	)
-	await _click(archive.get_node("%BackToArchiveButton"))
+	await _click(archive.get_node("%BackToHandbookButton"))
 	await _settle()
 	_assert_true(
-		archive.get_node("%SelectionPanel").visible,
-		"encounter navigation should return to archive selection"
+		archive.get_node("%HandbookPanel").visible,
+		"encounter navigation should return to the shared handbook"
 	)
 
-	await _click(archive.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%PracticeArchiveButton"))
 	await _settle()
 	await _complete_distortion_archive(archive)
-	await _click(archive.get_node("%CompletionArchiveButton"))
+	await _click(archive.get_node("%CompletionHandbookButton"))
 	await _settle()
 	_assert_true(
-		archive.get_node("%SelectionPanel").visible,
-		"completion page should return to archive selection"
+		archive.get_node("%HandbookPanel").visible,
+		"completion page should return to the shared handbook"
 	)
 
-	await _click(archive.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%Archive06Button"))
+	await _click(handbook.get_node("%PracticeArchiveButton"))
 	await _settle()
 	await _complete_distortion_archive(archive)
 	await _click(archive.get_node("%CompletionHomeButton"))
@@ -64,20 +68,21 @@ func _run() -> void:
 		"completion page should return to the main menu"
 	)
 
-	await _click(current_scene.get_node("%RuleArchiveButton"))
+	await _click(current_scene.get_node("%RuleHandbookButton"))
 	await _settle()
 	archive = current_scene as RuleArchiveScreen
-	await _click(archive.get_node("%SelectionHomeButton"))
+	await _click(archive.handbook_panel.get_node("%CloseRuleReferenceButton"))
 	await _settle()
 	_assert_true(
 		current_scene is MainMenuScreen,
-		"archive selection should return to the main menu"
+		"rule handbook should return to the main menu"
 	)
 
-	await _click(current_scene.get_node("%RuleArchiveButton"))
+	await _click(current_scene.get_node("%RuleHandbookButton"))
 	await _settle()
 	archive = current_scene as RuleArchiveScreen
-	await _click(archive.get_node("%Archive01Button"))
+	await _click(archive.handbook_panel.get_node("%Archive01Button"))
+	await _click(archive.handbook_panel.get_node("%PracticeArchiveButton"))
 	await _settle()
 	await _click(archive.get_node("%HomeButton"))
 	await _settle()

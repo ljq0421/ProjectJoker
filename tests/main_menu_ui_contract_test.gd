@@ -16,6 +16,10 @@ func run() -> void:
 	if packed == null:
 		return
 	var menu: Control = packed.instantiate()
+	assert_false(
+		menu.get_node("%SettingsLayer").show_rule_entry,
+		"main menu should expose one rule handbook entry, not a duplicate utility entry"
+	)
 	var title := menu.get_node_or_null("%GameTitleLabel") as Label
 	assert_true(title != null, "main menu should expose the public game title")
 	if title != null:
@@ -34,7 +38,7 @@ func run() -> void:
 		"GoldCorridorButton",
 		"MirrorHallButton",
 		"FacelessHubButton",
-		"RuleArchiveButton",
+		"RuleHandbookButton",
 	]:
 		var button := menu.get_node_or_null("%" + node_name) as Button
 		assert_true(button != null, "main menu should expose %s" % node_name)
@@ -44,6 +48,11 @@ func run() -> void:
 		menu.get_node("%StartExpeditionButton").text,
 		"开始 Demo 远征",
 		"the primary action should name the complete demo path"
+	)
+	assert_equal(
+		menu.get_node("%RuleHandbookButton").text,
+		"规则手册",
+		"the rule entry should use the single player-facing handbook term"
 	)
 	for node_name in ["GoldCorridorButton", "MirrorHallButton", "FacelessHubButton"]:
 		assert_true(

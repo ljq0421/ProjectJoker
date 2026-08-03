@@ -2,15 +2,16 @@ class_name RuleReferenceOverlay
 extends Control
 
 signal close_requested
+signal practice_requested(archive_id: StringName)
 
 const RuleCopy = preload("res://scripts/ui/rule_copy_formatter.gd")
 const ARCHIVE_SHORT_LABELS := [
-	"01 点数",
-	"02 集合",
-	"03 奇偶",
-	"04 序列",
-	"05 槽位",
-	"06 扭曲",
+	"点数",
+	"集合",
+	"奇偶",
+	"序列",
+	"槽位",
+	"扭曲",
 ]
 
 @onready var current_rules_button: Button = %CurrentRulesButton
@@ -22,18 +23,22 @@ const ARCHIVE_SHORT_LABELS := [
 @onready var detail_description: Label = %RuleDetailDescription
 @onready var detail_metrics: Label = %RuleDetailMetrics
 @onready var detail_timing: Label = %RuleDetailTiming
+@onready var handbook_hint: Label = %HandbookHint
+@onready var practice_button: Button = %PracticeArchiveButton
 
 var catalog := RuleArchiveCatalog.new()
 var _entries: Array[RuleArchiveDefinition] = []
 var _current_rules: Array[RuleDefinition] = []
 var _active_rules: Array[RuleDefinition] = []
 var _active_context: StringName = &""
+var _practice_enabled := false
 
 func _ready() -> void:
 	_entries = catalog.all_entries()
 	%CloseRuleReferenceButton.pressed.connect(
 		func() -> void: close_requested.emit()
 	)
+	practice_button.pressed.connect(_request_practice)
 	current_rules_button.pressed.connect(show_current_rules)
 	var archive_buttons := _archive_buttons()
 	for index in range(mini(archive_buttons.size(), _entries.size())):
@@ -46,8 +51,15 @@ func _ready() -> void:
 		rule_buttons[index].pressed.connect(_show_rule.bind(index))
 	visible = false
 
-func open_reference(current_rules: Array = []) -> void:
+func open_reference(
+	current_rules: Array = [],
+	practice_enabled := false,
+	preferred_archive: StringName = &"",
+	close_copy := "关闭"
+) -> void:
 	_current_rules.clear()
+	_practice_enabled = practice_enabled
+	%CloseRuleReferenceButton.text = close_copy
 	for rule in current_rules:
 		if rule is RuleDefinition:
 			_current_rules.append(rule)
@@ -55,6 +67,8 @@ func open_reference(current_rules: Array = []) -> void:
 	visible = true
 	if not _current_rules.is_empty():
 		show_current_rules()
+	elif preferred_archive != &"" and catalog.find_entry(preferred_archive) != null:
+		show_archive(preferred_archive)
 	elif not _entries.is_empty():
 		show_archive(_entries[0].id)
 	%CloseRuleReferenceButton.grab_focus()
@@ -70,6 +84,7 @@ func show_current_rules() -> void:
 	summary_label.text = "这是当前桌面的只读快照。关闭档案后，骰子、手法牌与结算进度保持不变。"
 	_bind_rules(_current_rules)
 	_update_category_selection()
+	_update_practice_action()
 
 func show_archive(archive_id: StringName) -> void:
 	var entry := catalog.find_entry(archive_id)
@@ -80,6 +95,7 @@ func show_archive(archive_id: StringName) -> void:
 	summary_label.text = "%s\n%s" % [entry.summary, entry.explanation]
 	_bind_rules(entry.encounter.rules)
 	_update_category_selection()
+	_update_practice_action()
 
 func _bind_rules(rules: Array[RuleDefinition]) -> void:
 	_active_rules.assign(rules)
@@ -118,12 +134,13 @@ func _show_rule(index: int) -> void:
 	detail_timing.text = RuleCopy.timing_copy(template)
 
 func _clear_detail() -> void:
-	detail_eyebrow.text = "RULE ARCHIVE"
+	detail_eyebrow.text = "RULE HANDBOOK"
 	detail_title.text = "没有可显示的规则"
 	detail_formula.text = ""
 	detail_description.text = "当前页面没有绑定牌局规则。"
 	detail_metrics.text = ""
 	detail_timing.text = ""
+	_update_practice_action()
 
 func _update_category_selection() -> void:
 	current_rules_button.button_pressed = _active_context == &"current"
@@ -144,3 +161,30 @@ func _archive_buttons() -> Array[Button]:
 
 func _rule_buttons() -> Array[Button]:
 	return [%Rule01Button, %Rule02Button, %Rule03Button]
+
+
+func _update_practice_action() -> void:
+	var can_practice := (
+		_practice_enabled
+		and _active_context != &""
+		and _active_context != &"current"
+	)
+	practice_button.visible = can_practice
+	practice_button.disabled = not can_practice
+	if can_practice:
+		var entry := catalog.find_entry(_active_context)
+		practice_button.text = "开始“%s”演练" % entry.display_name
+		handbook_hint.text = (
+			"先查看规则，再进入本组固定单轮演练。"
+			+ "演练不发放奖励，也不保存进度。"
+		)
+	elif _active_context == &"current":
+		handbook_hint.text = "当前牌局已暂停；关闭手册后，桌面状态保持不变。"
+	else:
+		handbook_hint.text = "选择左侧分类和中间规则，查看完整条件与结算时机。"
+
+
+func _request_practice() -> void:
+	if practice_button.disabled or _active_context == &"current":
+		return
+	practice_requested.emit(_active_context)

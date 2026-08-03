@@ -50,6 +50,7 @@ const AreaPresentation = preload(
 @onready var area_atmosphere: Control = %AreaAtmosphere
 @onready var area_identity_bar: ColorRect = %AreaIdentityBar
 @onready var dealer_sigil: Control = %DealerSigil
+@onready var interaction_motion_layer = %InteractionMotionLayer
 
 var session: SingleEncounterSession
 var dealer_definition: DealerDefinition
@@ -198,7 +199,7 @@ func bind_verification(engraving: EngravingDefinition) -> void:
 
 func bind_archive(definition: RuleArchiveDefinition) -> void:
 	dealer_definition = null
-	%DealerEyebrow.text = "规则档案 / RULE ARCHIVE"
+	%DealerEyebrow.text = "规则演练 / RULE PRACTICE"
 	%DealerName.text = definition.display_name
 	%DealerRule.text = definition.explanation
 	%DealerHint.text = definition.summary
@@ -217,6 +218,9 @@ func refresh_from_session() -> void:
 	var preview := session.preview()
 	var selected_target_type := _selected_card_target_type()
 	var engraving_catalog := session.controller.resolution_context.engraving_catalog
+	var accessibility := _accessibility_settings()
+	var motion_reduced := bool(accessibility.get("disable_distortion", false))
+	interaction_motion_layer.configure(accessibility)
 	for lane_index in range(lanes.size()):
 		var rule := session.controller.encounter.rules[lane_index]
 		var assigned: Array = []
@@ -258,14 +262,21 @@ func refresh_from_session() -> void:
 			session.is_legal_die_card_target
 		)
 
+	var tray_tokens: Dictionary = {}
 	for child in dice_tray.get_children():
-		child.queue_free()
+		if child is DieToken and not child.is_queued_for_deletion():
+			tray_tokens[child.die_id] = child
 	var unassigned_dice_count := 0
+	var retained_tray_ids: Dictionary = {}
 	for die in state.dice:
 		if not _is_assigned(die.id):
 			unassigned_dice_count += 1
-			var token: DieToken = DIE_SCENE.instantiate()
-			dice_tray.add_child(token)
+			retained_tray_ids[die.id] = true
+			var token: DieToken = tray_tokens.get(die.id) as DieToken
+			if token == null:
+				token = DIE_SCENE.instantiate()
+				dice_tray.add_child(token)
+				token.die_activated.connect(_on_die_activated)
 			token.bind_die_with_engravings(
 				die,
 				session.selection.die_id == die.id,
@@ -281,15 +292,27 @@ func refresh_from_session() -> void:
 				die_target_active,
 				session.is_legal_die_card_target(die.id)
 			)
-			token.die_activated.connect(_on_die_activated)
+			token.set_motion_reduced(motion_reduced)
+	for die_id in tray_tokens:
+		if not retained_tray_ids.has(die_id):
+			var stale_token: DieToken = tray_tokens[die_id]
+			dice_tray.remove_child(stale_token)
+			stale_token.queue_free()
 	dice_tray_empty_label.visible = unassigned_dice_count == 0
 
+	var hand_tokens: Dictionary = {}
 	for child in hand_container.get_children():
-		child.queue_free()
+		if child is CardToken and not child.is_queued_for_deletion():
+			hand_tokens[child.card_index] = child
 	var card_start_block_reason := session.card_start_block_reason()
 	for index in range(session.hand.size()):
-		var card_token: CardToken = CARD_SCENE.instantiate()
-		hand_container.add_child(card_token)
+		var card_token: CardToken = hand_tokens.get(index) as CardToken
+		if card_token == null:
+			card_token = CARD_SCENE.instantiate()
+			hand_container.add_child(card_token)
+			card_token.card_activated.connect(_on_card_activated)
+		else:
+			hand_container.move_child(card_token, index)
 		var card_used := session.is_card_used(index)
 		card_token.bind_card(
 			index,
@@ -303,7 +326,13 @@ func refresh_from_session() -> void:
 			),
 			"" if card_used else card_start_block_reason
 		)
-		card_token.card_activated.connect(_on_card_activated)
+		card_token.set_motion_reduced(motion_reduced)
+	for old_index in hand_tokens:
+		if int(old_index) >= session.hand.size():
+			var stale_card: CardToken = hand_tokens[old_index]
+			hand_container.remove_child(stale_card)
+			stale_card.queue_free()
+	_configure_assigned_die_motion(motion_reduced)
 	_refresh_card_detail()
 
 	var gap_is_target := selected_target_type == CardDefinition.TargetType.GAP
@@ -551,9 +580,11 @@ func _is_assigned(die_id: StringName) -> bool:
 func _on_die_activated(die_id: StringName) -> void:
 	var action := &"select_die"
 	var payload := {"die_id": die_id}
+	var card_motion: Dictionary = {}
 	if session.selection.kind == InteractionState.Kind.CARD:
 		action = &"card_die"
 		payload["card_index"] = session.selection.card_index
+		card_motion = _capture_card_motion(session.selection.card_index)
 	if not _tutorial_allows(action, payload):
 		return
 	var accepted := session.activate_die(die_id)
@@ -563,9 +594,14 @@ func _on_die_activated(die_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted and action == &"card_die":
+		_play_card_transition(card_motion, _find_die_token(die_id))
+	elif not accepted:
+		_reject_feedback(_find_die_token(die_id))
 
 func _on_card_activated(card_index: int) -> void:
 	var card := session.hand[card_index]
+	var card_motion := _capture_card_motion(card_index)
 	if (
 		session.selection.kind == InteractionState.Kind.CARD
 		and session.selection.card_index == card_index
@@ -595,6 +631,10 @@ func _on_card_activated(card_index: int) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted and action == &"card_global":
+		_play_card_transition(card_motion, %MiddleLane)
+	elif not accepted:
+		_reject_feedback(_find_hand_card_token(card_index))
 	if report_selection:
 		var token := _find_hand_card_token(card_index)
 		if token != null:
@@ -621,14 +661,123 @@ func _find_hand_card_token(card_index: int) -> CardToken:
 			return child
 	return null
 
+func _find_die_token(die_id: StringName) -> DieToken:
+	return _find_die_token_under(self, die_id)
+
+func _find_die_token_under(root: Node, die_id: StringName) -> DieToken:
+	for child in root.get_children():
+		if (
+			child is DieToken
+			and not child.is_queued_for_deletion()
+			and child.die_id == die_id
+		):
+			return child
+		var nested := _find_die_token_under(child, die_id)
+		if nested != null:
+			return nested
+	return null
+
+func _configure_assigned_die_motion(reduced: bool) -> void:
+	for lane in lanes:
+		_configure_die_motion_under(lane, reduced)
+
+func _configure_die_motion_under(root: Node, reduced: bool) -> void:
+	for child in root.get_children():
+		if child is DieToken:
+			child.set_motion_reduced(reduced)
+		else:
+			_configure_die_motion_under(child, reduced)
+
+func _capture_die_motion(die_id: StringName) -> Dictionary:
+	var token := _find_die_token(die_id)
+	if token == null:
+		return {}
+	var face_icon := token.get_node_or_null("%FaceIcon") as TextureRect
+	return {
+		"die_id": die_id,
+		"rect": token.get_global_rect(),
+		"texture": face_icon.texture if face_icon != null else null,
+	}
+
+func _capture_card_motion(card_index: int) -> Dictionary:
+	var token := _find_hand_card_token(card_index)
+	if token == null or card_index < 0 or card_index >= session.hand.size():
+		return {}
+	return {
+		"card_index": card_index,
+		"definition": session.hand[card_index],
+		"rect": token.get_global_rect(),
+	}
+
+func _play_die_transition(
+	capture: Dictionary,
+	die_id: StringName,
+	returning := false
+) -> void:
+	if capture.is_empty():
+		return
+	call_deferred("_complete_die_transition", capture, die_id, returning)
+
+func _complete_die_transition(
+	capture: Dictionary,
+	die_id: StringName,
+	returning: bool
+) -> void:
+	if not is_inside_tree():
+		return
+	var target := _find_die_token(die_id)
+	if target == null:
+		return
+	interaction_motion_layer.fly_die(
+		capture.get("texture") as Texture2D,
+		capture.get("rect") as Rect2,
+		target.get_global_rect(),
+		returning
+	)
+	if returning:
+		target.play_return_feedback()
+	else:
+		target.play_landing_feedback()
+	interaction_motion_layer.pulse_target(target, &"standard")
+
+func _play_card_transition(capture: Dictionary, target: Control) -> void:
+	if capture.is_empty() or target == null:
+		return
+	var source_token := _find_hand_card_token(int(capture.get("card_index", -1)))
+	if source_token != null:
+		source_token.play_commit_feedback()
+	interaction_motion_layer.fly_card(
+		capture.get("definition") as CardDefinition,
+		capture.get("rect") as Rect2,
+		target.get_global_rect()
+	)
+	interaction_motion_layer.pulse_target(target, &"impact")
+
+func _lane_for_id(table_id: StringName) -> RuleLane:
+	var lane_by_id := {
+		&"left": %LeftLane,
+		&"middle": %MiddleLane,
+		&"right": %RightLane,
+	}
+	return lane_by_id.get(table_id) as RuleLane
+
+func _reject_feedback(target: Control = null) -> void:
+	interaction_motion_layer.reject_target(
+		target if target != null else error_label
+	)
+
 func _on_lane_activated(table_id: StringName) -> void:
 	var action := &"click_assign"
 	var payload: Dictionary
+	var die_motion: Dictionary = {}
+	var card_motion: Dictionary = {}
 	if session.selection.kind == InteractionState.Kind.DIE:
 		payload = {"die_id": session.selection.die_id, "table_id": table_id}
+		die_motion = _capture_die_motion(session.selection.die_id)
 	elif session.selection.kind == InteractionState.Kind.CARD:
 		action = &"card_table"
 		payload = {"card_index": session.selection.card_index, "table_id": table_id}
+		card_motion = _capture_card_motion(session.selection.card_index)
 	else:
 		payload = {"table_id": table_id}
 	if not _tutorial_allows(action, payload):
@@ -640,18 +789,28 @@ func _on_lane_activated(table_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted and action == &"card_table":
+		_play_card_transition(card_motion, _lane_for_id(table_id))
+	elif accepted and payload.has("die_id"):
+		_play_die_transition(die_motion, payload["die_id"])
+	elif not accepted:
+		_reject_feedback(_lane_for_id(table_id))
 
 func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 	var action := &"click_assign"
+	var die_motion: Dictionary = {}
+	var card_motion: Dictionary = {}
 	var payload := {
 		"table_id": table_id,
 		"slot_index": slot_index,
 	}
 	if session.selection.kind == InteractionState.Kind.DIE:
 		payload["die_id"] = session.selection.die_id
+		die_motion = _capture_die_motion(session.selection.die_id)
 	elif session.selection.kind == InteractionState.Kind.CARD:
 		action = &"card_table"
 		payload["card_index"] = session.selection.card_index
+		card_motion = _capture_card_motion(session.selection.card_index)
 	if not _tutorial_allows(action, payload):
 		return
 	var accepted := session.activate_slot(table_id, slot_index)
@@ -664,9 +823,16 @@ func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted and action == &"card_table":
+		_play_card_transition(card_motion, _lane_for_id(table_id))
+	elif accepted and payload.has("die_id"):
+		_play_die_transition(die_motion, payload["die_id"])
+	elif not accepted:
+		_reject_feedback(_lane_for_id(table_id))
 
 func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	var payload := {"die_id": die_id, "table_id": table_id}
+	var die_motion := _capture_die_motion(die_id)
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
 	var accepted := session.assign_dropped_die(die_id, table_id)
@@ -676,12 +842,17 @@ func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted:
+		_play_die_transition(die_motion, die_id)
+	else:
+		_reject_feedback(_lane_for_id(table_id))
 
 func _on_die_drop_to_slot_requested(
 	die_id: StringName,
 	table_id: StringName,
 	slot_index: int
 ) -> void:
+	var die_motion := _capture_die_motion(die_id)
 	var payload := {
 		"die_id": die_id,
 		"table_id": table_id,
@@ -700,8 +871,13 @@ func _on_die_drop_to_slot_requested(
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted:
+		_play_die_transition(die_motion, die_id)
+	else:
+		_reject_feedback(_lane_for_id(table_id))
 func _on_die_return_requested(die_id: StringName) -> void:
 	var payload := {"die_id": die_id}
+	var die_motion := _capture_die_motion(die_id)
 	if not _tutorial_allows(&"return_die", payload):
 		return
 	var accepted := session.return_die_to_tray(die_id)
@@ -711,8 +887,13 @@ func _on_die_return_requested(die_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	if accepted:
+		_play_die_transition(die_motion, die_id, true)
+	else:
+		_reject_feedback(_find_die_token(die_id))
 
 func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
+	var card_motion := _capture_card_motion(session.selection.card_index)
 	var payload := {
 		"card_index": session.selection.card_index,
 		"left_id": left_id,
@@ -727,12 +908,18 @@ func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	var gap: Control = %LeftGap if left_id == &"left" else %RightGap
+	if accepted:
+		_play_card_transition(card_motion, gap)
+	else:
+		_reject_feedback(gap)
 
 func _on_calibrate_pressed(delta: int) -> void:
 	if session.selection.kind != InteractionState.Kind.DIE:
 		SfxAccess.play(self, &"error")
 		session.last_error = "请先选择一颗骰子"
 		refresh_from_session()
+		_reject_feedback(error_label)
 		return
 	var payload := {"die_id": session.selection.die_id, "delta": delta}
 	if not _tutorial_allows(&"calibrate", payload):
@@ -744,6 +931,11 @@ func _on_calibrate_pressed(delta: int) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
+	var calibrated_die := _find_die_token(payload["die_id"])
+	if accepted:
+		interaction_motion_layer.pulse_target(calibrated_die, &"impact")
+	else:
+		_reject_feedback(calibrated_die)
 
 func _on_undo_pressed() -> void:
 	if not _tutorial_allows(&"undo", {}):
@@ -767,6 +959,7 @@ func _on_confirm_pressed() -> void:
 			SfxAccess.play(self, &"round_commit")
 	refresh_from_session()
 	if report.valid and not was_committed and session.controller.committed:
+		interaction_motion_layer.pulse_target(resolution_panel, &"impact")
 		resolution_panel.play_committed_report(
 			report,
 			_accessibility_settings()

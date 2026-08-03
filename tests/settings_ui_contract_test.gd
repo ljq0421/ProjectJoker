@@ -31,6 +31,11 @@ func _test_settings_scene_contract() -> void:
 	var settings_button: Button = layer.get_node("%SettingsButton")
 	var rule_reference_button: Button = layer.get_node("%RuleReferenceButton")
 	assert_equal(
+		rule_reference_button.text,
+		"规则手册",
+		"the in-game entry should use the same handbook term as the main menu"
+	)
+	assert_equal(
 		settings_button.custom_minimum_size,
 		Vector2(96, 48),
 		"settings entry should use the approved 96x48 slot"

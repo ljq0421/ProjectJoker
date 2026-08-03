@@ -62,19 +62,19 @@ theme_override_constants/separation = 2
 
 [node name="Eyebrow" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
 layout_mode = 2
-text = "RULE ARCHIVE / OPEN INFORMATION"
+text = "RULE HANDBOOK / OPEN RULES"
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 16
 
 [node name="Title" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header/TitleColumn"]
 layout_mode = 2
-text = "规则档案"
+text = "规则手册"
 theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
 theme_override_font_sizes/font_size = 34
 
 [node name="HeaderHint" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Header"]
 layout_mode = 2
-text = "只读查阅 · F1 / Esc 返回"
+text = "查看规则 · F1 / Esc 返回"
 vertical_alignment = 1
 theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
 theme_override_font_sizes/font_size = 15
@@ -84,7 +84,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(112, 48)
 layout_mode = 2
 text = "关闭"
-tooltip_text = "关闭规则档案并返回当前页面"
+tooltip_text = "关闭规则手册并返回当前页面"
 
 [node name="Divider" type="HSeparator" parent="SafeArea/GlassPanel/MainMargin/MainColumn"]
 layout_mode = 2
@@ -111,7 +111,7 @@ theme_override_constants/separation = 6
 
 [node name="SpineTitle" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel/SpineMargin/Spine"]
 layout_mode = 2
-text = "档案卷宗"
+text = "规则分类"
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 18
 
@@ -320,9 +320,18 @@ theme_override_font_sizes/font_size = 16
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ReadOnlyHint" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+[node name="HandbookHint" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "档案浮层只提供查阅；固定练习请从主页面进入规则档案室。"
+text = "选择左侧分类和中间规则，查看完整条件与结算时机。"
 autowrap_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.92, 1)
 theme_override_font_sizes/font_size = 14
+
+[node name="PracticeArchiveButton" type="Button" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "开始本组演练"
+tooltip_text = "使用固定骰面和手牌演练当前规则分类"

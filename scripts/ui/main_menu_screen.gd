@@ -5,7 +5,7 @@ const PRACTICE_SCENE := "res://scenes/run/single_encounter_screen.tscn"
 const GOLD_CORRIDOR_SCENE := "res://scenes/run/gold_corridor_run_screen.tscn"
 const MIRROR_HALL_SCENE := "res://scenes/run/mirror_hall_run_screen.tscn"
 const FACELESS_HUB_SCENE := "res://scenes/run/faceless_hub_run_screen.tscn"
-const RULE_ARCHIVE_SCENE := "res://scenes/run/rule_archive_screen.tscn"
+const RULE_HANDBOOK_SCENE := "res://scenes/run/rule_archive_screen.tscn"
 const EXPEDITION_SCENE := "res://scenes/run/expedition_run_screen.tscn"
 const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
 const TUTORIAL_CONFIG_META := "tutorial_config_path"
@@ -19,7 +19,7 @@ const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
 @onready var gold_corridor_button: Button = %GoldCorridorButton
 @onready var mirror_hall_button: Button = %MirrorHallButton
 @onready var faceless_hub_button: Button = %FacelessHubButton
-@onready var rule_archive_button: Button = %RuleArchiveButton
+@onready var rule_handbook_button: Button = %RuleHandbookButton
 @onready var start_expedition_button: Button = %StartExpeditionButton
 @onready var continue_expedition_button: Button = %ContinueExpeditionButton
 @onready var abandon_expedition_button: Button = %AbandonExpeditionButton
@@ -76,8 +76,8 @@ func _ready() -> void:
 	faceless_hub_button.pressed.connect(
 		func() -> void: _open_scene(FACELESS_HUB_SCENE)
 	)
-	rule_archive_button.pressed.connect(
-		func() -> void: _open_scene(RULE_ARCHIVE_SCENE)
+	rule_handbook_button.pressed.connect(
+		func() -> void: _open_scene(RULE_HANDBOOK_SCENE)
 	)
 	_apply_build_scope()
 	_run_release_smoke_probe_if_requested()
@@ -93,12 +93,12 @@ func _apply_build_scope() -> void:
 	demo_journey_panel.visible = is_demo
 	practice_routes_header.visible = bool(access["region_practice"])
 	route_grid.visible = bool(access["region_practice"])
-	rule_archive_button.visible = bool(access["developer_practice"])
+	rule_handbook_button.visible = bool(access["developer_practice"])
 	practice_button.visible = bool(access["developer_practice"])
 	tutorial_button.visible = bool(access["tutorial"])
 	practice_row.visible = (
 		tutorial_button.visible
-		or rule_archive_button.visible
+		or rule_handbook_button.visible
 		or practice_button.visible
 	)
 	practice_hint.text = (

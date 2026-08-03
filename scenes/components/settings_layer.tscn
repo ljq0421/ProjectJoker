@@ -48,8 +48,8 @@ offset_right = -128.0
 offset_bottom = 72.0
 grow_horizontal = 0
 mouse_filter = 0
-text = "规则"
-tooltip_text = "随时查阅当前牌局和全部十八种规则台（F1）"
+text = "规则手册"
+tooltip_text = "查看当前牌局和全部十八种规则台（F1）"
 
 [node name="RuleReferenceOverlay" parent="SettingsRoot" instance=ExtResource("3_rule_reference")]
 unique_name_in_owner = true

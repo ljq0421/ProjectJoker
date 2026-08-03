@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/single_encounter_screen.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="7"]
 [ext_resource type="Script" path="res://scripts/ui/area_atmosphere.gd" id="8_atmosphere"]
 [ext_resource type="Script" path="res://scripts/ui/dealer_sigil.gd" id="9_sigil"]
+[ext_resource type="Script" path="res://scripts/ui/interaction_motion_layer.gd" id="10_motion"]
 
 [sub_resource type="StyleBoxFlat" id="DirectivePanelStyle"]
 content_margin_left = 14.0
@@ -496,3 +497,15 @@ theme_override_colors/font_color = Color(1, 0.55, 0.66, 1)
 [node name="SingleEncounterTutorial" parent="." instance=ExtResource("6")]
 unique_name_in_owner = true
 layout_mode = 1
+
+[node name="InteractionMotionLayer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 40
+script = ExtResource("10_motion")

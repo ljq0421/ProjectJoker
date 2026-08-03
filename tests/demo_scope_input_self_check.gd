@@ -12,7 +12,7 @@ func _run() -> void:
 	await process_frame
 	assert(not demo_menu.get_node("%PracticeRoutesHeader").visible)
 	assert(not demo_menu.get_node("%RouteGrid").visible)
-	assert(not demo_menu.get_node("%RuleArchiveButton").visible)
+	assert(not demo_menu.get_node("%RuleHandbookButton").visible)
 	assert(not demo_menu.get_node("%PracticeButton").visible)
 	assert(demo_menu.get_node("%DemoJourneyPanel").visible)
 	assert(demo_menu.get_node("%PracticeRow").visible)
@@ -27,7 +27,7 @@ func _run() -> void:
 	await process_frame
 	assert(full_menu.get_node("%PracticeRoutesHeader").visible)
 	assert(full_menu.get_node("%RouteGrid").visible)
-	assert(full_menu.get_node("%RuleArchiveButton").visible)
+	assert(full_menu.get_node("%RuleHandbookButton").visible)
 	assert(full_menu.get_node("%PracticeButton").visible)
 	assert(not full_menu.get_node("%DemoJourneyPanel").visible)
 	assert(full_menu.get_node("%TutorialButton").visible)

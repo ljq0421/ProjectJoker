@@ -29,6 +29,8 @@ func run() -> void:
 		"RuleDetailDescription",
 		"RuleDetailMetrics",
 		"RuleDetailTiming",
+		"HandbookHint",
+		"PracticeArchiveButton",
 	]:
 		assert_true(
 			overlay.get_node_or_null("%%%s" % node_name) != null,
@@ -44,6 +46,10 @@ func run() -> void:
 	)
 	overlay.call("open_reference", [])
 	assert_true(overlay.visible, "opening rule reference should reveal the overlay")
+	assert_false(
+		overlay.get_node("%PracticeArchiveButton").visible,
+		"in-game handbook should not offer an action that leaves the current run"
+	)
 	assert_false(
 		overlay.get_node("%CurrentRulesButton").visible,
 		"current rules entry should hide without an active encounter"
@@ -68,5 +74,14 @@ func run() -> void:
 	assert_true(
 		overlay.get_node("%RuleDetailDescription").text.contains("翻转"),
 		"reverse-table detail should explain its direction change"
+	)
+	overlay.call("open_reference", [], true, &"archive_06", "返回主页面")
+	assert_true(
+		overlay.get_node("%PracticeArchiveButton").visible,
+		"standalone handbook should offer practice for the selected category"
+	)
+	assert_true(
+		overlay.get_node("%PracticeArchiveButton").text.contains("扭曲"),
+		"practice action should name the selected rule category"
 	)
 	overlay.free()

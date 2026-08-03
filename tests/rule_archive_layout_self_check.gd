@@ -12,7 +12,8 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	await process_frame
-	_check_control(screen.get_node("%SelectionPanel"), "selection panel")
+	_check_control(screen.get_node("%HandbookPanel"), "rule handbook")
+	var handbook := screen.handbook_panel
 	for node_name in [
 		"Archive01Button",
 		"Archive02Button",
@@ -21,12 +22,30 @@ func _run() -> void:
 		"Archive05Button",
 		"Archive06Button",
 	]:
-		var button := screen.get_node("%" + node_name) as Button
+		var button := handbook.get_node("%" + node_name) as Button
 		_check_control(button, node_name)
-		_assert_true(button.size.x > 300, "%s should remain readable" % node_name)
-		_assert_true(button.size.y >= 240, "%s should expose its summary" % node_name)
+		_assert_true(button.size.x > 80, "%s should remain readable" % node_name)
+		_assert_true(button.size.y >= 50, "%s should remain a clear category target" % node_name)
+	var spine: Control = handbook.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/ArchiveSpinePanel"
+	)
+	var index: Control = handbook.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/RuleIndexPanel"
+	)
+	var detail: Control = handbook.get_node(
+		"SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel"
+	)
+	_assert_true(
+		spine.get_global_rect().end.x < index.get_global_rect().position.x,
+		"rule categories and rule list should not overlap"
+	)
+	_assert_true(
+		index.get_global_rect().end.x < detail.get_global_rect().position.x,
+		"rule list and rule detail should not overlap"
+	)
+	_check_control(handbook.get_node("%PracticeArchiveButton"), "practice action")
 
-	_assert_true(screen.open_archive(&"archive_05"), "position archive should open")
+	_assert_true(screen.start_practice(&"archive_05"), "position practice should open")
 	await process_frame
 	await process_frame
 	var target_hints: Array[String] = []

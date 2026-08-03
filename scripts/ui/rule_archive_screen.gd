@@ -4,7 +4,7 @@ extends Control
 const MAIN_MENU_SCENE := "res://scenes/run/main_menu_screen.tscn"
 
 @onready var encounter_screen: SingleEncounterScreen = %EncounterScreen
-@onready var selection_panel: Control = %SelectionPanel
+@onready var handbook_panel: RuleReferenceOverlay = %HandbookPanel
 @onready var navigation_bar: Control = %NavigationBar
 @onready var completion_panel: Control = %CompletionPanel
 @onready var archive_title: Label = %CompletionTitle
@@ -16,57 +16,42 @@ var current_definition: RuleArchiveDefinition
 
 func _ready() -> void:
 	%HomeButton.pressed.connect(_go_home)
-	%SelectionHomeButton.pressed.connect(_go_home)
-	%BackToArchiveButton.pressed.connect(show_archive)
-	%CompletionArchiveButton.pressed.connect(show_archive)
+	%BackToHandbookButton.pressed.connect(show_handbook)
+	%CompletionHandbookButton.pressed.connect(show_handbook)
 	%CompletionHomeButton.pressed.connect(_go_home)
-	%RetryArchiveButton.pressed.connect(retry_current)
+	%RetryPracticeButton.pressed.connect(retry_current)
+	handbook_panel.close_requested.connect(_go_home)
+	handbook_panel.practice_requested.connect(start_practice)
 	encounter_screen.round_committed.connect(_on_round_committed)
-	var buttons: Array[Button] = [
-		%Archive01Button,
-		%Archive02Button,
-		%Archive03Button,
-		%Archive04Button,
-		%Archive05Button,
-		%Archive06Button,
-	]
-	var entries := catalog.all_entries()
-	for index in range(mini(buttons.size(), entries.size())):
-		var entry: RuleArchiveDefinition = entries[index]
-		buttons[index].text = "%s\n%s\n%s" % [
-			entry.display_name,
-			entry.group_label,
-			entry.summary,
-		]
-		buttons[index].pressed.connect(open_archive.bind(entry.id))
 	var errors := catalog.validate(card_catalog)
+	show_handbook()
 	if not errors.is_empty():
-		%ArchiveErrorLabel.text = "\n".join(errors)
-	show_archive()
+		_show_handbook_error("规则手册内容不完整：%s" % "；".join(errors))
 
-func open_archive(archive_id: StringName) -> bool:
+func start_practice(archive_id: StringName) -> bool:
 	var definition := catalog.find_entry(archive_id)
 	if definition == null:
-		%ArchiveErrorLabel.text = "未找到规则档案：%s" % archive_id
+		_show_handbook_error("未找到规则分类：%s" % archive_id)
 		return false
 	var hand := definition.resolve_hand(card_catalog)
 	if hand.size() != definition.hand_ids.size():
-		%ArchiveErrorLabel.text = "规则档案手牌资源不完整"
+		_show_handbook_error("规则演练所需手牌不完整")
 		return false
 	current_definition = definition
+	_set_practice_settings_active(true)
 	var session := SingleEncounterSession.new(
 		definition.make_state(),
 		definition.encounter,
 		hand
 	)
-	selection_panel.visible = false
+	handbook_panel.call("close_reference")
 	completion_panel.visible = false
 	navigation_bar.visible = true
 	encounter_screen.visible = true
 	encounter_screen.bind_external_session(
 		session,
-		"规则档案室 · %s" % definition.display_name,
-		"单轮固定练习 · 2 点校准 · 无奖励"
+		"规则手册 · %s" % definition.display_name,
+		"固定单轮演练 · 2 点校准 · 无奖励"
 	)
 	encounter_screen.bind_archive(definition)
 	SfxAccess.play(self, &"page_transition")
@@ -74,22 +59,48 @@ func open_archive(archive_id: StringName) -> bool:
 
 func retry_current() -> void:
 	if current_definition != null:
-		open_archive(current_definition.id)
+		start_practice(current_definition.id)
 
-func show_archive() -> void:
-	current_definition = null
+func show_handbook() -> void:
+	var preferred_archive: StringName = (
+		current_definition.id if current_definition != null else StringName()
+	)
 	encounter_screen.visible = false
+	_set_practice_settings_active(false)
 	navigation_bar.visible = false
 	completion_panel.visible = false
-	selection_panel.visible = true
+	handbook_panel.call(
+		"open_reference",
+		[],
+		true,
+		preferred_archive,
+		"返回主页面"
+	)
 	SfxAccess.play(self, &"ui_back")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not handbook_panel.visible:
+		return
+	var closes_handbook := event.is_action_pressed("ui_cancel")
+	if event is InputEventKey and event.is_pressed() and not event.is_echo():
+		var key_event := event as InputEventKey
+		closes_handbook = (
+			closes_handbook
+			or key_event.keycode == KEY_F1
+			or key_event.physical_keycode == KEY_F1
+		)
+	if not closes_handbook:
+		return
+	_go_home()
+	get_viewport().set_input_as_handled()
 
 func _on_round_committed(report: ResolutionReport) -> void:
 	completion_panel.visible = true
-	archive_title.text = "%s · 练习完成" % current_definition.display_name
+	archive_title.text = "%s · 演练完成" % current_definition.display_name
 	archive_detail.text = (
 		"本轮公开得分：%d\n最终方向：%s\n"
-		+ "本练习不发放情报券、刻印或地区奖励。"
+		+ "本演练不发放情报券、刻印或地区奖励。"
 	) % [
 		report.total,
 		(
@@ -103,3 +114,21 @@ func _on_round_committed(report: ResolutionReport) -> void:
 func _go_home() -> void:
 	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+
+func _show_handbook_error(message: String) -> void:
+	var hint := handbook_panel.get_node_or_null("%HandbookHint") as Label
+	if hint != null:
+		hint.text = message
+
+
+func _set_practice_settings_active(active: bool) -> void:
+	var settings_layer := encounter_screen.get_node_or_null("%SettingsLayer")
+	if settings_layer == null:
+		return
+	settings_layer.process_mode = (
+		Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_DISABLED
+	)
+	var settings_root := settings_layer.get_node_or_null("SettingsRoot") as Control
+	if settings_root != null:
+		settings_root.visible = active
