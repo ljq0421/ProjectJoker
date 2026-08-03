@@ -3,9 +3,11 @@ extends RefCounted
 
 const PRESENTATIONS := {
 	&"gold_corridor": {
-		"primary": Color("#e7b84b"),
-		"secondary": Color("#55e7c5"),
-		"background": Color("#07121c"),
+		"primary": Color("#ffd34e"),
+		"secondary": Color("#fff1ad"),
+		"background": Color("#151002"),
+		"surface": Color("#2b2207"),
+		"surface_raised": Color("#46370b"),
 		"pattern": &"parallel_ledger",
 		"sigil": &"abacus",
 		"eyebrow": "LEDGER / PARALLEL PROOF",
@@ -19,7 +21,9 @@ const PRESENTATIONS := {
 	&"mirror_hall": {
 		"primary": Color("#79d8ff"),
 		"secondary": Color("#b57aff"),
-		"background": Color("#090b24"),
+		"background": Color("#05091d"),
+		"surface": Color("#0d1732"),
+		"surface_raised": Color("#14264a"),
 		"pattern": &"mirror_axis",
 		"sigil": &"mirror",
 		"eyebrow": "REFLECTION / REVERSE ORDER",
@@ -31,9 +35,11 @@ const PRESENTATIONS := {
 		"directive_title": "反照法则",
 	},
 	&"faceless_hub": {
-		"primary": Color("#ff71b7"),
-		"secondary": Color("#65eedb"),
-		"background": Color("#15091d"),
+		"primary": Color("#52e68c"),
+		"secondary": Color("#b7f7c9"),
+		"background": Color("#04110b"),
+		"surface": Color("#0b2417"),
+		"surface_raised": Color("#123b27"),
 		"pattern": &"three_nodes",
 		"sigil": &"faceless",
 		"eyebrow": "PROTOCOL / THREE OPEN SEATS",

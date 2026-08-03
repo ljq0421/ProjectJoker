@@ -4,6 +4,8 @@ extends Control
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
+const AreaThemeFactory = preload("res://scripts/ui/area_theme_factory.gd")
+const BASE_THEME = preload("res://resources/themes/neon_dream_theme.tres")
 
 signal expedition_checkpoint_reached(snapshot: Dictionary)
 signal expedition_failed(reason: String)
@@ -138,6 +140,13 @@ func _apply_area_presentation() -> void:
 	var presentation: Dictionary = AreaPresentation.new().find(area.id)
 	if presentation.is_empty():
 		return
+	var area_theme := AreaThemeFactory.build(BASE_THEME, presentation)
+	theme = area_theme
+	var settings_button := get_node_or_null(
+		"SettingsLayer/SettingsRoot/SettingsButton"
+	) as Button
+	if settings_button != null:
+		settings_button.theme = area_theme
 	area_chrome_label.text = "%s　%s" % [
 		presentation["eyebrow"],
 		area.display_name,

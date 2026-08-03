@@ -16,6 +16,8 @@ func run() -> void:
 			"primary",
 			"secondary",
 			"background",
+			"surface",
+			"surface_raised",
 			"pattern",
 			"sigil",
 			"eyebrow",
@@ -54,3 +56,11 @@ func run() -> void:
 		"无名协议",
 		"faceless ordinary rooms should have a non-dealer identity"
 	)
+	var gold_palette: Dictionary = catalog.find(&"gold_corridor")
+	assert_equal(gold_palette.primary, Color("#ffd34e"), "gold should use contract yellow")
+	assert_equal(gold_palette.secondary, Color("#fff1ad"), "gold should use ivory copy accents")
+	assert_equal(gold_palette.background, Color("#151002"), "gold should use a warm near-black")
+	var faceless_palette: Dictionary = catalog.find(&"faceless_hub")
+	assert_equal(faceless_palette.primary, Color("#52e68c"), "faceless should use terminal green")
+	assert_equal(faceless_palette.secondary, Color("#b7f7c9"), "faceless should use pale protocol green")
+	assert_equal(faceless_palette.background, Color("#04110b"), "faceless should use ink green-black")

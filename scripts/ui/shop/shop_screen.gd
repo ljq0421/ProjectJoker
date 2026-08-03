@@ -10,6 +10,8 @@ const CardFormatter = preload("res://scripts/ui/card_display_formatter.gd")
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
+const AreaThemeFactory = preload("res://scripts/ui/area_theme_factory.gd")
+const BASE_THEME = preload("res://resources/themes/neon_dream_theme.tres")
 
 @export var content_top_inset := 0.0
 
@@ -50,6 +52,13 @@ func apply_area_presentation(area_id: StringName, area_name: String) -> void:
 	var presentation: Dictionary = AreaPresentation.new().find(area_id)
 	if presentation.is_empty():
 		return
+	var area_theme := AreaThemeFactory.build(BASE_THEME, presentation)
+	theme = area_theme
+	var settings_button := get_node_or_null(
+		"SettingsLayer/SettingsRoot/SettingsButton"
+	) as Button
+	if settings_button != null:
+		settings_button.theme = area_theme
 	background.color = presentation["background"]
 	area_identity_bar.color = presentation["primary"]
 	area_stage_label.text = "%s / %s" % [
