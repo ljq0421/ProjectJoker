@@ -35,7 +35,10 @@ func bind_lane(
 	selected_die_id: StringName,
 	engraving_catalog: EngravingCatalog = null,
 	effective_slot_count: int = -1,
-	condition_summary: String = ""
+	condition_summary: String = "",
+	effective_die_values: Dictionary = {},
+	effective_coefficient: int = -1,
+	resolution_count: int = 1
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
@@ -44,10 +47,12 @@ func bind_lane(
 		if effective_slot_count < 0
 		else effective_slot_count
 	)
-	condition_label.text = "%d 个骰位 · 系数 ×%d" % [
+	condition_label.text = effective_rule_copy(
 		slot_count,
 		rule.coefficient,
-	]
+		effective_coefficient,
+		resolution_count
+	)
 	if not condition_summary.is_empty():
 		condition_label.text += "\n条件变化：%s" % condition_summary
 	for child in slots.get_children():
@@ -66,7 +71,12 @@ func bind_lane(
 			die_scene,
 			selected_die_id,
 			engraving_catalog,
-			_position_hint(rule, slot_index)
+			_position_hint(rule, slot_index),
+			(
+				int(effective_die_values.get(die.id, die.value))
+				if die != null
+				else -1
+			)
 		)
 		slot.slot_activated.connect(
 			func(index: int) -> void:
@@ -83,6 +93,24 @@ func bind_lane(
 
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
+
+func effective_rule_copy(
+	slot_count: int,
+	base_coefficient: int,
+	effective_coefficient: int = -1,
+	p_resolution_count: int = 1
+) -> String:
+	var displayed_coefficient := (
+		base_coefficient
+		if effective_coefficient < 1
+		else effective_coefficient
+	)
+	var copy := "%d 个骰位 · 系数 ×%d" % [slot_count, base_coefficient]
+	if displayed_coefficient != base_coefficient:
+		copy += " → ×%d" % displayed_coefficient
+	if p_resolution_count > 1:
+		copy += " · 结算 %d 次" % p_resolution_count
+	return copy
 
 func set_target_state(active: bool, legal: bool) -> void:
 	if not active:

@@ -3,6 +3,11 @@ extends RefCounted
 
 const MAX_CARDS_PER_ROUND := 2
 
+static func validate_card_start(state: RoundState) -> OperationResult:
+	if _real_card_count(state) >= MAX_CARDS_PER_ROUND:
+		return OperationResult.new(false, "每轮最多使用两张手法牌")
+	return OperationResult.new(true)
+
 static func play_card(
 	state: RoundState,
 	played_card: PlayedCard,
@@ -13,12 +18,10 @@ static func play_card(
 		return ActionResult.new(false, "手法牌定义缺失", state)
 	if played_card.is_mirror_copy:
 		return ActionResult.new(false, "镜像副本不能作为真实牌使用", state)
-	var real_card_count := 0
-	for existing_card in state.played_cards:
-		if existing_card is PlayedCard and not existing_card.is_mirror_copy:
-			real_card_count += 1
-	if real_card_count >= MAX_CARDS_PER_ROUND:
-		return ActionResult.new(false, "每轮最多使用两张手法牌", state)
+	var start_result := validate_card_start(state)
+	if not start_result.accepted:
+		return ActionResult.new(false, start_result.reason, state)
+	var real_card_count := _real_card_count(state)
 	var target_error := _validate_targets(state, played_card)
 	if not target_error.is_empty():
 		return ActionResult.new(false, target_error, state)
@@ -56,6 +59,13 @@ static func play_card(
 		if not report.valid:
 			return ActionResult.new(false, report.reason, state)
 	return ActionResult.new(true, "", next_state)
+
+static func _real_card_count(state: RoundState) -> int:
+	var count := 0
+	for existing_card in state.played_cards:
+		if existing_card is PlayedCard and not existing_card.is_mirror_copy:
+			count += 1
+	return count
 
 static func _validate_targets(
 	state: RoundState,

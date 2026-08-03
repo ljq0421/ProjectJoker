@@ -14,6 +14,9 @@ var dealer_reward: int = 0
 var dealer_reward_lost: int = 0
 var rule_failures: Array[Dictionary] = []
 var missed_effects: Array[String] = []
+var effective_die_values: Dictionary = {}
+var effective_table_coefficients: Dictionary = {}
+var table_resolution_counts: Dictionary = {}
 var resolution_direction: EncounterRuleProfile.ResolutionDirection = (
 	EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT
 )

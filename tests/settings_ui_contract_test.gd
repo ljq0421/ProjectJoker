@@ -125,6 +125,7 @@ func _test_exclusive_guides_block_the_entry() -> void:
 	for scene_path in [
 		"res://scenes/components/single_encounter_tutorial.tscn",
 		"res://scenes/components/iron_abacus_guide_overlay.tscn",
+		"res://scenes/components/shop_intel_panel.tscn",
 	]:
 		var source := FileAccess.get_file_as_string(scene_path)
 		assert_true(

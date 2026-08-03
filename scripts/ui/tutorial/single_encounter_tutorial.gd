@@ -2,6 +2,7 @@ class_name SingleEncounterTutorial
 extends Control
 
 signal persistence_warning(message: String)
+signal closed
 
 @onready var dimmer: ColorRect = %TutorialDimmer
 @onready var focus_rings: Control = %FocusRings
@@ -18,6 +19,7 @@ var screen: SingleEncounterScreen
 var progress_store: TutorialProgressStore
 var flow := SingleEncounterTutorialFlow.new()
 var active: bool = false
+var _focus_rebuild_generation := 0
 
 func _ready() -> void:
 	visible = false
@@ -68,7 +70,7 @@ func record_accepted_action(action: StringName, payload: Dictionary) -> void:
 
 func refresh_targets() -> void:
 	if active:
-		call_deferred("_rebuild_focus_rings")
+		_queue_focus_ring_rebuild()
 
 func _refresh() -> void:
 	title_label.text = _step_title(flow.step_index)
@@ -76,7 +78,17 @@ func _refresh() -> void:
 	progress_label.text = "%d / 11" % (flow.step_index + 1)
 	continue_button.visible = flow.step_index in [0, 6]
 	finish_button.visible = flow.step_index == 10
-	call_deferred("_rebuild_focus_rings")
+	_queue_focus_ring_rebuild()
+
+func _queue_focus_ring_rebuild() -> void:
+	_focus_rebuild_generation += 1
+	_rebuild_focus_rings_after_layout(_focus_rebuild_generation)
+
+func _rebuild_focus_rings_after_layout(generation: int) -> void:
+	await get_tree().process_frame
+	if generation != _focus_rebuild_generation:
+		return
+	_rebuild_focus_rings()
 
 func _rebuild_focus_rings() -> void:
 	if not active or not is_inside_tree():
@@ -152,6 +164,7 @@ func _on_skip_pressed() -> void:
 	visible = false
 	if save_error == OK:
 		SfxAccess.play(self, &"ui_back")
+	closed.emit()
 
 func _on_finish_pressed() -> void:
 	if not flow.can_finish(screen.session):
@@ -162,6 +175,7 @@ func _on_finish_pressed() -> void:
 	visible = false
 	if save_error == OK:
 		SfxAccess.play(self, &"ui_confirm")
+	closed.emit()
 
 func _show_save_error(error: Error) -> void:
 	warning_label.text = "" if error == OK else "无法保存引导状态；下次启动会再次显示。"

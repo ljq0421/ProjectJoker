@@ -13,7 +13,8 @@ func bind_card(
 	definition: CardDefinition,
 	selected: bool,
 	used: bool,
-	selection_step: String = ""
+	_selection_step: String = "",
+	disabled_reason: String = ""
 ) -> void:
 	card_index = index
 	text = "%s · %s\n%s · %s\n%s" % [
@@ -24,9 +25,7 @@ func bind_card(
 		definition.rule_text,
 	]
 	button_pressed = selected
-	disabled = used
-	if selected and not selection_step.is_empty():
-		text += "\n▶ %s" % selection_step
+	disabled = used or not disabled_reason.is_empty()
 	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
 		definition.suit_copy(),
 		definition.rank_label,
@@ -35,6 +34,8 @@ func bind_card(
 		target_copy_for(definition),
 		definition.rule_text,
 	]
+	if not disabled_reason.is_empty():
+		tooltip_text += "；当前不可用：%s" % disabled_reason
 
 func target_copy_for(definition: CardDefinition) -> String:
 	var copy := _target_copy(definition.target_type)

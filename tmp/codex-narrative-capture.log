@@ -1,0 +1,16 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+overlay=[P: (0.0, 0.0), S: (1920.0, 1080.0)]
+safe_area=[P: (64.0, 48.0), S: (1792.0, 984.0)]
+center=[P: (64.0, 48.0), S: (1792.0, 984.0)]
+card=[P: (64.0, 48.0), S: (1040.0, 620.0)]
+ERROR: Parameter "t" is null.
+   at: texture_2d_get (./servers/rendering/dummy/storage/texture_storage.h:106)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tmp/codex_narrative_capture.gd:32)
+SCRIPT ERROR: Cannot call method 'save_png' on a null value.
+   at: _run (res://tmp/codex_narrative_capture.gd:34)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tmp/codex_narrative_capture.gd:34)

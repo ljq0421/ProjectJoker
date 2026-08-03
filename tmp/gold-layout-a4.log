@@ -1,0 +1,9 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+PLAYABILITY gold_room_precise_steps legal=8296 calibration=39 card_alternatives=180 unassigned=0 best=53 target_difference=-59 signatures=227
+PLAYABILITY gold_room_even_split legal=8296 calibration=37 card_alternatives=180 unassigned=0 best=64 target_difference=-82 signatures=253
+PLAYABILITY gold_room_narrow_ledger legal=8296 calibration=42 card_alternatives=180 unassigned=0 best=60 target_difference=-60 signatures=48
+PLAYABILITY gold_room_parallel_proof legal=8296 calibration=38 card_alternatives=180 unassigned=0 best=82 target_difference=-111 signatures=130
+PASS gold_corridor_layout_self_check

@@ -1,0 +1,14 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+ERROR: home button overlaps area chrome label: [P: (1800.0, 24.0), S: (96.0, 48.0)] vs [P: (242.0, 36.0), S: (1582.0, 23.0)]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tests/area_chrome_layout_self_check.gd:57)
+       [1] _settle (res://tests/area_chrome_layout_self_check.gd:80)
+ERROR: home button overlaps route title: [P: (32.0, 24.0), S: (192.0, 48.0)] vs [P: (56.0, 48.0), S: (1610.0, 47.0)]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tests/area_chrome_layout_self_check.gd:57)
+       [1] _settle (res://tests/area_chrome_layout_self_check.gd:80)

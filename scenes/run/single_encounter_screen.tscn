@@ -347,10 +347,8 @@ script = ExtResource("5")
 
 [node name="SelectionHintLabel" type="Label" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true
-visible = false
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
-text = "选择来源骰子"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
 theme_override_font_sizes/font_size = 16

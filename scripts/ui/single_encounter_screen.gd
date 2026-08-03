@@ -9,6 +9,8 @@ signal card_selected(card_index: int, card: CardDefinition, token: Control)
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
 const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
+const TUTORIAL_CONFIG_META := "tutorial_config_path"
+const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
@@ -49,6 +51,7 @@ var dealer_definition: DealerDefinition
 var owns_session := true
 
 func _ready() -> void:
+	_apply_tutorial_launch_path()
 	safe_area.offset_top += content_top_inset
 	session = SingleEncounterSession.new(
 		SingleEncounterFixture.make_state(),
@@ -79,6 +82,7 @@ func _ready() -> void:
 	refresh_from_session()
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
 	tutorial.persistence_warning.connect(_on_tutorial_persistence_warning)
+	tutorial.closed.connect(_on_tutorial_closed)
 	replay_tutorial_button.pressed.connect(start_tutorial_replay)
 	replay_advanced_guide_button.pressed.connect(_on_replay_advanced_guide_pressed)
 	replay_gold_corridor_guide_button.pressed.connect(_on_replay_gold_corridor_guide_pressed)
@@ -93,6 +97,23 @@ func _ready() -> void:
 	)
 	if tutorial_auto_start:
 		tutorial.call_deferred("maybe_start")
+
+func _apply_tutorial_launch_path() -> void:
+	var root_window := get_tree().root
+	if root_window.has_meta(TUTORIAL_CONFIG_META):
+		tutorial_config_path = String(root_window.get_meta(TUTORIAL_CONFIG_META))
+
+func _on_tutorial_closed() -> void:
+	var root_window := get_tree().root
+	if not root_window.has_meta(TUTORIAL_NEXT_SCENE_META):
+		return
+	var next_scene := String(root_window.get_meta(TUTORIAL_NEXT_SCENE_META))
+	root_window.remove_meta(TUTORIAL_NEXT_SCENE_META)
+	call_deferred("_continue_after_tutorial", next_scene)
+
+func _continue_after_tutorial(next_scene: String) -> void:
+	SfxAccess.play(self, &"page_transition")
+	get_tree().change_scene_to_file(next_scene)
 
 func bind_external_session(
 	p_session: SingleEncounterSession,
@@ -164,6 +185,7 @@ func show_transient_warning(message: String) -> void:
 
 func refresh_from_session() -> void:
 	var state := session.controller.state
+	var preview := session.preview()
 	var selected_target_type := _selected_card_target_type()
 	var engraving_catalog := session.controller.resolution_context.engraving_catalog
 	for lane_index in range(lanes.size()):
@@ -183,7 +205,13 @@ func refresh_from_session() -> void:
 			session.selection.die_id,
 			engraving_catalog,
 			effective_slots,
-			session.controller.condition_summary(rule.id)
+			session.controller.condition_summary(rule.id),
+			preview.effective_die_values,
+			int(preview.effective_table_coefficients.get(
+				rule.id,
+				rule.coefficient
+			)),
+			int(preview.table_resolution_counts.get(rule.id, 1))
 		)
 		var table_target_active := (
 			selected_target_type == CardDefinition.TargetType.TABLE
@@ -211,7 +239,8 @@ func refresh_from_session() -> void:
 				die,
 				session.selection.die_id == die.id,
 				engraving_catalog,
-				false
+				false,
+				int(preview.effective_die_values.get(die.id, die.value))
 			)
 			var die_target_active := selected_target_type in [
 				CardDefinition.TargetType.DIE,
@@ -225,19 +254,22 @@ func refresh_from_session() -> void:
 
 	for child in hand_container.get_children():
 		child.queue_free()
+	var card_start_block_reason := session.card_start_block_reason()
 	for index in range(session.hand.size()):
 		var card_token: CardToken = CARD_SCENE.instantiate()
 		hand_container.add_child(card_token)
+		var card_used := session.is_card_used(index)
 		card_token.bind_card(
 			index,
 			session.hand[index],
 			session.selection.card_index == index,
-			session.is_card_used(index),
+			card_used,
 			(
 				session.selected_card_target_hint()
-				if session.selection.card_index == index
-				else ""
-			)
+					if session.selection.card_index == index
+					else ""
+			),
+			"" if card_used else card_start_block_reason
 		)
 		card_token.card_activated.connect(_on_card_activated)
 
@@ -252,7 +284,6 @@ func refresh_from_session() -> void:
 		if gap_is_target and session.is_legal_gap_card_target(&"middle", &"right")
 		else (Color(0.48, 0.48, 0.58, 0.58) if gap_is_target else Color.WHITE)
 	)
-	var preview := session.preview()
 	_refresh_direction(preview)
 	_refresh_mirror_layers(state)
 	resolution_panel.bind_report(preview)
@@ -264,7 +295,6 @@ func refresh_from_session() -> void:
 		]
 	error_label.text = session.last_error
 	selection_hint_label.text = session.selected_card_target_hint()
-	selection_hint_label.visible = not selection_hint_label.text.is_empty()
 	_refresh_active_restriction(state)
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed

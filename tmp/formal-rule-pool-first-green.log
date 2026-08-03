@@ -1,0 +1,749 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+ERROR: area_definition_test.gd: gold area definition should validate; expected=[] actual=["rule right sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _test_route_entry_checkpoint_replays_opening (res://tests/area_run_checkpoint_test.gd:48)
+   GDScript backtrace (most recent call first):
+       [0] _test_route_entry_checkpoint_replays_opening (res://tests/area_run_checkpoint_test.gd:48)
+       [1] run (res://tests/area_run_checkpoint_test.gd:6)
+       [2] _run_all (res://tests/run_all.gd:27)
+ERROR: area_run_checkpoint_test.gd: area should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS area_run_ui_contract_test.gd
+PASS card_rules_test.gd
+PASS card_suit_catalog_test.gd
+PASS content_validator_test.gd
+PASS dealer_and_engraving_resolution_test.gd
+PASS deterministic_state_primitives_test.gd
+PASS engraving_action_guard_test.gd
+PASS engraving_installation_service_test.gd
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _test_three_real_area_sessions_flow_in_order (res://tests/expedition_flow_test.gd:25)
+   GDScript backtrace (most recent call first):
+       [0] _test_three_real_area_sessions_flow_in_order (res://tests/expedition_flow_test.gd:25)
+       [1] run (res://tests/expedition_flow_test.gd:6)
+       [2] _run_all (res://tests/run_all.gd:27)
+ERROR: expedition_flow_test.gd: gold_corridor should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: ConfigFile parse error at C:\Users\Administrator\AppData\Local\Temp/project-joker-expedition-save-test-948824.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_path (res://scripts/run/expedition_save_store.gd:102)
+       [1] load_snapshot (res://scripts/run/expedition_save_store.gd:73)
+       [2] _test_corrupt_file_is_preserved (res://tests/expedition_save_store_test.gd:31)
+       [3] run (res://tests/expedition_save_store_test.gd:10)
+       [4] _run_all (res://tests/run_all.gd:27)
+ERROR: ConfigFile parse error at C:\Users\Administrator\AppData\Local\Temp/project-joker-expedition-save-test-948824.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_path (res://scripts/run/expedition_save_store.gd:102)
+       [1] load_snapshot (res://scripts/run/expedition_save_store.gd:73)
+       [2] archive_corrupt (res://scripts/run/expedition_save_store.gd:88)
+       [3] _test_corrupt_file_is_preserved (res://tests/expedition_save_store_test.gd:34)
+       [4] run (res://tests/expedition_save_store_test.gd:10)
+       [5] _run_all (res://tests/run_all.gd:27)
+PASS expedition_save_store_test.gd
+PASS expedition_session_test.gd
+PASS expedition_ui_contract_test.gd
+PASS explicit_slot_assignment_test.gd
+PASS faceless_card_catalog_test.gd
+PASS faceless_condition_card_effects_test.gd
+PASS faceless_die_card_effects_test.gd
+PASS faceless_engraving_resolution_test.gd
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[DieState]')
+   at: _test_fixed_build_starts (res://tests/faceless_hub_area_run_test.gd:15)
+   GDScript backtrace (most recent call first):
+       [0] _test_fixed_build_starts (res://tests/faceless_hub_area_run_test.gd:15)
+       [1] run (res://tests/faceless_hub_area_run_test.gd:6)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid assignment of property or key 'target_total' with value of type 'int' on a base object of type 'Nil'.
+   at: _complete_normal_encounter (res://tests/faceless_hub_area_run_test.gd:87)
+   GDScript backtrace (most recent call first):
+       [0] _complete_normal_encounter (res://tests/faceless_hub_area_run_test.gd:87)
+       [1] _test_all_route_combinations_complete (res://tests/faceless_hub_area_run_test.gd:34)
+       [2] run (res://tests/faceless_hub_area_run_test.gd:7)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'offer_ids' on a base object of type 'Nil'.
+   at: _test_all_route_combinations_complete (res://tests/faceless_hub_area_run_test.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] _test_all_route_combinations_complete (res://tests/faceless_hub_area_run_test.gd:36)
+       [1] run (res://tests/faceless_hub_area_run_test.gd:7)
+       [2] _run_all (res://tests/run_all.gd:27)
+ERROR: faceless_hub_area_run_test.gd: faceless area should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: faceless market should contain twenty-eight cards; expected=28 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: fixed build starts with eight intel; expected=8 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: deck is fixed; expected=[&"starter_nudge_up_1", &"starter_nudge_down_1", &"starter_map_2", &"starter_repeat_1", &"starter_link", &"starter_reverse", &"mirror_folded_map", &"mirror_soft_echo", &"mirror_hinged_bridge", &"faceless_swap_values", &"faceless_refund_calibration", &"faceless_three_seats"] actual=[]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: route fixture starts
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: selected room is offered
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: selected route starts
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_area_run_test.gd: shop opens after room
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_content_catalog_test.gd: faceless area validates; expected=[] actual=["rule left sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: faceless_hub_content_catalog_test.gd: all areas validate; expected=[] actual=["rule right sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS faceless_hub_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-faceless-guide-corrupt-1324431.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/faceless_hub_guide_progress_store.gd:58)
+       [1] _init (res://scripts/ui/tutorial/faceless_hub_guide_progress_store.gd:20)
+       [2] _test_corrupt_file_is_preserved (res://tests/faceless_hub_guide_progress_store_test.gd:58)
+       [3] run (res://tests/faceless_hub_guide_progress_store_test.gd:5)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS faceless_hub_guide_progress_store_test.gd
+PASS faceless_hub_ui_contract_test.gd
+PASS faceless_intel_card_effects_test.gd
+ERROR: faceless_round_schedule_model_test.gd: legacy area should still validate without a schedule; expected=[] actual=["rule right sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS faceless_round_schedule_session_test.gd
+PASS formal_rule_pool_test.gd
+PASS framework_self_test.gd
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _test_two_room_shop_loop (res://tests/gold_corridor_area_run_test.gd:91)
+   GDScript backtrace (most recent call first):
+       [0] _test_two_room_shop_loop (res://tests/gold_corridor_area_run_test.gd:91)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:4)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _test_area_market_and_future_intel (res://tests/gold_corridor_area_run_test.gd:20)
+   GDScript backtrace (most recent call first):
+       [0] _test_area_market_and_future_intel (res://tests/gold_corridor_area_run_test.gd:20)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:5)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _drive_to_dealer (res://tests/gold_corridor_area_run_test.gd:371)
+   GDScript backtrace (most recent call first):
+       [0] _drive_to_dealer (res://tests/gold_corridor_area_run_test.gd:371)
+       [1] _test_same_seed_replays_route_shop_and_dealer_start (res://tests/gold_corridor_area_run_test.gd:162)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:6)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _drive_to_dealer (res://tests/gold_corridor_area_run_test.gd:371)
+   GDScript backtrace (most recent call first):
+       [0] _drive_to_dealer (res://tests/gold_corridor_area_run_test.gd:371)
+       [1] _test_same_seed_replays_route_shop_and_dealer_start (res://tests/gold_corridor_area_run_test.gd:163)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:6)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'selected_room_ids' on a base object of type 'Nil'.
+   at: _test_same_seed_replays_route_shop_and_dealer_start (res://tests/gold_corridor_area_run_test.gd:164)
+   GDScript backtrace (most recent call first):
+       [0] _test_same_seed_replays_route_shop_and_dealer_start (res://tests/gold_corridor_area_run_test.gd:164)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:6)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid assignment of property or key 'target_total' with value of type 'int' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:394)
+       [2] _test_all_route_combinations_complete (res://tests/gold_corridor_area_run_test.gd:197)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:7)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'offer_ids' on a base object of type 'Nil'.
+   at: _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+   GDScript backtrace (most recent call first):
+       [0] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+       [1] _test_all_route_combinations_complete (res://tests/gold_corridor_area_run_test.gd:197)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:7)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'encounter_session' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _test_all_route_combinations_complete (res://tests/gold_corridor_area_run_test.gd:203)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:7)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'phase' on a base object of type 'Nil'.
+   at: _test_all_route_combinations_complete (res://tests/gold_corridor_area_run_test.gd:204)
+   GDScript backtrace (most recent call first):
+       [0] _test_all_route_combinations_complete (res://tests/gold_corridor_area_run_test.gd:204)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:7)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[StringName]')
+   at: _test_failures_end_the_area (res://tests/gold_corridor_area_run_test.gd:252)
+   GDScript backtrace (most recent call first):
+       [0] _test_failures_end_the_area (res://tests/gold_corridor_area_run_test.gd:252)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:8)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid assignment of property or key 'target_total' with value of type 'int' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:394)
+       [2] _test_restart_replays_from_seed (res://tests/gold_corridor_area_run_test.gd:298)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:9)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'offer_ids' on a base object of type 'Nil'.
+   at: _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+   GDScript backtrace (most recent call first):
+       [0] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+       [1] _test_restart_replays_from_seed (res://tests/gold_corridor_area_run_test.gd:298)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:9)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'encounter_session' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _test_restart_replays_from_seed (res://tests/gold_corridor_area_run_test.gd:304)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:9)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'engraving_offer_ids' on a base object of type 'Nil'.
+   at: _test_restart_replays_from_seed (res://tests/gold_corridor_area_run_test.gd:305)
+   GDScript backtrace (most recent call first):
+       [0] _test_restart_replays_from_seed (res://tests/gold_corridor_area_run_test.gd:305)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:9)
+       [2] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid assignment of property or key 'target_total' with value of type 'int' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:394)
+       [2] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:356)
+       [3] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:337)
+       [4] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [5] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'offer_ids' on a base object of type 'Nil'.
+   at: _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+   GDScript backtrace (most recent call first):
+       [0] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+       [1] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:356)
+       [2] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:337)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'encounter_session' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:362)
+       [2] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:337)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'engraving_offer_ids' on a base object of type 'Nil'.
+   at: _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:363)
+   GDScript backtrace (most recent call first):
+       [0] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:363)
+       [1] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:337)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid assignment of property or key 'target_total' with value of type 'int' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:394)
+       [2] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:356)
+       [3] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:338)
+       [4] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [5] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'offer_ids' on a base object of type 'Nil'.
+   at: _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+   GDScript backtrace (most recent call first):
+       [0] _drive_route_combination_to_dealer (res://tests/gold_corridor_area_run_test.gd:397)
+       [1] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:356)
+       [2] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:338)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'encounter_session' on a base object of type 'Nil'.
+   at: _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+   GDScript backtrace (most recent call first):
+       [0] _complete_current_encounter (res://tests/gold_corridor_area_run_test.gd:412)
+       [1] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:362)
+       [2] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:338)
+       [3] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [4] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'engraving_offer_ids' on a base object of type 'Nil'.
+   at: _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:363)
+   GDScript backtrace (most recent call first):
+       [0] _complete_fixed_run (res://tests/gold_corridor_area_run_test.gd:363)
+       [1] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:338)
+       [2] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [3] _run_all (res://tests/run_all.gd:27)
+SCRIPT ERROR: Invalid access to property or key 'engraving_offer_ids' on a base object of type 'Nil'.
+   at: _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:339)
+   GDScript backtrace (most recent call first):
+       [0] _test_same_seed_replays_full_completion (res://tests/gold_corridor_area_run_test.gd:339)
+       [1] run (res://tests/gold_corridor_area_run_test.gd:10)
+       [2] _run_all (res://tests/run_all.gd:27)
+ERROR: gold_corridor_area_run_test.gd: Gold Corridor should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: start opens first route; expected=1 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: first route should contain the fixed first group; expected=[&"gold_room_precise_steps", &"gold_room_even_split"] actual=[]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: start owns configured deck; expected=[&"starter_nudge_down_1", &"starter_nudge_up_1", &"starter_nudge_down_2", &"starter_nudge_up_2", &"starter_map_1", &"starter_map_2", &"starter_repeat_1", &"starter_repeat_2", &"starter_stable_repeat", &"starter_amplified_repeat", &"starter_reverse", &"starter_link"] actual=[]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: start creates six die profiles; expected=6 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: shop-service area should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: gold market should contain eighteen cards; expected=18 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: gold market should be unique; expected=18 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: determinism fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: determinism fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should be offered
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should select
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination shop should open
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: first-failure fixture starts
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should be offered
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should select
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination shop should open
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should be offered
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should select
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination shop should open
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination fixture should start
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should be offered
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: chosen room should select
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_area_run_test.gd: combination shop should open
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: Gold Corridor content should validate; expected=[] actual=["rule right sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_precise_steps lane 1 condition should match; expected=2 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_precise_steps lane 1 slots should match; expected=3 actual=2
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_precise_steps lane 2 condition should match; expected=1 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_precise_steps lane 2 slots should match; expected=1 actual=2
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_even_split lane 1 target should match; expected=9 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_even_split lane 2 condition should match; expected=2 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_narrow_ledger lane 0 target should match; expected=10 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_narrow_ledger lane 1 condition should match; expected=2 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_narrow_ledger lane 1 slots should match; expected=3 actual=2
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_narrow_ledger lane 2 condition should match; expected=1 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_narrow_ledger lane 2 slots should match; expected=1 actual=2
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_parallel_proof lane 0 condition should match; expected=1 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_parallel_proof lane 2 condition should match; expected=2 actual=0
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: gold_corridor_catalog_test.gd: gold_room_parallel_proof lane 2 coefficient should match; expected=3 actual=4
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS gold_corridor_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-gold-guide-corrupt-2003232.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/gold_corridor_guide_progress_store.gd:59)
+       [1] _init (res://scripts/ui/tutorial/gold_corridor_guide_progress_store.gd:21)
+       [2] _test_corrupt_file_is_not_overwritten (res://tests/gold_corridor_guide_progress_store_test.gd:90)
+       [3] run (res://tests/gold_corridor_guide_progress_store_test.gd:19)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS gold_corridor_guide_progress_store_test.gd
+PASS gold_corridor_ui_contract_test.gd
+PASS iron_abacus_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-advanced-guide-corrupt-2549295.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/iron_abacus_guide_progress_store.gd:62)
+       [1] _init (res://scripts/ui/tutorial/iron_abacus_guide_progress_store.gd:22)
+       [2] _test_corrupt_file_is_not_overwritten (res://tests/iron_abacus_guide_progress_store_test.gd:107)
+       [3] run (res://tests/iron_abacus_guide_progress_store_test.gd:19)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS iron_abacus_guide_progress_store_test.gd
+PASS iron_abacus_guide_ui_contract_test.gd
+PASS iron_abacus_slice_session_test.gd
+PASS main_entry_ui_contract_test.gd
+PASS main_menu_ui_contract_test.gd
+PASS mirror_copy_resolver_test.gd
+PASS mirror_data_model_test.gd
+PASS mirror_encounter_ui_contract_test.gd
+PASS mirror_engraving_resolution_test.gd
+PASS mirror_hall_area_run_test.gd
+ERROR: mirror_hall_content_catalog_test.gd: all areas should validate; expected=[] actual=["rule right sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable", "rule left sum target is unreachable", "rule right sum target is unreachable"]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS mirror_hall_guide_flow_test.gd
+PASS mirror_hall_guide_progress_store_test.gd
+PASS mirror_resolution_test.gd
+WARNING: Unknown music context: unknown
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] play_context (res://scripts/audio/music_service.gd:96)
+       [1] run (res://tests/music_service_test.gd:71)
+       [2] _run_all (res://tests/run_all.gd:27)
+PASS music_service_test.gd
+PASS narrative_card_ui_contract_test.gd
+PASS parameterized_three_round_session_test.gd
+PASS resolution_playback_test.gd
+PASS resolution_playback_ui_contract_test.gd
+PASS resolution_test.gd
+PASS rng_and_deck_test.gd
+PASS round_actions_test.gd
+PASS round_controller_test.gd
+PASS round_restriction_evaluator_test.gd
+PASS rule_archive_catalog_test.gd
+PASS rule_archive_playability_test.gd
+PASS rule_archive_ui_contract_test.gd
+PASS rule_evaluator_test.gd
+PASS rule_table_catalog_test.gd
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_consecutive
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_minimum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_same_parity
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_maximum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_sum_range
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_fixed_difference
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_odd
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_distinct
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_equal
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_minimum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_maximum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_strict_descending
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_reverse_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_strict_ascending
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_mirrored
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_equal
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_echo_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_bridge_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_fixed_difference
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_slot_targets
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_mirrored
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_reverse_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_echo_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_bridge_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_slot_targets
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_sum_range
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_bridge_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_strict_descending
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_reverse_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_slot_targets
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_distinct
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_minimum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_echo_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_equal
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_all_odd
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_fixed_difference
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_maximum_sum
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_same_parity
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_strict_ascending
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_reverse_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_bridge_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_strict_descending
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule left should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_slot_targets
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule middle should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_echo_table
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+ERROR: rule_table_content_migration_test.gd: rule right should preserve its legacy condition semantics; expected=rule_exact_sum actual=rule_mirrored
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:32)
+PASS rule_table_distortion_test.gd
+PASS rule_table_evaluator_test.gd
+PASS rule_table_instance_validation_test.gd
+PASS rule_table_template_validation_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-settings-store-3425310.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] load_settings (res://scripts/settings/settings_store.gd:19)
+       [1] _test_store_validation_and_round_trip (res://tests/settings_service_test.gd:172)
+       [2] run (res://tests/settings_service_test.gd:57)
+       [3] _run_all (res://tests/run_all.gd:27)
+PASS settings_service_test.gd
+PASS settings_ui_contract_test.gd
+WARNING: Unknown SFX cue: unknown_cue
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] play (res://scripts/audio/sfx_service.gd:239)
+       [1] run (res://tests/sfx_service_test.gd:74)
+       [2] _run_all (res://tests/run_all.gd:27)
+PASS sfx_service_test.gd
+PASS sfx_ui_contract_test.gd
+PASS shop_intel_panel_test.gd
+PASS shop_intel_snapshot_test.gd
+PASS shop_session_test.gd
+PASS single_encounter_fixture_test.gd
+PASS single_encounter_session_test.gd
+PASS single_encounter_tutorial_flow_test.gd
+PASS stage4_card_catalog_test.gd
+PASS stage5_content_catalog_test.gd
+PASS three_round_encounter_session_test.gd
+PASS tutorial_progress_store_test.gd
+PASS ui_component_contract_test.gd
+ERROR: 102 TEST FAILURE(S)
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run_all (res://tests/run_all.gd:39)
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

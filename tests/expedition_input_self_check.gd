@@ -17,8 +17,10 @@ func _run() -> void:
 		"project-joker-expedition-guide-%d.cfg" % Time.get_ticks_usec()
 	)
 	GoldCorridorGuideProgressStore.new(_guide_path).dismiss_all()
+	TutorialProgressStore.new(_guide_path).mark_done()
 	root.set_meta("expedition_save_path", _save_path)
 	root.set_meta("gold_corridor_guide_config_path", _guide_path)
+	root.set_meta("tutorial_config_path", _guide_path)
 	change_scene_to_file("res://scenes/run/main_menu_screen.tscn")
 	await _settle()
 
@@ -28,9 +30,16 @@ func _run() -> void:
 		_finish()
 		return
 	await _click(menu.get_node("%StartExpeditionButton") as Button)
-	await _settle(6)
+	await _settle(5)
+	var setup := current_scene as ExpeditionSetupScreen
+	_assert(setup != null, "start click should open expedition setup")
+	if setup == null:
+		_finish()
+		return
+	await _click(setup.get_node("%StartConfiguredExpeditionButton") as Button)
+	await _settle(8)
 	var host := current_scene as ExpeditionRunScreen
-	_assert(host != null, "start click should open expedition host")
+	_assert(host != null, "configured expedition should open expedition host")
 	_assert(
 		ExpeditionSaveStore.new(_save_path).has_save(),
 		"new expedition should persist before its transition card"

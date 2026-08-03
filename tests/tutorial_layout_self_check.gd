@@ -32,6 +32,15 @@ func _run() -> void:
 		"welcome should focus the three lanes and resolution panel"
 	)
 
+	var accepted := screen.session.assign_dropped_die(&"d1", &"left")
+	_assert_true(accepted, "layout setup should place die 1 in the left lane")
+	tutorial.flow.step_index = 2
+	tutorial.call("_refresh")
+	screen.refresh_from_session()
+	await process_frame
+	await process_frame
+	_assert_focus_rings_match_targets(screen, tutorial)
+
 	var path := screen.tutorial_config_path
 	screen.queue_free()
 	await process_frame
@@ -46,6 +55,36 @@ func _run() -> void:
 
 func _assert_inside(parent_rect: Rect2, child_rect: Rect2, label: String) -> void:
 	_assert_true(parent_rect.encloses(child_rect), "%s must remain inside root" % label)
+
+func _assert_focus_rings_match_targets(
+	screen: SingleEncounterScreen,
+	tutorial: SingleEncounterTutorial
+) -> void:
+	var specs := tutorial.flow.target_specs(screen.session)
+	var rings := tutorial.get_node("%FocusRings").get_children()
+	_assert_true(rings.size() == specs.size(), "each step target should have one focus ring")
+	if rings.size() != specs.size():
+		return
+	for index in range(specs.size()):
+		var target := screen.find_tutorial_target(specs[index])
+		_assert_true(target != null, "step target %d should resolve" % index)
+		if target == null:
+			continue
+		var ring := rings[index] as Control
+		var ring_center := ring.get_global_rect().get_center()
+		var target_center := target.get_global_rect().get_center()
+		var center_error := ring_center.distance_to(target_center)
+		_assert_true(
+			center_error <= 1.0,
+			"focus ring %d should align with its live target; offset=%.2f ring=%s target=%s focus_origin=%s tutorial_origin=%s" % [
+				index,
+				center_error,
+				ring_center,
+				target_center,
+				tutorial.focus_rings.global_position,
+				tutorial.global_position,
+			]
+		)
 
 func _assert_true(value: bool, message: String) -> void:
 	if not value:

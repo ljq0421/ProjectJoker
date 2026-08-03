@@ -16,6 +16,7 @@ signal exit_requested
 
 var _reduce_flashes := false
 var _disable_distortion := false
+var _opening_tween: Tween
 
 func _ready() -> void:
 	continue_button.pressed.connect(_on_confirmed)
@@ -111,18 +112,37 @@ func _apply_accessibility(accessibility: Dictionary) -> void:
 	)
 
 func _play_opening_motion() -> void:
+	if _opening_tween != null:
+		_opening_tween.kill()
+		_opening_tween = null
 	card_panel.modulate = Color.WHITE
+	card_panel.scale = Vector2.ONE
 	if _reduce_flashes and _disable_distortion:
 		return
-	var settled_position := card_panel.position
-	var tween := create_tween()
-	tween.set_parallel(true)
+	call_deferred("_start_opening_motion")
+
+func _start_opening_motion() -> void:
+	if not visible:
+		return
+	card_panel.pivot_offset = card_panel.size * 0.5
+	_opening_tween = create_tween()
+	_opening_tween.set_parallel(true)
 	if not _reduce_flashes:
 		card_panel.modulate = Color(1.12, 1.12, 1.12, 1.0)
-		tween.tween_property(card_panel, "modulate", Color.WHITE, 0.2)
+		_opening_tween.tween_property(
+			card_panel,
+			"modulate",
+			Color.WHITE,
+			0.2
+		)
 	if not _disable_distortion:
-		card_panel.position = settled_position + Vector2(0.0, 12.0)
-		tween.tween_property(card_panel, "position", settled_position, 0.2)
+		card_panel.scale = Vector2(0.985, 0.985)
+		_opening_tween.tween_property(
+			card_panel,
+			"scale",
+			Vector2.ONE,
+			0.2
+		)
 
 func _count_engravings(profiles: Array) -> int:
 	var count := 0

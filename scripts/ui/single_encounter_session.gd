@@ -82,6 +82,10 @@ func cancel_selection() -> bool:
 	last_error = ""
 	return true
 
+func card_start_block_reason() -> String:
+	var result := controller.validate_card_start()
+	return "" if result.accepted else result.reason
+
 func selected_card_target_hint() -> String:
 	if selection.kind != InteractionState.Kind.CARD:
 		return ""

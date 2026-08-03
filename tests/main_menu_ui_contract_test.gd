@@ -12,6 +12,7 @@ func run() -> void:
 		return
 	var menu: Control = packed.instantiate()
 	for node_name in [
+		"TutorialButton",
 		"PracticeButton",
 		"GoldCorridorButton",
 		"MirrorHallButton",

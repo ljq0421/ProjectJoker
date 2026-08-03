@@ -6,6 +6,7 @@ var failed := false
 var pointer_position := Vector2.ZERO
 var meta_path := ""
 var save_path := ""
+var tutorial_path := ""
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -18,11 +19,16 @@ func _run() -> void:
 	save_path = OS.get_temp_dir().path_join(
 		"project-joker-setup-input-save-%d.cfg" % Time.get_ticks_usec()
 	)
+	tutorial_path = OS.get_temp_dir().path_join(
+		"project-joker-setup-input-tutorial-%d.cfg" % Time.get_ticks_usec()
+	)
+	TutorialProgressStore.new(tutorial_path).mark_done()
 	var meta_store = ExpeditionMeta.new(meta_path)
 	meta_store.clear()
 	meta_store.record_run(_complete_record())
 	root.set_meta("expedition_meta_path", meta_path)
 	root.set_meta("expedition_save_path", save_path)
+	root.set_meta("tutorial_config_path", tutorial_path)
 
 	var menu: Control = load("res://scenes/run/main_menu_screen.tscn").instantiate()
 	root.add_child(menu)
@@ -92,6 +98,8 @@ func _run() -> void:
 
 	ExpeditionSaveStore.new(save_path).clear()
 	meta_store.clear()
+	if FileAccess.file_exists(tutorial_path):
+		DirAccess.remove_absolute(tutorial_path)
 	if failed:
 		quit(1)
 	else:

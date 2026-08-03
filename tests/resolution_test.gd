@@ -17,8 +17,47 @@ func run() -> void:
 	assert_equal(report.total, 51, "three tables and coefficient card should total 51")
 	assert_equal(report.events.size(), 4, "one card event and three table events are expected")
 	assert_equal(report.events[1].source_id, &"left", "left table should resolve first")
+	assert_equal(
+		report.effective_table_coefficients.get(&"left"),
+		3,
+		"preview facts should expose the card-adjusted coefficient"
+	)
 	_test_neighbor_link()
 	_test_failure_facts()
+	_test_effective_value_facts()
+
+func _test_effective_value_facts() -> void:
+	var state = _build_state()
+	var adjust := EffectSpecScript.new()
+	adjust.operation = EffectSpecScript.Operation.ADJUST_DIE
+	adjust.amount = -2
+	var adjust_card := CardDefinitionScript.new()
+	adjust_card.id = &"club_deep_drop"
+	adjust_card.display_name = "深降"
+	adjust_card.effects = [adjust]
+	state.played_cards.append(PlayedCardScript.new(adjust_card, &"d6"))
+
+	var repeat := EffectSpecScript.new()
+	repeat.operation = EffectSpecScript.Operation.REPEAT_TABLE
+	repeat.amount = 1
+	var repeat_card := CardDefinitionScript.new()
+	repeat_card.id = &"heart_repeat"
+	repeat_card.display_name = "复写"
+	repeat_card.target_type = CardDefinitionScript.TargetType.TABLE
+	repeat_card.effects = [repeat]
+	state.played_cards.append(PlayedCardScript.new(repeat_card, &"middle"))
+
+	var report = RoundResolverScript.new().resolve(state, _build_encounter())
+	assert_equal(
+		report.effective_die_values.get(&"d6"),
+		4,
+		"preview facts should expose the card-adjusted die value"
+	)
+	assert_equal(
+		report.table_resolution_counts.get(&"middle"),
+		2,
+		"preview facts should expose the full table resolution count"
+	)
 
 func _test_neighbor_link() -> void:
 	var state = _build_state()

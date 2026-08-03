@@ -8,7 +8,10 @@ const FACELESS_HUB_SCENE := "res://scenes/run/faceless_hub_run_screen.tscn"
 const RULE_ARCHIVE_SCENE := "res://scenes/run/rule_archive_screen.tscn"
 const EXPEDITION_SCENE := "res://scenes/run/expedition_run_screen.tscn"
 const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
+const TUTORIAL_CONFIG_META := "tutorial_config_path"
+const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
 
+@onready var tutorial_button: Button = %TutorialButton
 @onready var practice_button: Button = %PracticeButton
 @onready var gold_corridor_button: Button = %GoldCorridorButton
 @onready var mirror_hall_button: Button = %MirrorHallButton
@@ -23,6 +26,7 @@ const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
 
 var expedition_store: ExpeditionSaveStore
 var expedition_save_path := "user://expedition_save.cfg"
+var tutorial_config_path := "user://onboarding.cfg"
 
 func _ready() -> void:
 	var root_window := get_tree().root
@@ -30,7 +34,10 @@ func _ready() -> void:
 		expedition_save_path = String(
 			root_window.get_meta("expedition_save_path")
 		)
+	if root_window.has_meta(TUTORIAL_CONFIG_META):
+		tutorial_config_path = String(root_window.get_meta(TUTORIAL_CONFIG_META))
 	expedition_store = ExpeditionSaveStore.new(expedition_save_path)
+	tutorial_button.pressed.connect(_on_tutorial_pressed)
 	start_expedition_button.pressed.connect(_on_start_expedition_pressed)
 	continue_expedition_button.pressed.connect(_on_continue_expedition_pressed)
 	abandon_expedition_button.pressed.connect(
@@ -51,6 +58,7 @@ func _ready() -> void:
 	rule_archive_button.pressed.connect(
 		func() -> void: _open_scene(RULE_ARCHIVE_SCENE)
 	)
+	_refresh_tutorial_entry()
 	_refresh_expedition_status()
 
 func _open_scene(scene_path: String) -> void:
@@ -64,7 +72,28 @@ func _on_start_expedition_pressed() -> void:
 	_launch_new_expedition()
 
 func _launch_new_expedition() -> void:
+	if not TutorialProgressStore.new(tutorial_config_path).is_done():
+		_open_tutorial_before(EXPEDITION_SETUP_SCENE)
+		return
 	_open_scene(EXPEDITION_SETUP_SCENE)
+
+func _on_tutorial_pressed() -> void:
+	var result := TutorialProgressStore.new(tutorial_config_path).reset()
+	if result != OK:
+		expedition_status_label.text = "无法重置新手引导，请检查存档目录。"
+		SfxAccess.play(self, &"error")
+		return
+	_open_tutorial_before("res://scenes/run/main_menu_screen.tscn")
+
+func _open_tutorial_before(next_scene: String) -> void:
+	var root_window := get_tree().root
+	root_window.set_meta(TUTORIAL_CONFIG_META, tutorial_config_path)
+	root_window.set_meta(TUTORIAL_NEXT_SCENE_META, next_scene)
+	_open_scene(PRACTICE_SCENE)
+
+func _refresh_tutorial_entry() -> void:
+	var completed := TutorialProgressStore.new(tutorial_config_path).is_done()
+	tutorial_button.text = "重播新手引导" if completed else "开始新手引导"
 
 func _on_continue_expedition_pressed() -> void:
 	var loaded := expedition_store.load_snapshot()

@@ -1,0 +1,165 @@
+Godot Engine v4.6.1.stable.official.14d19694e - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2570)
+PASS area_definition_test.gd
+PASS area_identity_ui_contract_test.gd
+PASS area_presentation_catalog_test.gd
+PASS area_run_checkpoint_test.gd
+PASS area_run_ui_contract_test.gd
+PASS build_identity_test.gd
+PASS card_rules_test.gd
+PASS card_suit_catalog_test.gd
+PASS content_validator_test.gd
+PASS dealer_and_engraving_resolution_test.gd
+PASS dealer_reward_choice_test.gd
+PASS deterministic_state_primitives_test.gd
+PASS engraving_action_guard_test.gd
+PASS engraving_installation_service_test.gd
+PASS expedition_challenge_integration_test.gd
+PASS expedition_config_catalog_test.gd
+PASS expedition_config_playability_test.gd
+PASS expedition_flow_test.gd
+PASS expedition_meta_store_test.gd
+PASS expedition_replay_session_test.gd
+ERROR: ConfigFile parse error at C:\Users\Administrator\AppData\Local\Temp/project-joker-expedition-save-test-2652863.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_path (res://scripts/run/expedition_save_store.gd:102)
+       [1] load_snapshot (res://scripts/run/expedition_save_store.gd:73)
+       [2] _test_corrupt_file_is_preserved (res://tests/expedition_save_store_test.gd:32)
+       [3] run (res://tests/expedition_save_store_test.gd:11)
+       [4] _run_all (res://tests/run_all.gd:27)
+ERROR: ConfigFile parse error at C:\Users\Administrator\AppData\Local\Temp/project-joker-expedition-save-test-2652863.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_path (res://scripts/run/expedition_save_store.gd:102)
+       [1] load_snapshot (res://scripts/run/expedition_save_store.gd:73)
+       [2] archive_corrupt (res://scripts/run/expedition_save_store.gd:88)
+       [3] _test_corrupt_file_is_preserved (res://tests/expedition_save_store_test.gd:35)
+       [4] run (res://tests/expedition_save_store_test.gd:11)
+       [5] _run_all (res://tests/run_all.gd:27)
+PASS expedition_save_store_test.gd
+PASS expedition_session_test.gd
+PASS expedition_setup_ui_contract_test.gd
+PASS expedition_ui_contract_test.gd
+PASS explicit_slot_assignment_test.gd
+PASS faceless_card_catalog_test.gd
+PASS faceless_condition_card_effects_test.gd
+PASS faceless_die_card_effects_test.gd
+PASS faceless_engraving_resolution_test.gd
+PASS faceless_hub_area_run_test.gd
+PASS faceless_hub_content_catalog_test.gd
+PASS faceless_hub_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-faceless-guide-corrupt-3203767.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/faceless_hub_guide_progress_store.gd:58)
+       [1] _init (res://scripts/ui/tutorial/faceless_hub_guide_progress_store.gd:20)
+       [2] _test_corrupt_file_is_preserved (res://tests/faceless_hub_guide_progress_store_test.gd:58)
+       [3] run (res://tests/faceless_hub_guide_progress_store_test.gd:5)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS faceless_hub_guide_progress_store_test.gd
+PASS faceless_hub_ui_contract_test.gd
+PASS faceless_intel_card_effects_test.gd
+PASS faceless_round_schedule_model_test.gd
+PASS faceless_round_schedule_session_test.gd
+PASS failure_review_builder_test.gd
+PASS formal_rule_pool_test.gd
+PASS framework_self_test.gd
+PASS gold_corridor_area_run_test.gd
+PASS gold_corridor_catalog_test.gd
+PASS gold_corridor_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-gold-guide-corrupt-3988829.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/gold_corridor_guide_progress_store.gd:59)
+       [1] _init (res://scripts/ui/tutorial/gold_corridor_guide_progress_store.gd:21)
+       [2] _test_corrupt_file_is_not_overwritten (res://tests/gold_corridor_guide_progress_store_test.gd:90)
+       [3] run (res://tests/gold_corridor_guide_progress_store_test.gd:19)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS gold_corridor_guide_progress_store_test.gd
+PASS gold_corridor_ui_contract_test.gd
+PASS iron_abacus_guide_flow_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-advanced-guide-corrupt-4537426.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] _load_existing (res://scripts/ui/tutorial/iron_abacus_guide_progress_store.gd:62)
+       [1] _init (res://scripts/ui/tutorial/iron_abacus_guide_progress_store.gd:22)
+       [2] _test_corrupt_file_is_not_overwritten (res://tests/iron_abacus_guide_progress_store_test.gd:107)
+       [3] run (res://tests/iron_abacus_guide_progress_store_test.gd:19)
+       [4] _run_all (res://tests/run_all.gd:27)
+PASS iron_abacus_guide_progress_store_test.gd
+PASS iron_abacus_guide_ui_contract_test.gd
+PASS iron_abacus_slice_session_test.gd
+PASS main_entry_ui_contract_test.gd
+PASS main_menu_ui_contract_test.gd
+PASS mirror_copy_resolver_test.gd
+PASS mirror_data_model_test.gd
+PASS mirror_encounter_ui_contract_test.gd
+PASS mirror_engraving_resolution_test.gd
+PASS mirror_hall_area_run_test.gd
+PASS mirror_hall_content_catalog_test.gd
+PASS mirror_hall_guide_flow_test.gd
+PASS mirror_hall_guide_progress_store_test.gd
+PASS mirror_resolution_test.gd
+WARNING: Unknown music context: unknown
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] play_context (res://scripts/audio/music_service.gd:118)
+       [1] run (res://tests/music_service_test.gd:101)
+       [2] _run_all (res://tests/run_all.gd:27)
+PASS music_service_test.gd
+PASS narrative_card_ui_contract_test.gd
+PASS nonstandard_activity_test.gd
+PASS parameterized_three_round_session_test.gd
+PASS resolution_playback_test.gd
+PASS resolution_playback_ui_contract_test.gd
+PASS resolution_test.gd
+PASS rng_and_deck_test.gd
+PASS round_actions_test.gd
+PASS round_controller_test.gd
+PASS round_restriction_evaluator_test.gd
+PASS rule_archive_catalog_test.gd
+PASS rule_archive_playability_test.gd
+PASS rule_archive_ui_contract_test.gd
+PASS rule_evaluator_test.gd
+PASS rule_table_catalog_test.gd
+PASS rule_table_content_migration_test.gd
+PASS rule_table_distortion_test.gd
+PASS rule_table_evaluator_test.gd
+PASS rule_table_instance_validation_test.gd
+PASS rule_table_template_validation_test.gd
+ERROR: ConfigFile parse error at C:/Users/Administrator/AppData/Local/Temp/project-joker-settings-store-5528046.cfg:0: Unexpected EOF while parsing simple tag.
+   at: _parse (core/io/config_file.cpp:292)
+   GDScript backtrace (most recent call first):
+       [0] load_settings (res://scripts/settings/settings_store.gd:19)
+       [1] _test_store_validation_and_round_trip (res://tests/settings_service_test.gd:172)
+       [2] run (res://tests/settings_service_test.gd:57)
+       [3] _run_all (res://tests/run_all.gd:27)
+PASS settings_service_test.gd
+PASS settings_ui_contract_test.gd
+WARNING: Unknown SFX cue: unknown_cue
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] play (res://scripts/audio/sfx_service.gd:239)
+       [1] run (res://tests/sfx_service_test.gd:74)
+       [2] _run_all (res://tests/run_all.gd:27)
+PASS sfx_service_test.gd
+PASS sfx_ui_contract_test.gd
+PASS shop_intel_panel_test.gd
+PASS shop_intel_snapshot_test.gd
+PASS shop_session_test.gd
+PASS single_encounter_fixture_test.gd
+PASS single_encounter_session_test.gd
+PASS single_encounter_tutorial_flow_test.gd
+PASS stage4_card_catalog_test.gd
+PASS stage5_content_catalog_test.gd
+PASS three_round_encounter_session_test.gd
+PASS tutorial_progress_store_test.gd
+PASS ui_component_contract_test.gd
+ALL TESTS PASSED (96 suites)
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)
+ERROR: 1 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

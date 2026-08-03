@@ -79,6 +79,14 @@ func _check_size(viewport_size: Vector2i) -> void:
 		"route mode should bind at %s" % viewport_size
 	)
 	await _settle()
+	var settings_button: Button = shop.get_node("%SettingsLayer").get_node(
+		"%SettingsButton"
+	)
+	_assert_true(
+		not settings_button.visible,
+		"settings entry should hide while route intel is open at %s"
+		% viewport_size
+	)
 	var route_mode: Control = intel.get_node("%RouteMode")
 	_assert_inside(viewport_rect, route_mode.get_global_rect(), "route mode at %s" % viewport_size)
 	var left_page: Control = intel.get_node(
@@ -139,9 +147,14 @@ func _check_size(viewport_size: Vector2i) -> void:
 		"close target should stay at least 120px wide at %s" % viewport_size
 	)
 	intel.close()
+	await _settle()
 	_assert_true(
 		intel.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 		"close should release input at %s" % viewport_size
+	)
+	_assert_true(
+		settings_button.visible,
+		"settings entry should return after intel closes at %s" % viewport_size
 	)
 
 	host.free()

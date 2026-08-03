@@ -102,6 +102,25 @@ func _run() -> void:
 	await _click(screen.get_node("%UndoButton"))
 	_assert_true(not screen.session.is_card_used(1), "undo should restore the card")
 
+	await _click(_find_card(0))
+	await _click(_find_die(&"d2"))
+	await _click(_find_card(3))
+	_assert_true(
+		_find_card(1).disabled,
+		"unused cards should be disabled after the two-card round limit"
+	)
+	await _click(_find_card(1))
+	_assert_true(
+		screen.session.selection.kind == InteractionState.Kind.NONE,
+		"clicking a card at the round limit must not select it"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		not _find_card(1).disabled,
+		"undoing below the round limit should re-enable unused cards"
+	)
+
 	await _click(_find_die(&"d5"))
 	await _click(screen.get_node("%MinusButton"))
 	screen.session.activate_die(&"d2")

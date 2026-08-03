@@ -19,13 +19,28 @@ func _run() -> void:
 	_assert(route_grid.size.y >= 240.0, "route trial cards should retain readable height")
 	menu.free()
 
+	var expedition_save_path := (
+		"res://tmp/codex-expedition-layout-%d.cfg" % Time.get_ticks_usec()
+	)
+	root.set_meta("expedition_launch_mode", &"new")
+	root.set_meta("expedition_seed", 20260803)
+	root.set_meta("expedition_save_path", expedition_save_path)
 	var host: Control = load(
 		"res://scenes/run/expedition_run_screen.tscn"
 	).instantiate()
 	root.add_child(host)
+	for _frame in range(12):
+		await process_frame
+	var narrative := host.get_node("%NarrativeCard") as Control
+	var initial_narrative_card: Control = narrative.get_node("%NarrativeCard")
+	_assert(
+		initial_narrative_card.get_global_rect().get_center().is_equal_approx(
+			Vector2(root.size) * 0.5
+		),
+		"initial narrative card should be centered after startup layout; rect=%s"
+			% initial_narrative_card.get_global_rect()
+	)
 	host.get_node("%ExpeditionSummaryPanel").visible = true
-	await process_frame
-	await process_frame
 	for node_name in [
 		"ExpeditionSeedLabel",
 		"ExpeditionAreaHistoryLabel",
@@ -37,7 +52,6 @@ func _run() -> void:
 			host.get_node("%" + node_name),
 			Rect2(Vector2.ZERO, root.size)
 		)
-	var narrative := host.get_node("%NarrativeCard") as Control
 	var area := AreaCatalog.new().gold_corridor()
 	narrative.show_area_transition(area, {
 		"deck_ids": area.starting_deck_ids,
@@ -56,6 +70,14 @@ func _run() -> void:
 		narrative.get_node("%NarrativeCard").get_meta("motion_suppressed", false),
 		"disabled distortion should suppress narrative movement"
 	)
+	var narrative_card: Control = narrative.get_node("%NarrativeCard")
+	_assert(
+		narrative_card.get_global_rect().get_center().is_equal_approx(
+			Vector2(root.size) * 0.5
+		),
+		"narrative card should be centered in the viewport; rect=%s"
+			% narrative_card.get_global_rect()
+	)
 	for node_name in [
 		"NarrativeCard",
 		"NarrativeTitle",
@@ -69,6 +91,14 @@ func _run() -> void:
 			Rect2(Vector2.ZERO, root.size)
 		)
 	host.free()
+	for path in [
+		expedition_save_path,
+		expedition_save_path + ".tmp",
+		expedition_save_path + ".bak",
+	]:
+		var absolute_path := ProjectSettings.globalize_path(path)
+		if FileAccess.file_exists(absolute_path):
+			DirAccess.remove_absolute(absolute_path)
 	if _failed:
 		quit(1)
 	else:

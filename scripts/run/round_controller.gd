@@ -80,7 +80,7 @@ func validate_card_start() -> OperationResult:
 		)
 		if not restriction_result.accepted:
 			return restriction_result
-	return OperationResult.new(true)
+	return CardRules.validate_card_start(state)
 
 func validate_card_play(played_card: PlayedCard) -> ActionResult:
 	var start_result := validate_card_start()

@@ -130,6 +130,7 @@ func resolve(
 			played_card.source_slot_id,
 			_gap_id(played_card)
 		))
+	report.effective_die_values = die_values.duplicate(true)
 
 	var precomputed_results: Dictionary = {}
 	var reverse_table_rules: Array[RuleDefinition] = []
@@ -143,6 +144,12 @@ func resolve(
 		var requested_modifier: int = coefficient_modifiers.get(rule.id, 0)
 		var minimum_modifier: int = 1 - rule.coefficient
 		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
+		report.effective_table_coefficients[rule.id] = (
+			rule.coefficient + effective_modifier
+		)
+		report.table_resolution_counts[rule.id] = (
+			1 + repeat_counts.get(rule.id, 0)
+		)
 		var precomputed_result := _evaluator.evaluate(
 			rule,
 			precomputed_values,

@@ -18,7 +18,8 @@ func bind_slot(
 	die_scene: PackedScene,
 	p_selected_die_id: StringName,
 	engraving_catalog: EngravingCatalog = null,
-	position_hint: String = ""
+	position_hint: String = "",
+	effective_value: int = -1
 ) -> void:
 	index = p_index
 	selected_die_id = p_selected_die_id
@@ -47,7 +48,8 @@ func bind_slot(
 		die,
 		die.id == selected_die_id,
 		engraving_catalog,
-		true
+		true,
+		effective_value
 	)
 	token.die_activated.connect(_on_die_activated)
 

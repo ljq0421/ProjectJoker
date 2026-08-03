@@ -12,6 +12,12 @@ func run() -> void:
 		"die token should expose engraving binding"
 	)
 	assert_true(card.has_signal("card_activated"), "card token should emit activation")
+	var fixture_card := SingleEncounterFixture.make_hand()[0]
+	card.bind_card(0, fixture_card, true, false, "请选择一颗合法骰子")
+	assert_false(
+		card.text.contains("请选择一颗合法骰子"),
+		"selected card should not grow by repeating the page-level target hint"
+	)
 	assert_true(lane.has_signal("lane_activated"), "lane should emit click activation")
 	assert_true(lane.has_signal("die_drop_requested"), "lane should emit die drops")
 	assert_true(lane.has_signal("slot_activated"), "lane should emit slot activation")
@@ -25,6 +31,18 @@ func run() -> void:
 	assert_true(lane.has_method("set_legal_target"), "lane should expose table target highlight")
 	assert_true(lane.has_method("set_die_target_highlight"), "lane should highlight assigned dice")
 	assert_true(panel.has_method("bind_report"), "resolution panel should bind reports")
+	var die_state := DieState.new(&"d5", 5)
+	die.bind_die(die_state, false, 3)
+	assert_equal(die.text, "3", "die face should directly show the card-adjusted value")
+	assert_true(
+		die.tooltip_text.contains("初始 5，手法牌后 3"),
+		"die tooltip should explain the initial and card-adjusted values"
+	)
+	assert_equal(
+		lane.effective_rule_copy(2, 2, 4, 2),
+		"2 个骰位 · 系数 ×2 → ×4 · 结算 2 次",
+		"rule lane should summarize coefficient and repeat changes"
+	)
 	die.free()
 	card.free()
 	lane.free()
