@@ -109,13 +109,52 @@ layout_mode = 2
 text = "当前十二张牌"
 theme_override_font_sizes/font_size = 22
 
-[node name="DeckGrid" type="GridContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
+[node name="DeckContent" type="HBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="DeckGrid" type="GridContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 columns = 4
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
+
+[node name="ShopSelectionInfoColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ShopSelectionLabel" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "候选：未选择　替换：未选择"
+autowrap_mode = 2
+
+[node name="ShopCardDetailPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+
+[node name="ShopCardDetailText" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/ShopCardDetailPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择卡牌后显示完整规则对照"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="ShopServiceStatusLabel" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "刷新：可用　路线情报：未购"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 
 [node name="OfferPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
 custom_minimum_size = Vector2(320, 0)
@@ -138,31 +177,6 @@ theme_override_constants/separation = 8
 [node name="Footer" type="VBoxContainer" parent="SafeArea/RootColumn"]
 layout_mode = 2
 theme_override_constants/separation = 8
-
-[node name="ShopSelectionLabel" type="Label" parent="SafeArea/RootColumn/Footer"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "候选：未选择　替换：未选择"
-
-[node name="ShopCardDetailPanel" type="PanelContainer" parent="SafeArea/RootColumn/Footer"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 76)
-layout_mode = 2
-
-[node name="ShopCardDetailText" type="Label" parent="SafeArea/RootColumn/Footer/ShopCardDetailPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "选择卡牌后显示完整规则对照"
-autowrap_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.9, 0.98, 1)
-theme_override_font_sizes/font_size = 15
-
-[node name="ShopServiceStatusLabel" type="Label" parent="SafeArea/RootColumn/Footer"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "刷新：可用　路线情报：未购"
-theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 
 [node name="ShopErrorLabel" type="Label" parent="SafeArea/RootColumn/Footer"]
 unique_name_in_owner = true

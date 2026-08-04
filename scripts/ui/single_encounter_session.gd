@@ -260,15 +260,40 @@ func assign_dropped_die_to_slot(
 	var rule := _find_rule(table_id)
 	if rule == null:
 		return _fail("规则轨不存在")
+	var slot_limit := controller.effective_slot_count(table_id)
+	var slots := controller.state.slot_values(table_id, slot_limit)
+	var source := controller.state.find_assignment(die_id)
+	if (
+		source.is_empty()
+		and slot_index >= 0
+		and slot_index < slots.size()
+		and slots[slot_index] != RoundState.EMPTY_SLOT
+	):
+		var nearest_open := _nearest_open_slot(slots, slot_index)
+		if nearest_open >= 0:
+			slot_index = nearest_open
 	return _accept(
 		controller.assign_die_to_slot(
 			die_id,
 			table_id,
 			slot_index,
-			controller.effective_slot_count(table_id)
+			slot_limit
 		),
 		false
 	)
+
+
+func _nearest_open_slot(slots: Array, requested_index: int) -> int:
+	var nearest_index := -1
+	var nearest_distance := 1_000_000
+	for index in range(slots.size()):
+		if slots[index] != RoundState.EMPTY_SLOT:
+			continue
+		var distance := absi(index - requested_index)
+		if distance < nearest_distance:
+			nearest_index = index
+			nearest_distance = distance
+	return nearest_index
 
 func return_die_to_tray(die_id: StringName) -> bool:
 	return _accept(controller.unassign_die(die_id), false)

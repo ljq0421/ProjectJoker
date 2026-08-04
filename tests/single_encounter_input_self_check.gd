@@ -21,12 +21,52 @@ func _run() -> void:
 	)
 	var d1 := _find_die(&"d1")
 	var left: Control = screen.get_node("%LeftLane")
-	await _drag(d1, _find_slot(left, 0))
+	var second_slot := _find_slot(left, 1)
+	var second_slot_label_point := (
+		second_slot.get_global_rect().position
+		+ Vector2(second_slot.size.x * 0.5, -8.0)
+	)
+	await _drag_to_point(d1, second_slot_label_point)
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"d1", &""],
-		"real drag should assign d1 to the chosen left slot"
+		== [&"", &"d1"],
+		"real drag should assign d1 to slot 2 instead of the first empty slot"
 	)
+	_assert_true(
+		screen.get_node("%InteractionMotionLayer").get_child_count() == 0,
+		"a completed pointer drag must not replay a second automatic die flight"
+	)
+	_assert_true(
+		_find_die(&"d1").modulate.a == 1.0,
+		"the dropped die should be visible immediately after the drag preview ends"
+	)
+	_assert_true(
+		screen.get_node("%InteractionMotionLayer").get_meta(
+			"last_response_sequence", []
+		) == [&"source", &"affected", &"prediction"],
+		"partial placement should update the die and prediction without flashing the lane"
+	)
+	await _drag(_find_die(&"d2"), _find_die(&"d1"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d2", &"d1"],
+		"a free die dropped near occupied slot 2 should use the nearest open slot 1"
+	)
+	_assert_true(
+		screen.get_node("%InteractionMotionLayer").get_meta(
+			"last_response_sequence", []
+		) == [&"source", &"affected", &"rule", &"prediction"],
+		"filling the final slot should add one clear rule-lane response pulse"
+	)
+	await _drag(_find_die(&"d2"), _find_die(&"d1"))
+	_assert_true(
+		screen.get_node("%InteractionMotionLayer").get_meta(
+			"last_response_sequence", []
+		) == [&"source", &"affected", &"prediction"],
+		"rearranging an already-full lane should not replay the full-lane pulse"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	await _right_click(_find_die(&"d2"))
 	await _right_click(_find_die(&"d1"))
 	_assert_true(
 		screen.session.controller.state.assigned_die_ids(&"left").is_empty(),
@@ -55,22 +95,54 @@ func _run() -> void:
 	await _click_lane(left)
 	_assert_true(
 		screen.session.controller.state.assigned_die_ids(&"left")
-		== [&"d1", &"d6"],
+		== [&"d6", &"d1"],
 		"click fallback should assign d6 to left"
 	)
 
 	await _click(_find_die(&"d1"))
-	await _click(_find_slot(left, 1))
+	await _click(_find_slot(left, 0))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"d6", &"d1"],
+		== [&"d1", &"d6"],
 		"clicking an occupied slot with an assigned die selected should swap"
 	)
 	await _click(screen.get_node("%UndoButton"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"d1", &"d6"],
+		== [&"d6", &"d1"],
 		"one undo should reverse the whole slot swap"
+	)
+
+	await _drag(_find_die(&"d1"), _find_die(&"d6"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d1", &"d6"],
+		"dragging an assigned die onto another assigned die should swap slots"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d6", &"d1"],
+		"one undo should reverse a drag-based slot swap"
+	)
+
+	var right: Control = screen.get_node("%RightLane")
+	await _drag(_find_die(&"d2"), _find_slot(right, 0))
+	await _drag(_find_die(&"d1"), _find_die(&"d2"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d6", &"d2"]
+		and screen.session.controller.state.assignments.get(&"right", [])
+		== [&"d1"],
+		"dragging between occupied lanes should swap both slot assignments"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d6", &"d1"]
+		and screen.session.controller.state.assigned_die_ids(&"right").is_empty(),
+		"undo should restore both lanes after a cross-lane drag swap"
 	)
 
 	await _click(_find_die(&"d2"))

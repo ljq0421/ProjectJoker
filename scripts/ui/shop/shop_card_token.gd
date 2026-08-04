@@ -28,7 +28,8 @@ func bind_card(
 	selected: bool,
 	p_disabled: bool,
 	p_role: StringName,
-	price: int = -1
+	price: int = -1,
+	compact_face := false
 ) -> void:
 	card_id = card.id
 	role = p_role
@@ -43,7 +44,7 @@ func bind_card(
 	if face != null:
 		text = ""
 		icon = null
-		face.bind_card(card, identity_copy, price, true)
+		face.bind_card(card, identity_copy, price, not compact_face)
 	else:
 		text = formatter.shop_compact_copy(card, identity_copy, price)
 		icon = load(formatter.effect_icon_path(card))

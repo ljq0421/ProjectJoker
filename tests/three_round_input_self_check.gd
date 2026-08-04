@@ -29,6 +29,38 @@ func _run() -> void:
 		await process_frame
 		var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
 		_assert_true(summary.visible, "commit should open the round summary")
+		var score_block := summary.get_node_or_null("%RoundScoreBlock") as Control
+		var score_value := summary.get_node_or_null("%RoundScoreValue") as Label
+		_assert_true(
+			score_block != null and score_block.visible,
+			"round summary should contain the merged formal-score climax"
+		)
+		_assert_true(
+			score_value != null
+			and score_value.text == str(
+				run_screen.run_session.committed_reports[-1].total
+			),
+			"merged summary should prominently show the committed round total"
+		)
+		_assert_true(
+			summary.get_meta("last_motion_kind", &"") == &"round_complete_climax",
+			"round summary should own the final climax feedback"
+		)
+		var next_button := summary.get_node("%NextRoundButton") as Button
+		var return_button := summary.get_node("%ReturnTeachingButton") as Button
+		if round_number < 3:
+			_assert_true(
+				next_button.visible and return_button.visible,
+				"round-complete summary should show both next and return actions"
+			)
+			_assert_true(
+				absf(
+					(next_button.get_global_rect().get_center().x
+					+ return_button.get_global_rect().get_center().x) * 0.5
+					- summary.get_global_rect().get_center().x
+				) <= 2.0,
+				"next and return actions should be a centered side-by-side pair"
+			)
 		if round_number < 3:
 			_assert_true(
 				run_screen.run_session.status == ThreeRoundEncounterSession.Status.ROUND_SUMMARY,

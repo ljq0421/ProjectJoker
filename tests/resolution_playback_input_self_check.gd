@@ -97,7 +97,12 @@ func _run() -> void:
 	_assert_equal(
 		committed_reports.size(),
 		1,
-		"finishing playback should notify the parent exactly once"
+		"event playback should hand the result directly to the round summary"
+	)
+	var motion_layer: InteractionMotionLayer = screen.get_node("%InteractionMotionLayer")
+	_assert_true(
+		motion_layer.get_node_or_null("ResolutionClimaxOverlay") == null,
+		"formal resolution must not open a second popup before round summary"
 	)
 	if report != null:
 		_assert_equal(

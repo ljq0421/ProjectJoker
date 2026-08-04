@@ -129,7 +129,6 @@ func _on_playback_completed(report: ResolutionReport) -> void:
 	boost_button.button_pressed = false
 	status_label.text = "正式结算已完成 · 共 %d 项" % report.events.size()
 	total_label.text = "正式结算：%d" % report.total
-	_animate_total(&"climax")
 	playback_finished.emit(report)
 
 func event_emphasis_for(
@@ -139,8 +138,6 @@ func event_emphasis_for(
 ) -> StringName:
 	if not event.effect_applied or event.delta == 0:
 		return &"muted"
-	if index == event_count - 1:
-		return &"climax"
 	if absi(event.delta) >= IMPACT_DELTA_THRESHOLD:
 		return &"impact"
 	return &"standard"

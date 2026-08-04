@@ -4,6 +4,9 @@ const DieStateScript = preload("res://scripts/run/die_state.gd")
 const RoundStateScript = preload("res://scripts/run/round_state.gd")
 const RoundActionsScript = preload("res://scripts/run/round_actions.gd")
 const RoundControllerScript = preload("res://scripts/run/round_controller.gd")
+const SingleEncounterSessionScript = preload(
+	"res://scripts/ui/single_encounter_session.gd"
+)
 const EncounterDefinitionScript = preload("res://scripts/resolution/encounter_definition.gd")
 const RuleDefinitionScript = preload("res://scripts/rules/rule_definition.gd")
 
@@ -25,6 +28,21 @@ func run() -> void:
 	assert_false(
 		occupied_rejection.accepted,
 		"an unassigned die must not overwrite an occupied slot"
+	)
+	var empty_hand: Array[CardDefinition] = []
+	var drag_session := SingleEncounterSessionScript.new(
+		first.next_state,
+		_encounter(),
+		empty_hand
+	)
+	assert_true(
+		drag_session.assign_dropped_die_to_slot(&"d2", &"left", 1),
+		"a free dragged die should fall back from an occupied slot"
+	)
+	assert_equal(
+		drag_session.controller.state.assignments[&"left"],
+		[&"d2", &"d1", &""],
+		"drag fallback should use the nearest open slot without replacing the occupant"
 	)
 
 	var second := RoundActionsScript.assign_die_to_slot(

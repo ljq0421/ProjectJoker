@@ -164,8 +164,33 @@ func set_die_card_target_state(
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	return data is Dictionary and data.get("kind") == "die"
 
-func _drop_data(_at_position: Vector2, data: Variant) -> void:
+func _drop_data(at_position: Vector2, data: Variant) -> void:
+	var slot_index := _nearest_slot_index(at_position)
+	if slot_index >= 0:
+		die_drop_to_slot_requested.emit(
+			data.get("die_id"),
+			table_id,
+			slot_index
+		)
+		return
 	die_drop_requested.emit(data.get("die_id"), table_id)
+
+
+func _nearest_slot_index(at_position: Vector2) -> int:
+	var global_drop_point := get_global_transform_with_canvas() * at_position
+	var nearest_index := -1
+	var nearest_distance := INF
+	for child in slots.get_children():
+		if child is not RuleSlot:
+			continue
+		var slot := child as RuleSlot
+		var distance := global_drop_point.distance_squared_to(
+			slot.get_global_rect().get_center()
+		)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_index = slot.index
+	return nearest_index
 
 func _position_hint(rule: RuleDefinition, slot_index: int) -> String:
 	var hint := "位 %d" % (slot_index + 1)

@@ -44,8 +44,8 @@ func bind_slot(
 	tooltip_text += "；右键放回骰盘"
 	var token: DieToken = die_scene.instantiate()
 	token.custom_minimum_size = Vector2(60, 60)
-	token.position = Vector2.ZERO
 	add_child(token)
+	token.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	token.bind_die_with_engravings(
 		die,
 		die.id == selected_die_id,
@@ -55,6 +55,10 @@ func bind_slot(
 	)
 	token.tooltip_text += "\n右键放回骰盘"
 	token.die_activated.connect(_on_die_activated)
+	token.die_drop_requested.connect(
+		func(dropped_die_id: StringName) -> void:
+			die_drop_requested.emit(dropped_die_id, index)
+	)
 	token.gui_input.connect(_on_assigned_die_gui_input.bind(die.id))
 
 func _on_die_activated(activated_die_id: StringName) -> void:

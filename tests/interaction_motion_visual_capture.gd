@@ -22,6 +22,41 @@ func _capture() -> void:
 	await process_frame
 	await process_frame
 
+	# Prime one slot so the captured drop fills the table and legitimately
+	# triggers the stronger rule-response beat.
+	screen.session.assign_dropped_die_to_slot(&"d3", &"middle", 0)
+	screen.session.assign_dropped_die_to_slot(&"d4", &"middle", 1)
+	screen.refresh_from_session()
+	screen._on_die_drop_to_slot_requested(&"d5", &"middle", 2)
+	await create_timer(0.13).timeout
+	await process_frame
+	if not _save("00-response-source.png"):
+		return
+	await create_timer(InteractionMotionLayer.RESPONSE_STEP_SECONDS).timeout
+	await process_frame
+	if not _save("00-response-affected.png"):
+		return
+	await create_timer(InteractionMotionLayer.RESPONSE_STEP_SECONDS).timeout
+	await process_frame
+	if not _save("00-response-rule.png"):
+		return
+	await create_timer(InteractionMotionLayer.RESPONSE_STEP_SECONDS).timeout
+	await process_frame
+	if not _save("00-response-prediction.png"):
+		return
+	screen.reset_teaching_encounter()
+	screen._on_die_activated(&"d5")
+	screen._on_slot_activated(&"middle", 1)
+	await create_timer(0.04).timeout
+	await process_frame
+	if not _save("00-die-landing.png"):
+		return
+	await create_timer(0.34).timeout
+	await process_frame
+	if not _save("00-die-settled.png"):
+		return
+	screen.reset_teaching_encounter()
+
 	screen._on_card_activated(0)
 	await create_timer(0.06).timeout
 	await process_frame
@@ -53,7 +88,19 @@ func _capture() -> void:
 		screen.resolution_panel.advance_playback_for_test(
 			ResolutionPlayback.NORMAL_EVENT_SECONDS * float(report.events.size())
 		)
-	await create_timer(0.08).timeout
+		var summary: RoundSummaryPanel = load(
+			"res://scenes/components/round_summary_panel.tscn"
+		).instantiate()
+		summary.z_index = 80
+		viewport.add_child(summary)
+		await process_frame
+		var summary_session := ThreeRoundEncounterSession.new(null)
+		summary_session.status = ThreeRoundEncounterSession.Status.ROUND_SUMMARY
+		summary_session.committed_reports.append(report)
+		summary_session.cumulative_total = report.total
+		summary_session.target_total = 100
+		summary.show_run_state(summary_session)
+	await create_timer(0.26).timeout
 	await process_frame
 	if not _save("03-resolution-climax.png"):
 		return

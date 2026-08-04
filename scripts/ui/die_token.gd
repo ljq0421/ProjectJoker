@@ -2,12 +2,15 @@ class_name DieToken
 extends Button
 
 signal die_activated(die_id: StringName)
+signal die_drop_requested(die_id: StringName)
 
 const FACE_ICON_ROOT := "res://resources/ui/dream_glass/icons/dice/"
 const REST_SCALE := Vector2.ONE
 const HOVER_SCALE := Vector2(1.08, 1.08)
 const SELECTED_SCALE := Vector2(1.12, 1.12)
 const PRESSED_SCALE := Vector2(0.9, 0.9)
+const LANDING_SCALE := Vector2(1.1, 1.1)
+const RETURN_SCALE := Vector2(0.9, 0.9)
 const MOTION_SECONDS := 0.1
 
 var die_id: StringName
@@ -15,6 +18,7 @@ var _motion_reduced := false
 var _hovered := false
 var _selected := false
 var _pressed := false
+var _accept_die_drops := false
 var _motion_tween: Tween
 
 func _ready() -> void:
@@ -34,6 +38,7 @@ func bind_die(
 	effective_value: int = -1
 ) -> void:
 	die_id = state.id
+	_accept_die_drops = false
 	var selection_changed := _selected != selected
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
@@ -72,6 +77,7 @@ func bind_die_with_engravings(
 	effective_value: int = -1
 ) -> void:
 	bind_die(state, selected, effective_value)
+	_accept_die_drops = assigned
 	var engraving := (
 		catalog.find_engraving(state.engraving_id)
 		if catalog != null and state.engraving_id != &""
@@ -125,7 +131,7 @@ func play_landing_feedback() -> void:
 		return
 	_stop_motion()
 	_update_pivot()
-	scale = Vector2(1.18, 0.82)
+	scale = LANDING_SCALE
 	rotation = 0.035 if String(die_id).hash() % 2 == 0 else -0.035
 	_motion_tween = create_tween().set_parallel(true)
 	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -138,7 +144,7 @@ func play_return_feedback() -> void:
 		return
 	_stop_motion()
 	_update_pivot()
-	scale = Vector2(0.78, 1.18)
+	scale = RETURN_SCALE
 	_motion_tween = create_tween()
 	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_motion_tween.tween_property(self, "scale", REST_SCALE, 0.2)
@@ -160,6 +166,16 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	set_drag_preview(preview)
 	return {"kind": "die", "die_id": die_id}
+
+func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+	return (
+		_accept_die_drops
+		and data is Dictionary
+		and data.get("kind") == "die"
+	)
+
+func _drop_data(_at_position: Vector2, data: Variant) -> void:
+	die_drop_requested.emit(data.get("die_id", &""))
 
 func _face_icon() -> TextureRect:
 	return get_node_or_null("%FaceIcon") as TextureRect

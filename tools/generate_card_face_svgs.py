@@ -24,6 +24,21 @@ IVORY = "#F4F0FF"
 MUTED = "#AAA4C1"
 GLASS = "#0E0B26"
 DEEP = "#080619"
+SUIT_IDENTITY_COLORS = {
+    "♥": "#FF5C8A",
+    "♠": "#8EA7FF",
+    "♦": "#FFB547",
+    "♣": "#65D6A6",
+}
+
+
+def identity_color(identity: str) -> str:
+    if not identity:
+        raise ValueError("card identity must not be empty")
+    try:
+        return SUIT_IDENTITY_COLORS[identity[0]]
+    except KeyError as error:
+        raise ValueError(f"unsupported card suit in identity: {identity}") from error
 
 
 def _u16(data: bytes, offset: int) -> int:
@@ -703,6 +718,7 @@ def artwork(card_id: str) -> str:
 
 def generate_svg(card: dict[str, object], font: TrueTypeFont) -> str:
     rarity = int(card["rarity"])
+    identity = str(card["identity"])
     border = [CYAN, VIOLET, VIOLET][rarity]
     border_width = [2.5, 3, 4][rarity]
     metadata = html.escape(json.dumps(card, ensure_ascii=False, sort_keys=True))
@@ -714,7 +730,17 @@ def generate_svg(card: dict[str, object], font: TrueTypeFont) -> str:
         f'<path d="M5 38V5h33M262 195h33v-33" stroke="{IVORY if rarity == 2 else VIOLET}" stroke-width="2.5" stroke-linecap="round"/>',
         f'<path d="M16 44h268" stroke="{CYAN}" stroke-opacity=".26" stroke-width="1.5"/>',
         f'<rect x="14" y="137" width="272" height="48" rx="10" fill="{DEEP}" fill-opacity=".92" stroke="{CYAN}" stroke-opacity=".28"/>',
-        text_group(font, "card-identity", str(card["identity"]), 18, 32, 16, CYAN, max_width=38, stroke=0.65),
+        text_group(
+            font,
+            "card-identity",
+            identity,
+            18,
+            32,
+            16,
+            identity_color(identity),
+            max_width=38,
+            stroke=0.65,
+        ),
         text_group(font, "card-name", str(card["name"]), 58, 34, 22, IVORY, max_width=162, stroke=0.8),
         rarity_track(rarity),
         artwork(str(card["id"])),

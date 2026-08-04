@@ -75,7 +75,7 @@ func _ready() -> void:
 		lane.die_drop_to_slot_requested.connect(
 			_on_die_drop_to_slot_requested
 		)
-	dice_tray.die_return_requested.connect(_on_die_return_requested)
+	dice_tray.die_return_requested.connect(_on_die_drop_return_requested)
 	%LeftGap.pressed.connect(func() -> void: _on_gap_activated(&"left", &"middle"))
 	%RightGap.pressed.connect(func() -> void: _on_gap_activated(&"middle", &"right"))
 	%MinusButton.pressed.connect(func() -> void: _on_calibrate_pressed(-1))
@@ -595,7 +595,14 @@ func _on_die_activated(die_id: StringName) -> void:
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
 	if accepted and action == &"card_die":
-		_play_card_transition(card_motion, _find_die_token(die_id))
+		var affected_die := _find_die_token(die_id)
+		_play_card_transition(card_motion, affected_die)
+		var assignment := session.controller.state.find_assignment(die_id)
+		_play_card_rule_response(
+			int(payload["card_index"]),
+			affected_die,
+			assignment.get("table_id", &"")
+		)
 	elif not accepted:
 		_reject_feedback(_find_die_token(die_id))
 
@@ -633,6 +640,11 @@ func _on_card_activated(card_index: int) -> void:
 	refresh_from_session()
 	if accepted and action == &"card_global":
 		_play_card_transition(card_motion, %MiddleLane)
+		_play_card_rule_response(
+			int(payload["card_index"]),
+			%MiddleLane.get_node_or_null("%Formula") as Control,
+			&"middle"
+		)
 	elif not accepted:
 		_reject_feedback(_find_hand_card_token(card_index))
 	if report_selection:
@@ -728,17 +740,34 @@ func _complete_die_transition(
 	var target := _find_die_token(die_id)
 	if target == null:
 		return
+	var hidden_modulate := target.modulate
+	hidden_modulate.a = 0.0
+	target.modulate = hidden_modulate
+	target.set_meta("awaiting_motion_arrival", true)
+	var reveal_target := Callable(self, "_finish_die_transition").bind(
+		target.get_instance_id(),
+		returning
+	)
 	interaction_motion_layer.fly_die(
 		capture.get("texture") as Texture2D,
 		capture.get("rect") as Rect2,
 		target.get_global_rect(),
-		returning
+		returning,
+		reveal_target
 	)
-	if returning:
-		target.play_return_feedback()
-	else:
-		target.play_landing_feedback()
-	interaction_motion_layer.pulse_target(target, &"standard")
+
+func _finish_die_transition(target_instance_id: int, _returning: bool) -> void:
+	if not is_instance_id_valid(target_instance_id):
+		return
+	var target := instance_from_id(target_instance_id) as DieToken
+	if target == null or not target.is_inside_tree():
+		return
+	var visible_modulate := target.modulate
+	visible_modulate.a = 1.0
+	target.modulate = visible_modulate
+	target.set_meta("awaiting_motion_arrival", false)
+	target.scale = Vector2.ONE
+	target.rotation = 0.0
 
 func _play_card_transition(capture: Dictionary, target: Control) -> void:
 	if capture.is_empty() or target == null:
@@ -751,7 +780,76 @@ func _play_card_transition(capture: Dictionary, target: Control) -> void:
 		capture.get("rect") as Rect2,
 		target.get_global_rect()
 	)
-	interaction_motion_layer.pulse_target(target, &"impact")
+
+
+func _play_die_rule_response(
+	die_id: StringName,
+	table_id: StringName,
+	initial_delay := 0.12,
+	include_rule_lane := false
+) -> void:
+	var source_token := _find_die_token(die_id)
+	var source: Control = source_token
+	if source_token != null:
+		var face_icon := source_token.get_node_or_null("%FaceIcon") as Control
+		if face_icon != null:
+			source = face_icon
+	var affected: Control = null
+	if source_token != null and source_token.get_parent() is RuleSlot:
+		affected = source_token.get_parent() as Control
+	_play_rule_response(
+		source,
+		affected,
+		table_id,
+		initial_delay,
+		include_rule_lane
+	)
+
+
+func _play_card_rule_response(
+	card_index: int,
+	affected: Control,
+	table_id: StringName,
+	initial_delay := 0.0
+) -> void:
+	_play_rule_response(
+		_find_hand_card_token(card_index),
+		affected,
+		table_id,
+		initial_delay
+	)
+
+
+func _play_rule_response(
+	source: Control,
+	affected: Control,
+	table_id: StringName,
+	initial_delay := 0.0,
+	include_rule_lane := true
+) -> void:
+	var lane := _lane_for_id(table_id)
+	if affected == null and lane != null:
+		affected = lane.get_node_or_null("%Formula") as Control
+	var prediction := resolution_panel.get_node_or_null("%Total") as Control
+	interaction_motion_layer.play_response_sequence([
+		{"role": &"source", "target": source},
+		{"role": &"affected", "target": affected},
+		{
+			"role": &"rule",
+			"target": lane if include_rule_lane else null,
+		},
+		{"role": &"prediction", "target": prediction},
+	], initial_delay)
+
+
+func _table_slots_full(table_id: StringName) -> bool:
+	if table_id == &"":
+		return false
+	var slot_count := session.controller.effective_slot_count(table_id)
+	if slot_count <= 0:
+		return false
+	var slots := session.controller.state.slot_values(table_id, slot_count)
+	return slots.size() == slot_count and not slots.has(RoundState.EMPTY_SLOT)
 
 func _lane_for_id(table_id: StringName) -> RuleLane:
 	var lane_by_id := {
@@ -782,6 +880,7 @@ func _on_lane_activated(table_id: StringName) -> void:
 		payload = {"table_id": table_id}
 	if not _tutorial_allows(action, payload):
 		return
+	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.activate_table(table_id)
 	if accepted:
 		_record_tutorial_action(action, payload)
@@ -791,8 +890,19 @@ func _on_lane_activated(table_id: StringName) -> void:
 	refresh_from_session()
 	if accepted and action == &"card_table":
 		_play_card_transition(card_motion, _lane_for_id(table_id))
+		_play_card_rule_response(
+			int(payload["card_index"]),
+			_lane_for_id(table_id).get_node_or_null("%Formula") as Control,
+			table_id
+		)
 	elif accepted and payload.has("die_id"):
 		_play_die_transition(die_motion, payload["die_id"])
+		_play_die_rule_response(
+			payload["die_id"],
+			table_id,
+			0.32,
+			not table_was_full and _table_slots_full(table_id)
+		)
 	elif not accepted:
 		_reject_feedback(_lane_for_id(table_id))
 
@@ -813,6 +923,7 @@ func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 		card_motion = _capture_card_motion(session.selection.card_index)
 	if not _tutorial_allows(action, payload):
 		return
+	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.activate_slot(table_id, slot_index)
 	if accepted:
 		_record_tutorial_action(action, payload)
@@ -825,16 +936,27 @@ func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 	refresh_from_session()
 	if accepted and action == &"card_table":
 		_play_card_transition(card_motion, _lane_for_id(table_id))
+		_play_card_rule_response(
+			int(payload["card_index"]),
+			_lane_for_id(table_id).get_node_or_null("%Formula") as Control,
+			table_id
+		)
 	elif accepted and payload.has("die_id"):
 		_play_die_transition(die_motion, payload["die_id"])
+		_play_die_rule_response(
+			payload["die_id"],
+			table_id,
+			0.32,
+			not table_was_full and _table_slots_full(table_id)
+		)
 	elif not accepted:
 		_reject_feedback(_lane_for_id(table_id))
 
 func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	var payload := {"die_id": die_id, "table_id": table_id}
-	var die_motion := _capture_die_motion(die_id)
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
+	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.assign_dropped_die(die_id, table_id)
 	if accepted:
 		_record_tutorial_action(&"drag_assign", payload)
@@ -843,7 +965,12 @@ func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
 	if accepted:
-		_play_die_transition(die_motion, die_id)
+		_play_die_rule_response(
+			die_id,
+			table_id,
+			0.12,
+			not table_was_full and _table_slots_full(table_id)
+		)
 	else:
 		_reject_feedback(_lane_for_id(table_id))
 
@@ -852,7 +979,6 @@ func _on_die_drop_to_slot_requested(
 	table_id: StringName,
 	slot_index: int
 ) -> void:
-	var die_motion := _capture_die_motion(die_id)
 	var payload := {
 		"die_id": die_id,
 		"table_id": table_id,
@@ -860,6 +986,7 @@ func _on_die_drop_to_slot_requested(
 	}
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
+	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.assign_dropped_die_to_slot(
 		die_id,
 		table_id,
@@ -872,12 +999,27 @@ func _on_die_drop_to_slot_requested(
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
 	if accepted:
-		_play_die_transition(die_motion, die_id)
+		_play_die_rule_response(
+			die_id,
+			table_id,
+			0.12,
+			not table_was_full and _table_slots_full(table_id)
+		)
 	else:
 		_reject_feedback(_lane_for_id(table_id))
+
+
 func _on_die_return_requested(die_id: StringName) -> void:
+	_return_die_to_tray(die_id, true)
+
+
+func _on_die_drop_return_requested(die_id: StringName) -> void:
+	_return_die_to_tray(die_id, false)
+
+
+func _return_die_to_tray(die_id: StringName, play_transition: bool) -> void:
 	var payload := {"die_id": die_id}
-	var die_motion := _capture_die_motion(die_id)
+	var die_motion := _capture_die_motion(die_id) if play_transition else {}
 	if not _tutorial_allows(&"return_die", payload):
 		return
 	var accepted := session.return_die_to_tray(die_id)
@@ -887,9 +1029,9 @@ func _on_die_return_requested(die_id: StringName) -> void:
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
 	refresh_from_session()
-	if accepted:
+	if accepted and play_transition:
 		_play_die_transition(die_motion, die_id, true)
-	else:
+	elif not accepted:
 		_reject_feedback(_find_die_token(die_id))
 
 func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
@@ -911,6 +1053,11 @@ func _on_gap_activated(left_id: StringName, right_id: StringName) -> void:
 	var gap: Control = %LeftGap if left_id == &"left" else %RightGap
 	if accepted:
 		_play_card_transition(card_motion, gap)
+		_play_card_rule_response(
+			int(payload["card_index"]),
+			gap,
+			left_id
+		)
 	else:
 		_reject_feedback(gap)
 

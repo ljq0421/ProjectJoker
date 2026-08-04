@@ -35,12 +35,12 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(960, 650)
+custom_minimum_size = Vector2(1080, 820)
 layout_mode = 2
 
 [node name="Content" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
 [node name="RewardTitle" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
@@ -93,6 +93,14 @@ layout_mode = 2
 text = "选择一张当前牌进行替换"
 horizontal_alignment = 1
 
+[node name="RewardDeckHelpLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "直接点击牌面；选中的牌会被稀有牌替换，牌组仍保持 12 张。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 15
+
 [node name="RewardDeckGrid" type="GridContainer" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -114,11 +122,31 @@ layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 12
 
+[node name="EngravingEffectLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "先选择一个刻印图符；这里会显示它的触发效果。"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 16
+
 [node name="DieTitle" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "选择骰子"
 horizontal_alignment = 1
+
+[node name="DieHelpLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "D1–D6 是六颗实体骰子的编号（永久编号），不是点数；请选择一颗尚未刻印的骰子。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 15
 
 [node name="DieRow" type="HBoxContainer" parent="Center/Panel/Content"]
 unique_name_in_owner = true
@@ -131,6 +159,15 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "选择刻印面"
 horizontal_alignment = 1
+
+[node name="FaceHelpLabel" type="Label" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "刻印面是 1–6 中的一个触发面：以后这颗骰子掷出该面时刻印激活；把骰子分配进规则台后，按上方效果参与判定或结算。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 15
 
 [node name="FaceGrid" type="GridContainer" parent="Center/Panel/Content"]
 unique_name_in_owner = true

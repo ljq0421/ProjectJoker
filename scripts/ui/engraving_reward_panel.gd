@@ -11,7 +11,6 @@ signal replacement_card_selected(card_id: StringName)
 
 const OPTION_SCENE = preload("res://scenes/components/engraving_option_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/shop_card_token.tscn")
-const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
 
 var selected_engraving_id: StringName = &""
 var selected_die_id: StringName = &""
@@ -19,6 +18,7 @@ var selected_face: int = 0
 var selected_reward_card_id: StringName = &""
 var selected_replaced_card_id: StringName = &""
 var _card_catalog: CardCatalog
+var _engraving_catalog: EngravingCatalog
 
 func _ready() -> void:
 	visible = false
@@ -48,6 +48,7 @@ func bind_reward(
 	selected_reward_card_id = restored_reward_card_id
 	selected_replaced_card_id = restored_replaced_card_id
 	_card_catalog = card_catalog
+	_engraving_catalog = catalog
 	%RewardErrorLabel.text = ""
 
 	for engraving_id in offer_ids:
@@ -72,25 +73,26 @@ func bind_reward(
 		var card := card_catalog.find_card(card_id) if card_catalog != null else null
 		if card == null:
 			continue
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(136, 46)
-		button.toggle_mode = true
-		button.text = card.display_name
-		button.tooltip_text = "%s｜%s" % [
-			BuildIdentities.new().display_name(
-				BuildIdentities.new().identity_for_card(card)
-			),
-			card.rule_text,
-		]
-		button.set_meta("card_id", card_id)
-		button.pressed.connect(_on_replacement_card_pressed.bind(button))
-		%RewardDeckGrid.add_child(button)
+		var token: ShopCardToken = CARD_SCENE.instantiate()
+		token.custom_minimum_size = Vector2(144, 96)
+		%RewardDeckGrid.add_child(token)
+		token.bind_card(card, false, false, &"reward_replacement", -1, true)
+		token.card_selected.connect(_on_replacement_card_selected)
 
 	for profile in profiles:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(92, 58)
 		button.toggle_mode = true
 		button.text = String(profile.id).to_upper()
+		button.icon = load(
+			"res://resources/ui/dream_glass/icons/dice/die_%d.svg"
+			% clampi(profile.value, 1, 6)
+		)
+		button.expand_icon = true
+		button.tooltip_text = (
+			"骰子 %s：这是永久编号，不是点数；当前显示点数为 %d。"
+			% [String(profile.id).to_upper(), profile.value]
+		)
 		if profile.engraving_id != &"":
 			button.text += "\n已刻印"
 			button.disabled = true
@@ -102,7 +104,12 @@ func bind_reward(
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(72, 58)
 		button.toggle_mode = true
-		button.text = str(face)
+		button.text = ""
+		button.icon = load(
+			"res://resources/ui/dream_glass/icons/dice/die_%d.svg" % face
+		)
+		button.expand_icon = true
+		button.tooltip_text = "选择刻印面 %d：以后掷出 %d 时触发刻印。" % [face, face]
 		button.set_meta("face", face)
 		button.pressed.connect(_on_face_button_pressed.bind(button))
 		%FaceGrid.add_child(button)
@@ -137,8 +144,7 @@ func _on_reward_card_selected(card_id: StringName, _role: StringName) -> void:
 	reward_card_selected.emit(card_id)
 	_update_selection()
 
-func _on_replacement_card_pressed(button: Button) -> void:
-	var card_id: StringName = button.get_meta("card_id", &"")
+func _on_replacement_card_selected(card_id: StringName, _role: StringName) -> void:
 	if selected_replaced_card_id != card_id:
 		SfxAccess.play(self, &"card_select")
 	selected_replaced_card_id = card_id
@@ -161,11 +167,22 @@ func _show_card_mode() -> void:
 		%RareCardTitle,
 		%RareCardOfferRow,
 		%RewardDeckTitle,
+		%RewardDeckHelpLabel,
 		%RewardDeckGrid,
 		%ConfirmCardRewardButton,
 	]:
 		node.visible = true
-	for node in [%OfferRow, %DieTitle, %DieRow, %FaceTitle, %FaceGrid, %InstallEngravingButton]:
+	for node in [
+		%OfferRow,
+		%EngravingEffectLabel,
+		%DieTitle,
+		%DieHelpLabel,
+		%DieRow,
+		%FaceTitle,
+		%FaceHelpLabel,
+		%FaceGrid,
+		%InstallEngravingButton,
+	]:
 		node.visible = false
 	_update_selection()
 
@@ -176,11 +193,22 @@ func _show_engraving_mode() -> void:
 		%RareCardTitle,
 		%RareCardOfferRow,
 		%RewardDeckTitle,
+		%RewardDeckHelpLabel,
 		%RewardDeckGrid,
 		%ConfirmCardRewardButton,
 	]:
 		node.visible = false
-	for node in [%OfferRow, %DieTitle, %DieRow, %FaceTitle, %FaceGrid, %InstallEngravingButton]:
+	for node in [
+		%OfferRow,
+		%EngravingEffectLabel,
+		%DieTitle,
+		%DieHelpLabel,
+		%DieRow,
+		%FaceTitle,
+		%FaceHelpLabel,
+		%FaceGrid,
+		%InstallEngravingButton,
+	]:
 		node.visible = true
 	_update_selection()
 
@@ -224,10 +252,13 @@ func _update_selection() -> void:
 		if child is ShopCardToken:
 			child.button_pressed = child.card_id == selected_reward_card_id
 	for child in %RewardDeckGrid.get_children():
-		if child is Button:
+		if child is ShopCardToken:
 			child.button_pressed = (
-				child.get_meta("card_id", &"") == selected_replaced_card_id
+				child.card_id == selected_replaced_card_id
 			)
+			var face := child.get_node_or_null("CardFaceContent")
+			if face != null:
+				face.set_interaction_state(child.button_pressed, false)
 	if %CardRewardModeButton.button_pressed:
 		%RewardSelectionLabel.text = "稀有牌：%s　替换：%s" % [
 			_card_name(selected_reward_card_id),
@@ -235,10 +266,13 @@ func _update_selection() -> void:
 		]
 	else:
 		%RewardSelectionLabel.text = "刻印：%s　骰子：%s　骰面：%s" % [
-			"未选择" if selected_engraving_id == &"" else selected_engraving_id,
-			"未选择" if selected_die_id == &"" else selected_die_id,
+			_engraving_name(selected_engraving_id),
+			"未选择" if selected_die_id == &"" else String(selected_die_id).to_upper(),
 			"未选择" if selected_face == 0 else str(selected_face),
 		]
+		%EngravingEffectLabel.text = _engraving_effect_copy(
+			selected_engraving_id
+		)
 	%ConfirmCardRewardButton.disabled = (
 		selected_reward_card_id == &""
 		or selected_replaced_card_id == &""
@@ -254,6 +288,30 @@ func _card_name(card_id: StringName) -> String:
 		return "未选择"
 	var card := _card_catalog.find_card(card_id) if _card_catalog != null else null
 	return "未知" if card == null else card.display_name
+
+
+func _engraving_name(engraving_id: StringName) -> String:
+	if engraving_id == &"":
+		return "未选择"
+	var engraving := (
+		_engraving_catalog.find_engraving(engraving_id)
+		if _engraving_catalog != null
+		else null
+	)
+	return "未知刻印" if engraving == null else engraving.display_name
+
+
+func _engraving_effect_copy(engraving_id: StringName) -> String:
+	if engraving_id == &"":
+		return "先选择一个刻印图符；这里会显示它的触发效果。"
+	var engraving := (
+		_engraving_catalog.find_engraving(engraving_id)
+		if _engraving_catalog != null
+		else null
+	)
+	if engraving == null:
+		return "当前刻印定义不可用。"
+	return "%s｜%s" % [engraving.display_name, engraving.rule_text]
 
 func _clear_container(container: Container) -> void:
 	for child in container.get_children():

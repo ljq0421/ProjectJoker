@@ -2,6 +2,12 @@ extends "res://tests/test_case.gd"
 
 const ROOT := "res://resources/ui/dream_glass/card_faces/prototypes/"
 const SOURCE_ROOT := "res://resources/ui/dream_glass/card_faces/sources/"
+const SUIT_IDENTITY_COLORS := {
+	CardDefinition.Suit.CLUBS: "#65D6A6",
+	CardDefinition.Suit.HEARTS: "#FF5C8A",
+	CardDefinition.Suit.DIAMONDS: "#FFB547",
+	CardDefinition.Suit.SPADES: "#8EA7FF",
+}
 const CARD_FACE_IDS := [
 	"starter_nudge_down_1",
 	"shop_precision_map",
@@ -112,4 +118,17 @@ func run() -> void:
 				required_group in source,
 				"%s should contain complete-card group %s"
 				% [card_id, required_group]
+			)
+		if card != null:
+			var identity_start := source.find('id="card-identity"')
+			var identity_end := source.find("</g>", identity_start)
+			var identity_group := source.substr(
+				identity_start,
+				identity_end - identity_start
+			)
+			var expected_color: String = SUIT_IDENTITY_COLORS[card.suit]
+			assert_true(
+				'fill="%s"' % expected_color in identity_group,
+				"%s should color its %s identity with %s"
+				% [card_id, card.suit_copy(), expected_color]
 			)

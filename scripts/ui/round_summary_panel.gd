@@ -13,6 +13,10 @@ signal verification_retry_requested
 
 @onready var title_label: Label = %SummaryTitle
 @onready var detail_label: Label = %SummaryDetail
+@onready var dimmer: ColorRect = $Dimmer
+@onready var panel_card: PanelContainer = $Center/Panel
+@onready var score_block: VBoxContainer = %RoundScoreBlock
+@onready var score_value: Label = %RoundScoreValue
 @onready var next_button: Button = %NextRoundButton
 @onready var shop_button: Button = %EnterShopButton
 @onready var retry_button: Button = %RetryRunButton
@@ -24,6 +28,8 @@ signal verification_retry_requested
 @onready var failure_result_label: Label = %FailureResultLabel
 @onready var failure_loss_label: Label = %FailureLossLabel
 @onready var failure_suggestion_label: Label = %FailureSuggestionLabel
+
+var _summary_tween: Tween
 
 func _ready() -> void:
 	visible = false
@@ -46,10 +52,12 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 		ThreeRoundEncounterSession.Status.FAILED:
 			SfxAccess.play(self, &"round_failure")
 		_:
-			SfxAccess.play(self, &"panel_open")
+			SfxAccess.play(self, &"resolution_climax")
 	var last_total := 0
 	if not run_session.committed_reports.is_empty():
 		last_total = run_session.committed_reports[-1].total
+	score_block.visible = true
+	score_value.text = str(last_total)
 	title_label.text = _title_for_status(run_session.status)
 	detail_label.text = (
 		"本轮解析：%d\n累计解析：%d / %d\n目标差值：%d"
@@ -67,6 +75,7 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	retry_button.visible = run_session.status == ThreeRoundEncounterSession.Status.FAILED
 	retry_button.text = "同种子重试"
 	return_button.visible = true
+	_play_round_summary_climax()
 
 func show_room_checkpoint(room_summary: Dictionary) -> void:
 	visible = true
@@ -176,6 +185,7 @@ func close() -> void:
 
 func _hide_actions() -> void:
 	failure_review.visible = false
+	score_block.visible = false
 	for button in [
 		next_button,
 		shop_button,
@@ -186,6 +196,50 @@ func _hide_actions() -> void:
 		verification_retry_button,
 	]:
 		button.visible = false
+
+
+func _play_round_summary_climax() -> void:
+	set_meta("last_motion_kind", &"round_complete_climax")
+	if _summary_tween != null and _summary_tween.is_valid():
+		_summary_tween.kill()
+	var settings := get_node_or_null("/root/SettingsService")
+	var reduce_flashes := false
+	var disable_distortion := false
+	if settings != null and settings.has_method("accessibility_value"):
+		reduce_flashes = bool(settings.call("accessibility_value", &"reduce_flashes"))
+		disable_distortion = bool(
+			settings.call("accessibility_value", &"disable_distortion")
+		)
+	dimmer.modulate.a = 1.0 if reduce_flashes else 0.0
+	panel_card.pivot_offset = panel_card.size * 0.5
+	score_value.pivot_offset = score_value.size * 0.5
+	panel_card.scale = Vector2.ONE if disable_distortion else Vector2(0.82, 0.82)
+	score_value.scale = Vector2.ONE if disable_distortion else Vector2(1.32, 1.32)
+	score_value.modulate = Color.WHITE if reduce_flashes else Color(0.92, 0.72, 1.0, 1.0)
+	_summary_tween = create_tween()
+	_summary_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if not reduce_flashes:
+		_summary_tween.tween_property(dimmer, "modulate:a", 1.0, 0.2)
+		_summary_tween.parallel().tween_property(
+			score_value,
+			"modulate",
+			Color.WHITE,
+			0.46
+		)
+	if not disable_distortion:
+		_summary_tween.parallel().tween_property(
+			panel_card,
+			"scale",
+			Vector2(1.045, 1.045),
+			0.3
+		)
+		_summary_tween.parallel().tween_property(
+			score_value,
+			"scale",
+			Vector2.ONE,
+			0.46
+		)
+		_summary_tween.tween_property(panel_card, "scale", Vector2.ONE, 0.14)
 
 func _title_for_status(status: ThreeRoundEncounterSession.Status) -> String:
 	match status:
