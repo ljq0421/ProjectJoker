@@ -2,6 +2,7 @@ class_name MainMenuScreen
 extends Control
 
 const PRACTICE_SCENE := "res://scenes/run/single_encounter_screen.tscn"
+const DICE_FIRST_PROTOTYPE_SCENE := "res://scenes/run/dice_first_prototype_screen.tscn"
 const GOLD_CORRIDOR_SCENE := "res://scenes/run/gold_corridor_run_screen.tscn"
 const MIRROR_HALL_SCENE := "res://scenes/run/mirror_hall_run_screen.tscn"
 const FACELESS_HUB_SCENE := "res://scenes/run/faceless_hub_run_screen.tscn"
@@ -16,6 +17,7 @@ const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
 
 @onready var tutorial_button: Button = %TutorialButton
 @onready var practice_button: Button = %PracticeButton
+@onready var dice_first_prototype_button: Button = %DiceFirstPrototypeButton
 @onready var gold_corridor_button: Button = %GoldCorridorButton
 @onready var mirror_hall_button: Button = %MirrorHallButton
 @onready var faceless_hub_button: Button = %FacelessHubButton
@@ -67,6 +69,9 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	quit_game_dialog.confirmed.connect(_on_quit_confirmed)
 	practice_button.pressed.connect(func() -> void: _open_scene(PRACTICE_SCENE))
+	dice_first_prototype_button.pressed.connect(
+		func() -> void: _open_scene(DICE_FIRST_PROTOTYPE_SCENE)
+	)
 	gold_corridor_button.pressed.connect(
 		func() -> void: _open_scene(GOLD_CORRIDOR_SCENE)
 	)
@@ -95,11 +100,13 @@ func _apply_build_scope() -> void:
 	route_grid.visible = bool(access["region_practice"])
 	rule_handbook_button.visible = bool(access["developer_practice"])
 	practice_button.visible = bool(access["developer_practice"])
+	dice_first_prototype_button.visible = bool(access["developer_practice"])
 	tutorial_button.visible = bool(access["tutorial"])
 	practice_row.visible = (
 		tutorial_button.visible
 		or rule_handbook_button.visible
 		or practice_button.visible
+		or dice_first_prototype_button.visible
 	)
 	practice_hint.text = (
 		"想重温基础操作？"

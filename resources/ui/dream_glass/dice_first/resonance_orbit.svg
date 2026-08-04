@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="220" viewBox="0 0 1200 220">
+  <defs>
+    <linearGradient id="beam" x1="0" x2="1">
+      <stop offset="0" stop-color="#72f6e8" stop-opacity="0"/>
+      <stop offset="0.22" stop-color="#72f6e8" stop-opacity="0.72"/>
+      <stop offset="0.5" stop-color="#e1a9ff" stop-opacity="0.95"/>
+      <stop offset="0.78" stop-color="#72f6e8" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#72f6e8" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-100%" width="160%" height="300%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <path d="M38 110 C180 24 310 24 448 110 S720 196 866 110 S1050 24 1162 110"
+        fill="none" stroke="url(#beam)" stroke-width="3" filter="url(#glow)"/>
+  <path d="M38 110 C180 196 310 196 448 110 S720 24 866 110 S1050 196 1162 110"
+        fill="none" stroke="url(#beam)" stroke-width="2" opacity="0.72"/>
+  <g fill="#0d0924" stroke="#8cf9ed" stroke-width="3">
+    <circle cx="104" cy="84" r="11"/><circle cx="302" cy="136" r="11"/>
+    <circle cx="500" cy="84" r="11"/><circle cx="700" cy="136" r="11"/>
+    <circle cx="898" cy="84" r="11"/><circle cx="1096" cy="136" r="11"/>
+  </g>
+</svg>
