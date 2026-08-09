@@ -299,14 +299,14 @@ func return_die_to_tray(die_id: StringName) -> bool:
 	return _accept(controller.unassign_die(die_id), false)
 
 func calibrate_die(die_id: StringName, delta: int) -> bool:
-	return _accept(controller.adjust_die(die_id, delta), false)
+	return _accept(controller.adjust_die(die_id, delta), true)
 
 func undo() -> bool:
 	if not undo_allowed:
 		return _fail("落子无悔：本次远征禁止撤销")
 	var accepted := controller.undo()
 	if not accepted:
-		return _fail("当前没有可撤销的操作")
+		return _fail(controller.undo_block_reason())
 	selection.clear()
 	last_error = ""
 	return true
@@ -326,6 +326,29 @@ func is_card_used(card_index: int) -> bool:
 				and played_card.definition.id == id
 			)
 	)
+
+func used_card_target_copy(card_index: int) -> String:
+	if card_index < 0 or card_index >= hand.size():
+		return ""
+	var card_id := hand[card_index].id
+	for played_card in controller.state.played_cards:
+		if (
+			played_card is not PlayedCard
+			or played_card.is_mirror_copy
+			or played_card.definition.id != card_id
+		):
+			continue
+		if played_card.secondary_target != &"":
+			return "已确认 · %s→%s" % [
+				String(played_card.primary_target).to_upper(),
+				String(played_card.secondary_target).to_upper(),
+			]
+		if played_card.primary_target != &"":
+			return "已确认 · %s" % String(
+				played_card.primary_target
+			).to_upper()
+		return "已确认"
+	return ""
 
 func _find_rule(table_id: StringName) -> RuleDefinition:
 	for rule in controller.encounter.rules:

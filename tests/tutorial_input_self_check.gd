@@ -54,6 +54,7 @@ func _run() -> void:
 
 	await _click(_find_die(&"d5"))
 	await _click(screen.get_node("%MinusButton"))
+	await _click(_find_die(&"d5"))
 	await _click_lane(screen.get_node("%RightLane"))
 	_assert_true(tutorial.flow.step_index == 5, "calibration lesson should advance")
 	_assert_true(screen.session.preview().total == 44, "base tutorial state should be 44")

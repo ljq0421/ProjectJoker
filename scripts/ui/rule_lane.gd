@@ -14,6 +14,12 @@ signal die_drop_to_slot_requested(
 
 const SLOT_SCENE = preload("res://scenes/components/rule_slot.tscn")
 const RuleCopy = preload("res://scripts/ui/rule_copy_formatter.gd")
+const RULE_PASSED_TINT := Color(0.56, 1.0, 0.72, 1.0)
+const RULE_FAILED_TINT := Color(1.0, 0.38, 0.48, 1.0)
+const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
+const ILLEGAL_TINT := Color(0.48, 0.48, 0.58, 0.58)
+
+enum EvaluationState { NEUTRAL, PASSED, FAILED }
 
 @onready var title_label: Label = %Title
 @onready var formula_label: Label = %Formula
@@ -21,6 +27,10 @@ const RuleCopy = preload("res://scripts/ui/rule_copy_formatter.gd")
 @onready var slots: HBoxContainer = %Slots
 
 var table_id: StringName
+var evaluation_state := EvaluationState.NEUTRAL
+var _target_active := false
+var _target_legal := false
+var _resolution_focused := false
 
 func _gui_input(event: InputEvent) -> void:
 	if (
@@ -41,7 +51,8 @@ func bind_lane(
 	condition_summary: String = "",
 	effective_die_values: Dictionary = {},
 	effective_coefficient: int = -1,
-	resolution_count: int = 1
+	resolution_count: int = 1,
+	p_evaluation_state: int = EvaluationState.NEUTRAL
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
@@ -99,6 +110,7 @@ func bind_lane(
 			func(id: StringName, index: int) -> void:
 				die_drop_to_slot_requested.emit(id, table_id, index)
 		)
+	set_evaluation_state(p_evaluation_state)
 
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
@@ -134,12 +146,38 @@ func _rule_detail_copy(rule: RuleDefinition) -> String:
 	return detail
 
 func set_target_state(active: bool, legal: bool) -> void:
-	if not active:
-		self_modulate = Color.WHITE
-	elif legal:
-		self_modulate = Color(0.68, 1.0, 0.96, 1.0)
-	else:
-		self_modulate = Color(0.48, 0.48, 0.58, 0.58)
+	_target_active = active
+	_target_legal = legal
+	_apply_lane_tint()
+
+func set_evaluation_state(value: int) -> void:
+	evaluation_state = value
+	for child in slots.get_children():
+		if child is not RuleSlot:
+			continue
+		for nested in child.get_children():
+			if nested is DieToken:
+				nested.set_rule_evaluation_state(value)
+	_apply_lane_tint()
+
+func set_resolution_focus(value: bool) -> void:
+	_resolution_focused = value
+	_apply_lane_tint()
+
+func _apply_lane_tint() -> void:
+	if _resolution_focused:
+		self_modulate = TARGET_TINT
+		return
+	if _target_active:
+		self_modulate = TARGET_TINT if _target_legal else ILLEGAL_TINT
+		return
+	match evaluation_state:
+		EvaluationState.PASSED:
+			self_modulate = RULE_PASSED_TINT
+		EvaluationState.FAILED:
+			self_modulate = RULE_FAILED_TINT
+		_:
+			self_modulate = Color.WHITE
 
 func set_die_target_highlight(value: bool) -> void:
 	for child in slots.get_children():

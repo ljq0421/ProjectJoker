@@ -2,10 +2,23 @@ class_name CardRules
 extends RefCounted
 
 const MAX_CARDS_PER_ROUND := 2
+const Modifiers = preload("res://scripts/run/area_run_modifier_catalog.gd")
 
-static func validate_card_start(state: RoundState) -> OperationResult:
-	if _real_card_count(state) >= MAX_CARDS_PER_ROUND:
-		return OperationResult.new(false, "每轮最多使用两张手法牌")
+static func validate_card_start(
+	state: RoundState,
+	context: ResolutionContext = null
+) -> OperationResult:
+	var effective_limit := MAX_CARDS_PER_ROUND
+	if (
+		context != null
+		and context.area_modifier_id == Modifiers.FACELESS_OPEN_HAND
+	):
+		effective_limit += 1
+	if _real_card_count(state) >= effective_limit:
+		return OperationResult.new(
+			false,
+			"每轮最多使用 %d 张手法牌" % effective_limit
+		)
 	return OperationResult.new(true)
 
 static func play_card(
@@ -18,7 +31,7 @@ static func play_card(
 		return ActionResult.new(false, "手法牌定义缺失", state)
 	if played_card.is_mirror_copy:
 		return ActionResult.new(false, "镜像副本不能作为真实牌使用", state)
-	var start_result := validate_card_start(state)
+	var start_result := validate_card_start(state, context)
 	if not start_result.accepted:
 		return ActionResult.new(false, start_result.reason, state)
 	var real_card_count := _real_card_count(state)
@@ -39,7 +52,8 @@ static func play_card(
 	var mirror_result := MirrorCopyResolver.new().resolve(
 		original,
 		state,
-		encounter
+		encounter,
+		context
 	)
 	if not mirror_result.accepted:
 		return ActionResult.new(false, mirror_result.reason, state)

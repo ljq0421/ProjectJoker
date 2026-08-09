@@ -1,10 +1,13 @@
 class_name MirrorCopyResolver
 extends RefCounted
 
+const Modifiers = preload("res://scripts/run/area_run_modifier_catalog.gd")
+
 func resolve(
 	original: PlayedCard,
 	state: RoundState,
-	encounter: EncounterDefinition
+	encounter: EncounterDefinition,
+	context: ResolutionContext = null
 ) -> MirrorCopyResult:
 	if original == null or original.definition == null:
 		return MirrorCopyResult.new(false, false, null, "镜像来源手法牌缺失")
@@ -58,7 +61,14 @@ func resolve(
 		original.primary_target,
 		original.secondary_target
 	)
-	for effect in original.definition.mirror_effects:
+	var copy_effects := original.definition.mirror_effects
+	if (
+		context != null
+		and context.area_modifier_id
+			== Modifiers.MIRROR_TWIN_ECHO
+	):
+		copy_effects = original.definition.effects
+	for effect in copy_effects:
 		copy.runtime_effects.append(_clone_effect(effect))
 	return MirrorCopyResult.new(true, true, copy)
 

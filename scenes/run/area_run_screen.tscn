@@ -57,6 +57,15 @@ horizontal_alignment = 2
 vertical_alignment = 1
 theme_override_font_sizes/font_size = 16
 
+[node name="RandomContractLabel" type="Label" parent="NavigationBar/ChromeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(248, 48)
+layout_mode = 2
+text = "本区异变"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 15
+
 [node name="EncounterScreen" parent="." instance=ExtResource("3_encounter")]
 unique_name_in_owner = true
 layout_mode = 1

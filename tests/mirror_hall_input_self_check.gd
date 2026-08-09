@@ -14,6 +14,15 @@ func _run() -> void:
 	if screen == null:
 		quit(1)
 		return
+	var narrative := screen.get_node("%NarrativeCard")
+	_assert(narrative.is_open(), "Mirror Hall should reveal its locked random mutation")
+	_assert(
+		"随机锁定" in narrative.get_node("%NarrativeBody").text,
+		"Mirror Hall reveal should explain the random contract"
+	)
+	narrative.get_node("%NarrativeContinueButton").emit_signal("pressed")
+	await process_frame
+	await process_frame
 
 	var route_button := screen.get_node("%RouteChoicePanel").get_node(
 		"%LeftRouteButton"

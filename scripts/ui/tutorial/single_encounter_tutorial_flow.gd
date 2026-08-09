@@ -114,7 +114,7 @@ func instruction(session: SingleEncounterSession) -> String:
 			var d5 := session.controller.state.find_die(&"d5")
 			if d5 != null and d5.value == 5:
 				return "选择骰子 5，点击“点数 -1”把它校准为 4。"
-			return "把校准后的骰子 4 放入右侧“单枚偶数”规则轨。"
+			return "校准已确认；重新选择骰子 5，再放入右侧“单枚偶数”规则轨。"
 		5:
 			return "选择“映射”手法牌，再点击左侧规则轨。"
 		6:

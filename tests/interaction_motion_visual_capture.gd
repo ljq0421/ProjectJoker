@@ -45,6 +45,21 @@ func _capture() -> void:
 	if not _save("00-response-prediction.png"):
 		return
 	screen.reset_teaching_encounter()
+	screen.session.assign_dropped_die_to_slot(&"d2", &"middle", 0)
+	screen.session.assign_dropped_die_to_slot(&"d4", &"middle", 1)
+	screen.refresh_from_session()
+	screen._on_die_drop_to_slot_requested(&"d5", &"middle", 2)
+	await create_timer(
+		InteractionMotionLayer.RESPONSE_STEP_SECONDS * 2.0 + 0.13
+	).timeout
+	await process_frame
+	if not _save("00-response-rule-failure.png"):
+		return
+	await create_timer(0.8).timeout
+	await process_frame
+	if not _save("00-failed-lane-settled.png"):
+		return
+	screen.reset_teaching_encounter()
 	screen._on_die_activated(&"d5")
 	screen._on_slot_activated(&"middle", 1)
 	await create_timer(0.04).timeout
@@ -68,8 +83,11 @@ func _capture() -> void:
 	await process_frame
 	if not _save("02-card-flight.png"):
 		return
+	await create_timer(0.34).timeout
+	await process_frame
+	if not _save("02-card-confirmed.png"):
+		return
 
-	await create_timer(0.32).timeout
 	screen.reset_teaching_encounter()
 	for assignment in [
 		[&"d1", &"left"],

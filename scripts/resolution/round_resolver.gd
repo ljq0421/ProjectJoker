@@ -1,6 +1,8 @@
 class_name RoundResolver
 extends RefCounted
 
+const Modifiers = preload("res://scripts/run/area_run_modifier_catalog.gd")
+
 var _evaluator := RuleEvaluator.new()
 var _engraving_resolver := EngravingResolver.new()
 
@@ -28,6 +30,18 @@ func resolve(
 		and encounter.rule_profile.resolution_direction
 			== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
 	)
+	if (
+		normalized_context.area_modifier_id
+		== Modifiers.MIRROR_REVERSED_FLOW
+	):
+		reverse_order = not reverse_order
+		report.events.append(ResolutionEvent.new(
+			Modifiers.MIRROR_REVERSED_FLOW,
+			"区域异变·错位联动：初始结算方向已翻转",
+			0,
+			report.total,
+			true
+		))
 
 	for played_card in state.played_cards:
 		for effect in played_card.effective_effects():
@@ -306,6 +320,7 @@ func resolve(
 				_append_outcome(report, outcome)
 			continue
 
+		var table_total_before := report.total
 		var resolution_count: int = 1 + repeat_counts.get(rule.id, 0)
 		for repeat_index in range(resolution_count):
 			report.total += result.total
@@ -332,7 +347,17 @@ func resolve(
 				result.total,
 				report.total
 			))
-		resolved_table_totals[rule.id] = result.total * resolution_count
+		_append_lucky_face_outcomes(
+			report,
+			state,
+			assigned_ids,
+			die_values,
+			report.effective_table_coefficients[rule.id],
+			resolution_count,
+			normalized_context,
+			table_total_before
+		)
+		resolved_table_totals[rule.id] = report.total - table_total_before
 		passed_rule_ids[rule.id] = true
 		_append_lock_rewards(
 			report,
@@ -439,6 +464,15 @@ func resolve(
 				"%s：桥接未触发，%s" % [bridge_rule.display_name, reason]
 			)
 
+	_append_area_modifier_outcome(
+		report,
+		state,
+		die_values,
+		resolved_table_totals,
+		passed_rule_ids,
+		normalized_context
+	)
+
 	_append_intel_outcomes(
 		report,
 		state,
@@ -453,12 +487,22 @@ func resolve(
 	report.assigned_dice = assigned.size()
 	report.unassigned_dice = maxi(state.dice.size() - assigned.size(), 0)
 	if normalized_context.dealer != null:
+		var fixed_reward := normalized_context.dealer.fixed_reward
+		if _all_six_dice_are_lucky(state, normalized_context):
+			fixed_reward *= 2
+			report.events.append(ResolutionEvent.new(
+				&"expedition_fortune",
+				"远征天运：六骰全部命中幸运面，庄家固定奖励翻倍",
+				0,
+				report.total,
+				true
+			))
 		report.dealer_reward_lost = mini(
-			normalized_context.dealer.fixed_reward,
+			fixed_reward,
 			report.unassigned_dice * normalized_context.dealer.penalty_per_unassigned_die
 		)
 		report.dealer_reward = maxi(
-			normalized_context.dealer.fixed_reward - report.dealer_reward_lost,
+			fixed_reward - report.dealer_reward_lost,
 			0
 		)
 		report.total += report.dealer_reward
@@ -474,6 +518,151 @@ func resolve(
 			report.total
 		))
 	return report
+
+func _append_lucky_face_outcomes(
+	report: ResolutionReport,
+	state: RoundState,
+	assigned_ids: Array,
+	die_values: Dictionary,
+	effective_coefficient: int,
+	resolution_count: int,
+	context: ResolutionContext,
+	table_total_before: int
+) -> void:
+	if context.lucky_faces.is_empty():
+		return
+	var critical_ids: Array[StringName] = []
+	var bonus := 0
+	for die_id in assigned_ids:
+		var die := state.find_die(die_id)
+		if (
+			die == null
+			or context.lucky_faces.get(die_id, 0) != die.rolled_value
+		):
+			continue
+		critical_ids.append(die_id)
+		bonus += ceili(
+			float(die_values.get(die_id, die.value) * effective_coefficient)
+			* 0.5
+		) * resolution_count
+	if critical_ids.is_empty():
+		return
+	report.total += bonus
+	report.events.append(ResolutionEvent.new(
+		&"lucky_critical",
+		"幸运暴击：%s 命中幸运面，单骰贡献追加 50%%" % "、".join(critical_ids),
+		bonus,
+		report.total,
+		true
+	))
+	if critical_ids.size() >= 3:
+		var table_subtotal := report.total - table_total_before
+		report.total += table_subtotal
+		report.events.append(ResolutionEvent.new(
+			&"full_table_critical",
+			"满台爆击：同一规则台至少三颗暴击骰，本台结算翻倍",
+			table_subtotal,
+			report.total,
+			true
+		))
+
+func _append_area_modifier_outcome(
+	report: ResolutionReport,
+	state: RoundState,
+	die_values: Dictionary,
+	resolved_table_totals: Dictionary,
+	passed_rule_ids: Dictionary,
+	context: ResolutionContext
+) -> void:
+	var modifier_id := context.area_modifier_id
+	if modifier_id == &"":
+		return
+	var passed_values: Array[int] = []
+	for table_id in passed_rule_ids:
+		for die_id in state.assigned_die_ids(table_id):
+			passed_values.append(int(die_values.get(die_id, 0)))
+	var delta := 0
+	var applied := false
+	var label := ""
+	match modifier_id:
+		Modifiers.GOLD_STRAIGHT_GIFT:
+			applied = _longest_consecutive_run(passed_values) >= 3
+			delta = 12 if applied else 0
+			label = "区域异变·顺赐：通过台中的骰子形成三连顺子，额外 +12"
+		Modifiers.GOLD_SAME_RADIANCE:
+			var counts: Dictionary = {}
+			for value in passed_values:
+				counts[value] = counts.get(value, 0) + 1
+			var pair_count := 0
+			for value in counts:
+				pair_count += int(counts[value]) / 2
+			applied = pair_count > 0
+			delta = pair_count * 4
+			label = "区域异变·同辉：通过台组成 %d 对同点骰，额外 +%d" % [pair_count, delta]
+		Modifiers.GOLD_EXTREME_GIFT:
+			applied = not passed_values.is_empty()
+			var maximum := 0
+			for value in passed_values:
+				maximum = maxi(maximum, value)
+			delta = maximum * 2
+			label = "区域异变·极值馈赠：最大点数 %d 额外结算两次" % maximum
+		Modifiers.MIRROR_TWIN_ECHO:
+			for played_card in state.played_cards:
+				if played_card is PlayedCard and played_card.is_mirror_copy:
+					applied = true
+					break
+			label = "区域异变·双生回响：镜像副本使用原牌完整效果"
+		Modifiers.MIRROR_REVERSED_FLOW:
+			return
+		Modifiers.MIRROR_OVERFLOW_TRANSFER:
+			applied = passed_rule_ids.size() == 3 and resolved_table_totals.size() == 3
+			if applied:
+				delta = 2147483647
+				for table_id in resolved_table_totals:
+					delta = mini(delta, int(resolved_table_totals[table_id]))
+			label = "区域异变·缝隙溢分：三台通过，最低台结算分再传递一次"
+		Modifiers.FACELESS_RULE_VEIL:
+			applied = true
+			label = "区域异变·规则虚化：全台占位限制放宽为至少两台"
+		Modifiers.FACELESS_OPEN_HAND:
+			applied = true
+			label = "区域异变·无名通融：每轮真实手法牌上限 +1"
+		_:
+			return
+	if applied:
+		report.total += delta
+	report.events.append(ResolutionEvent.new(
+		modifier_id,
+		label,
+		delta if applied else 0,
+		report.total,
+		applied
+	))
+	if not applied:
+		_record_missed_effect(report, label)
+
+func _longest_consecutive_run(values: Array[int]) -> int:
+	var unique: Dictionary = {}
+	for value in values:
+		unique[value] = true
+	var sorted: Array = unique.keys()
+	sorted.sort()
+	var longest := 0
+	var current := 0
+	var previous := -99
+	for value in sorted:
+		current = current + 1 if int(value) == previous + 1 else 1
+		longest = maxi(longest, current)
+		previous = int(value)
+	return longest
+
+func _all_six_dice_are_lucky(state: RoundState, context: ResolutionContext) -> bool:
+	if state.dice.size() != 6 or context.lucky_faces.size() != 6:
+		return false
+	for die in state.dice:
+		if context.lucky_faces.get(die.id, 0) != die.rolled_value:
+			return false
+	return true
 
 func _append_intel_outcomes(
 	report: ResolutionReport,

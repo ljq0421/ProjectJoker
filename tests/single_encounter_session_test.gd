@@ -14,7 +14,13 @@ func run() -> void:
 	_assign(session, &"d2", &"middle")
 	_assign(session, &"d3", &"middle")
 	_assign(session, &"d4", &"middle")
+	assert_true(session.activate_die(&"d5"), "d5 should select for calibration")
 	assert_true(session.calibrate_die(&"d5", -1), "d5 should calibrate to four")
+	assert_equal(
+		session.selection.kind,
+		InteractionState.Kind.NONE,
+		"accepted calibration should immediately clear the die selection"
+	)
 	_assign(session, &"d5", &"right")
 	assert_equal(session.preview().total, 44, "base placement should preview 44")
 

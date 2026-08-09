@@ -4,6 +4,9 @@ extends Control
 const CARD_SCENE := preload("res://scenes/components/card_token.tscn")
 const GLASS_CYAN := Color(0.68, 1.0, 0.96, 1.0)
 const GLASS_VIOLET := Color(0.92, 0.72, 1.0, 1.0)
+const RULE_SUCCESS := Color(0.56, 1.0, 0.72, 1.0)
+const RULE_FAILURE := Color(1.0, 0.38, 0.48, 1.0)
+const RULE_NEUTRAL := Color(0.68, 0.72, 0.82, 1.0)
 const DIE_CONTACT_SCALE := Vector2(1.06, 1.06)
 const RESPONSE_STEP_SECONDS := 0.16
 
@@ -104,7 +107,12 @@ func fly_card(
 	tween.tween_callback(ghost.queue_free)
 
 
-func pulse_target(target: Control, emphasis: StringName = &"standard") -> void:
+func pulse_target(
+	target: Control,
+	emphasis: StringName = &"standard",
+	peak_override: Color = Color.TRANSPARENT,
+	suppress_color_flash := false
+) -> void:
 	set_meta("last_target_emphasis", emphasis)
 	if target == null or not is_instance_valid(target) or not target.is_inside_tree():
 		return
@@ -120,7 +128,7 @@ func pulse_target(target: Control, emphasis: StringName = &"standard") -> void:
 		&"impact": Vector2(1.1, 1.1),
 		&"climax": Vector2(1.16, 1.16),
 	}.get(emphasis, Vector2(1.065, 1.065))
-	var peak_color: Color = (
+	var peak_color: Color = peak_override if peak_override.a > 0.0 else (
 		GLASS_VIOLET
 		if emphasis in [&"impact", &"climax"]
 		else GLASS_CYAN
@@ -130,7 +138,7 @@ func pulse_target(target: Control, emphasis: StringName = &"standard") -> void:
 	if not _reduce_motion:
 		target.scale = peak_scale
 		tween.tween_property(target, "scale", original_scale, 0.28)
-	if not _reduce_flashes:
+	if not _reduce_flashes and not suppress_color_flash:
 		target.modulate = peak_color
 		tween.tween_property(target, "modulate", original_modulate, 0.3)
 
@@ -140,6 +148,7 @@ func play_response_sequence(stages: Array, initial_delay := 0.0) -> void:
 		_response_tween.kill()
 	var valid_stages: Array[Dictionary] = []
 	var roles: Array[StringName] = []
+	var tones: Array[StringName] = []
 	for raw_stage in stages:
 		if raw_stage is not Dictionary:
 			continue
@@ -147,12 +156,16 @@ func play_response_sequence(stages: Array, initial_delay := 0.0) -> void:
 		if target == null or not is_instance_valid(target):
 			continue
 		var role: StringName = raw_stage.get("role", &"affected")
+		var tone: StringName = raw_stage.get("tone", &"neutral")
 		valid_stages.append({
 			"instance_id": target.get_instance_id(),
 			"role": role,
+			"tone": tone,
 		})
 		roles.append(role)
+		tones.append(tone)
 	set_meta("last_response_sequence", roles)
+	set_meta("last_response_tones", tones)
 	if valid_stages.is_empty() or not is_inside_tree():
 		return
 	_response_tween = create_tween()
@@ -163,7 +176,8 @@ func play_response_sequence(stages: Array, initial_delay := 0.0) -> void:
 		_response_tween.tween_callback(
 			_pulse_response_stage.bind(
 				int(stage["instance_id"]),
-				stage["role"] as StringName
+				stage["role"] as StringName,
+				stage["tone"] as StringName
 			)
 		)
 		if index + 1 < valid_stages.size():
@@ -267,43 +281,57 @@ func finish_resolution_climax_for_test() -> void:
 	_finish_resolution_climax()
 
 
-func _pulse_response_stage(target_instance_id: int, role: StringName) -> void:
+func _pulse_response_stage(
+	target_instance_id: int,
+	role: StringName,
+	tone: StringName = &"neutral"
+) -> void:
 	if not is_instance_id_valid(target_instance_id):
 		return
 	var target := instance_from_id(target_instance_id) as Control
 	if target == null or not target.is_inside_tree():
 		return
 	target.set_meta("last_response_role", role)
+	target.set_meta("last_response_tone", tone)
 	var emphasis: StringName = {
 		&"source": &"standard",
 		&"affected": &"impact",
 		&"rule": &"climax",
 		&"prediction": &"climax",
 	}.get(role, &"standard")
-	pulse_target(target, emphasis)
-	_spawn_response_ring(target, role)
+	var semantic_color := _rule_tone_color(tone) if role == &"rule" else Color.TRANSPARENT
+	pulse_target(target, emphasis, semantic_color, role == &"rule")
+	_spawn_response_ring(target, role, tone)
 
 
-func _spawn_response_ring(target: Control, role: StringName) -> void:
+func _spawn_response_ring(
+	target: Control,
+	role: StringName,
+	tone: StringName = &"neutral"
+) -> void:
 	if target == null or not target.is_inside_tree() or _reduce_flashes:
 		return
 	var node_name := "ResponsePulse_%s" % String(role)
 	var previous := get_node_or_null(NodePath(node_name))
 	if previous != null:
 		previous.free()
-	var color: Color = {
+	var color: Color = _rule_tone_color(tone) if role == &"rule" else {
 		&"source": GLASS_CYAN,
 		&"affected": GLASS_VIOLET,
-		&"rule": Color(1.0, 0.76, 0.34, 1.0),
 		&"prediction": Color(1.0, 0.9, 1.0, 1.0),
 	}.get(role, GLASS_CYAN)
 	var role_copy: String = {
 		&"source": "来源",
 		&"affected": "命中",
-		&"rule": "规则响应",
 		&"prediction": "预测更新",
 	}.get(role, "响应")
 	var is_rule_response := role == &"rule"
+	if is_rule_response:
+		role_copy = {
+			&"success": "规则满足",
+			&"failure": "规则未满足",
+			&"neutral": "规则更新",
+		}.get(tone, "规则更新")
 	var target_rect := _response_target_rect(target).grow(
 		18.0 if is_rule_response else 10.0
 	)
@@ -319,7 +347,7 @@ func _spawn_response_ring(target: Control, role: StringName) -> void:
 		color.r,
 		color.g,
 		color.b,
-		0.18 if is_rule_response else 0.08
+		0.0 if is_rule_response else 0.08
 	)
 	style.border_color = color
 	style.set_border_width_all(8 if is_rule_response else 5)
@@ -328,16 +356,16 @@ func _spawn_response_ring(target: Control, role: StringName) -> void:
 		color.r,
 		color.g,
 		color.b,
-		0.78 if is_rule_response else 0.48
+		0.0 if is_rule_response else 0.48
 	)
-	style.shadow_size = 26 if is_rule_response else 14
+	style.shadow_size = 0 if is_rule_response else 14
 	ring.add_theme_stylebox_override("panel", style)
 	add_child(ring)
 
 	var badge := Label.new()
 	badge.name = "ResponseBadge"
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.text = "规则台已响应" if is_rule_response else role_copy
+	badge.text = role_copy
 	if is_rule_response:
 		badge.set_anchors_preset(Control.PRESET_TOP_WIDE)
 		badge.offset_left = 34.0
@@ -347,7 +375,12 @@ func _spawn_response_ring(target: Control, role: StringName) -> void:
 		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		var badge_style := StyleBoxFlat.new()
-		badge_style.bg_color = Color(0.12, 0.055, 0.03, 0.94)
+		badge_style.bg_color = Color(
+			color.r * 0.12,
+			color.g * 0.12,
+			color.b * 0.12,
+			0.94
+		)
 		badge_style.border_color = color
 		badge_style.set_border_width_all(2)
 		badge_style.set_corner_radius_all(12)
@@ -378,6 +411,14 @@ func _spawn_response_ring(target: Control, role: StringName) -> void:
 		0.22 if is_rule_response else 0.0
 	)
 	tween.chain().tween_callback(ring.queue_free)
+
+func _rule_tone_color(tone: StringName) -> Color:
+	match tone:
+		&"success":
+			return RULE_SUCCESS
+		&"failure":
+			return RULE_FAILURE
+	return RULE_NEUTRAL
 
 
 func _response_target_rect(target: Control) -> Rect2:

@@ -1,6 +1,8 @@
 class_name RoundController
 extends RefCounted
 
+const MAX_UNDOS_PER_ROUND := 1
+
 var state: RoundState
 var encounter: EncounterDefinition
 var resolution_context: ResolutionContext
@@ -12,6 +14,7 @@ var _history: ActionHistory
 var _resolver := RoundResolver.new()
 var _restriction_evaluator := RoundRestrictionEvaluator.new()
 var _committed_report: ResolutionReport
+var _undo_count := 0
 
 func _init(
 	p_state: RoundState,
@@ -76,11 +79,12 @@ func validate_card_start() -> OperationResult:
 	for restriction in active_restrictions:
 		var restriction_result := _restriction_evaluator.validate_card_play(
 			state,
-			restriction
+			restriction,
+			resolution_context
 		)
 		if not restriction_result.accepted:
 			return restriction_result
-	return CardRules.validate_card_start(state)
+	return CardRules.validate_card_start(state, resolution_context)
 
 func validate_card_play(played_card: PlayedCard) -> ActionResult:
 	var start_result := validate_card_start()
@@ -111,13 +115,29 @@ func condition_summary(table_id: StringName) -> String:
 	return "；".join(parts)
 
 func undo() -> bool:
-	if committed:
+	if not can_undo():
 		return false
 	var previous := _history.undo()
 	if previous == null:
 		return false
 	state = previous
+	_undo_count += 1
 	return true
+
+func can_undo() -> bool:
+	return undo_block_reason().is_empty()
+
+func undo_remaining() -> int:
+	return maxi(MAX_UNDOS_PER_ROUND - _undo_count, 0)
+
+func undo_block_reason() -> String:
+	if committed:
+		return "本轮已经结算"
+	if undo_remaining() <= 0:
+		return "本回合最多撤销 1 次"
+	if not _history.can_undo():
+		return "当前没有可撤销的操作"
+	return ""
 
 func preview() -> ResolutionReport:
 	if committed:
@@ -147,7 +167,8 @@ func _attach_restriction(report: ResolutionReport) -> void:
 		var restriction_result := _restriction_evaluator.evaluate_commit(
 			state,
 			encounter,
-			restriction
+			restriction,
+			resolution_context
 		)
 		if not restriction_result.accepted:
 			report.restriction_satisfied = false

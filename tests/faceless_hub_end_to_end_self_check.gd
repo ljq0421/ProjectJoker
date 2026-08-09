@@ -19,6 +19,10 @@ func _run() -> void:
 		quit(1)
 		return
 	screen.guide_auto_start = false
+	var area_reveal := screen.get_node("%NarrativeCard")
+	_assert(area_reveal.is_open(), "Faceless entry should reveal its locked random mutation")
+	area_reveal.get_node("%NarrativeContinueButton").emit_signal("pressed")
+	await _settle()
 
 	for room_number in range(2):
 		screen._on_route_selected(screen.area_session.current_route_ids()[0])

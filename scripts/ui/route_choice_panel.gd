@@ -42,7 +42,9 @@ func bind_routes(
 		presentation.get("route_code", "未知区域"),
 		route_index + 1,
 	]
-	%RouteInstruction.text = presentation["route_instruction"]
+	%RouteInstruction.text = "%s\n左右仅为本次随机摆位，请比较房间规则、目标、奖励与牌组呼应。" % (
+		presentation["route_instruction"]
+	)
 	_bind_route("Left", left, deck_ids, card_catalog, challenge_ids)
 	_bind_route("Right", right, deck_ids, card_catalog, challenge_ids)
 	%LeftRouteButton.set_meta("room_id", left.id)

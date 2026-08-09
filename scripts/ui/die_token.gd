@@ -12,6 +12,12 @@ const PRESSED_SCALE := Vector2(0.9, 0.9)
 const LANDING_SCALE := Vector2(1.1, 1.1)
 const RETURN_SCALE := Vector2(0.9, 0.9)
 const MOTION_SECONDS := 0.1
+const RULE_PASSED_TINT := Color(0.56, 1.0, 0.72, 1.0)
+const RULE_FAILED_TINT := Color(1.0, 0.38, 0.48, 1.0)
+const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
+const ILLEGAL_TINT := Color(0.48, 0.48, 0.58, 0.58)
+
+enum EvaluationState { NEUTRAL, PASSED, FAILED }
 
 var die_id: StringName
 var _motion_reduced := false
@@ -20,6 +26,9 @@ var _selected := false
 var _pressed := false
 var _accept_die_drops := false
 var _motion_tween: Tween
+var _evaluation_state := EvaluationState.NEUTRAL
+var _target_active := false
+var _target_legal := false
 
 func _ready() -> void:
 	pressed.connect(func() -> void: die_activated.emit(die_id))
@@ -39,6 +48,9 @@ func bind_die(
 ) -> void:
 	die_id = state.id
 	_accept_die_drops = false
+	_evaluation_state = EvaluationState.NEUTRAL
+	_target_active = false
+	_target_legal = false
 	var selection_changed := _selected != selected
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
@@ -56,6 +68,7 @@ func bind_die(
 	button_pressed = selected
 	_selected = selected
 	_refresh_face_cue()
+	_apply_semantic_tint()
 	_apply_motion_state(selection_changed)
 	tooltip_text = (
 		"骰子 %s：初始 %d，手法牌后 %d"
@@ -112,7 +125,11 @@ func bind_die_with_engravings(
 	)
 
 func set_legal_target(value: bool) -> void:
-	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
+	self_modulate = TARGET_TINT if value else Color.WHITE
+
+func set_rule_evaluation_state(value: int) -> void:
+	_evaluation_state = value
+	_apply_semantic_tint()
 
 func set_motion_reduced(value: bool) -> void:
 	_motion_reduced = value
@@ -150,12 +167,21 @@ func play_return_feedback() -> void:
 	_motion_tween.tween_property(self, "scale", REST_SCALE, 0.2)
 
 func set_target_state(active: bool, legal: bool) -> void:
-	if not active:
-		self_modulate = Color.WHITE
-	elif legal:
-		self_modulate = Color(0.68, 1.0, 0.96, 1.0)
-	else:
-		self_modulate = Color(0.48, 0.48, 0.58, 0.58)
+	_target_active = active
+	_target_legal = legal
+	_apply_semantic_tint()
+
+func _apply_semantic_tint() -> void:
+	if _target_active:
+		self_modulate = TARGET_TINT if _target_legal else ILLEGAL_TINT
+		return
+	match _evaluation_state:
+		EvaluationState.PASSED:
+			self_modulate = RULE_PASSED_TINT
+		EvaluationState.FAILED:
+			self_modulate = RULE_FAILED_TINT
+		_:
+			self_modulate = Color.WHITE
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var preview := TextureRect.new()

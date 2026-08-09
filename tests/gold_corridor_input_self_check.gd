@@ -40,11 +40,18 @@ func _run() -> void:
 
 	var route_panel: RouteChoicePanel = run_screen.get_node("%RouteChoicePanel")
 	var encounter: SingleEncounterScreen = run_screen.get_node("%EncounterScreen")
-	_assert_true(route_panel.visible, "first route choice should open immediately")
+	var narrative := run_screen.get_node("%NarrativeCard")
 	_assert_true(
-		not run_screen.get_node("%NarrativeCard").is_open(),
-		"standalone area entry should not show an expedition transition"
+		narrative.is_open(),
+		"standalone entry should reveal the randomly locked area mutation"
 	)
+	_assert_true(
+		"随机锁定" in narrative.get_node("%NarrativeBody").text,
+		"mutation reveal should explain that it is random rather than player-picked"
+	)
+	await _click(narrative.get_node("%NarrativeContinueButton"))
+	await _settle()
+	_assert_true(route_panel.visible, "route choice should open after mutation reveal confirmation")
 	var route_order := run_screen.area_session.current_route_ids()
 	var phase_before_block := run_screen.area_session.phase
 	await _click_at_point(encounter.get_node("%ConfirmButton").get_global_rect().get_center())
@@ -82,7 +89,6 @@ func _run() -> void:
 		run_screen.area_session.phase == AreaRunSession.Phase.DEALER,
 		"second shop should enter Iron Abacus"
 	)
-	var narrative := run_screen.get_node("%NarrativeCard")
 	var dealer_guide := run_screen.get_node("%GoldCorridorGuideOverlay")
 	_assert_true(narrative.is_open(), "dealer entry should show Iron Abacus opening")
 	_assert_true(

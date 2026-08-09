@@ -57,6 +57,7 @@ var dealer_definition: DealerDefinition
 var owns_session := true
 var _area_id: StringName = &""
 var _directive_tween: Tween
+var _last_action_feedback := ""
 
 func _ready() -> void:
 	_apply_tutorial_launch_path()
@@ -136,6 +137,7 @@ func bind_external_session(
 	entry_groups.visible = false
 	session = p_session
 	owns_session = false
+	_last_action_feedback = ""
 	set_run_status(area_copy, goal_copy)
 	refresh_from_session()
 
@@ -225,7 +227,8 @@ func refresh_from_session() -> void:
 		var rule := session.controller.encounter.rules[lane_index]
 		var assigned: Array = []
 		var effective_slots := session.controller.effective_slot_count(rule.id)
-		for die_id in state.slot_values(rule.id, effective_slots):
+		var slot_ids: Array = state.slot_values(rule.id, effective_slots)
+		for die_id in slot_ids:
 			assigned.append(
 				null
 				if die_id == RoundState.EMPTY_SLOT
@@ -244,7 +247,8 @@ func refresh_from_session() -> void:
 				rule.id,
 				rule.coefficient
 			)),
-			int(preview.table_resolution_counts.get(rule.id, 1))
+			int(preview.table_resolution_counts.get(rule.id, 1)),
+			_lane_evaluation_state(preview, rule.id, slot_ids)
 		)
 		var table_target_active := (
 			selected_target_type == CardDefinition.TargetType.TABLE
@@ -324,7 +328,8 @@ func refresh_from_session() -> void:
 					if session.selection.card_index == index
 					else ""
 			),
-			"" if card_used else card_start_block_reason
+			"" if card_used else card_start_block_reason,
+			session.used_card_target_copy(index) if card_used else ""
 		)
 		card_token.set_motion_reduced(motion_reduced)
 	for old_index in hand_tokens:
@@ -356,16 +361,27 @@ func refresh_from_session() -> void:
 			dealer_definition.fixed_reward,
 		]
 	error_label.text = session.last_error
-	selection_hint_label.text = session.selected_card_target_hint()
+	var target_hint := session.selected_card_target_hint()
+	selection_hint_label.text = (
+		target_hint if not target_hint.is_empty() else _last_action_feedback
+	)
 	_refresh_active_restriction(state)
 	_refresh_area_directive(state, preview)
 	calibration_label.text = "校准点：%d" % state.calibration_points
 	confirm_button.disabled = session.controller.committed
-	%UndoButton.disabled = session.controller.committed or not session.undo_allowed
+	%UndoButton.disabled = (
+		session.controller.committed
+		or not session.undo_allowed
+		or not session.controller.can_undo()
+	)
 	%UndoButton.tooltip_text = (
 		"落子无悔：本次远征禁止撤销"
 		if not session.undo_allowed
-		else "撤销上一步操作"
+		else (
+			"撤销上一步操作（本回合剩余 1 次）"
+			if session.controller.can_undo()
+			else session.controller.undo_block_reason()
+		)
 	)
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
@@ -526,6 +542,7 @@ func reset_teaching_encounter() -> void:
 		SingleEncounterFixture.make_hand()
 	)
 	owns_session = true
+	_last_action_feedback = ""
 	refresh_from_session()
 
 func start_tutorial_replay() -> void:
@@ -585,6 +602,8 @@ func _on_die_activated(die_id: StringName) -> void:
 		action = &"card_die"
 		payload["card_index"] = session.selection.card_index
 		card_motion = _capture_card_motion(session.selection.card_index)
+	else:
+		_last_action_feedback = ""
 	if not _tutorial_allows(action, payload):
 		return
 	var accepted := session.activate_die(die_id)
@@ -607,6 +626,7 @@ func _on_die_activated(die_id: StringName) -> void:
 		_reject_feedback(_find_die_token(die_id))
 
 func _on_card_activated(card_index: int) -> void:
+	_last_action_feedback = ""
 	var card := session.hand[card_index]
 	var card_motion := _capture_card_motion(card_index)
 	if (
@@ -837,6 +857,7 @@ func _play_rule_response(
 		{
 			"role": &"rule",
 			"target": lane if include_rule_lane else null,
+			"tone": _rule_response_tone(table_id),
 		},
 		{"role": &"prediction", "target": prediction},
 	], initial_delay)
@@ -865,6 +886,7 @@ func _reject_feedback(target: Control = null) -> void:
 	)
 
 func _on_lane_activated(table_id: StringName) -> void:
+	_last_action_feedback = ""
 	var action := &"click_assign"
 	var payload: Dictionary
 	var die_motion: Dictionary = {}
@@ -1069,11 +1091,19 @@ func _on_calibrate_pressed(delta: int) -> void:
 		_reject_feedback(error_label)
 		return
 	var payload := {"die_id": session.selection.die_id, "delta": delta}
+	var before_die := session.controller.state.find_die(payload["die_id"])
+	var before_value := before_die.value if before_die != null else 0
 	if not _tutorial_allows(&"calibrate", payload):
 		return
 	var accepted := session.calibrate_die(session.selection.die_id, delta)
 	if accepted:
 		_record_tutorial_action(&"calibrate", payload)
+		var after_die := session.controller.state.find_die(payload["die_id"])
+		_last_action_feedback = "已确认：%s %d→%d" % [
+			String(payload["die_id"]).to_upper(),
+			before_value,
+			after_die.value if after_die != null else before_value,
+		]
 		SfxAccess.play(self, &"calibrate_up" if delta > 0 else &"calibrate_down")
 	elif not session.last_error.is_empty():
 		SfxAccess.play(self, &"error")
@@ -1089,6 +1119,7 @@ func _on_undo_pressed() -> void:
 		return
 	var accepted := session.undo()
 	if accepted:
+		_last_action_feedback = ""
 		_record_tutorial_action(&"undo", {})
 		SfxAccess.play(self, &"undo")
 	elif not session.last_error.is_empty():
@@ -1124,7 +1155,7 @@ func _on_resolution_source_focus_requested(source_id: StringName) -> void:
 		&"right": %RightLane,
 	}
 	if lane_by_id.has(source_id):
-		lane_by_id[source_id].self_modulate = TARGET_TINT
+		lane_by_id[source_id].set_resolution_focus(true)
 	elif source_id == &"left_gap":
 		%LeftGap.self_modulate = TARGET_TINT
 	elif source_id == &"right_gap":
@@ -1132,9 +1163,44 @@ func _on_resolution_source_focus_requested(source_id: StringName) -> void:
 
 func _clear_resolution_source_focus() -> void:
 	for lane in lanes:
-		lane.self_modulate = Color.WHITE
+		lane.set_resolution_focus(false)
 	%LeftGap.self_modulate = Color.WHITE
 	%RightGap.self_modulate = Color.WHITE
+
+func _lane_evaluation_state(
+	report: ResolutionReport,
+	table_id: StringName,
+	slot_ids: Array
+) -> int:
+	if slot_ids.is_empty() or slot_ids.has(RoundState.EMPTY_SLOT):
+		return RuleLane.EvaluationState.NEUTRAL
+	return (
+		RuleLane.EvaluationState.FAILED
+		if _report_has_rule_failure(report, table_id)
+		else RuleLane.EvaluationState.PASSED
+	)
+
+func _rule_response_tone(table_id: StringName) -> StringName:
+	if table_id == &"":
+		return &"neutral"
+	var slot_count := session.controller.effective_slot_count(table_id)
+	var slot_ids := session.controller.state.slot_values(table_id, slot_count)
+	if slot_ids.is_empty() or slot_ids.has(RoundState.EMPTY_SLOT):
+		return &"neutral"
+	return (
+		&"failure"
+		if _report_has_rule_failure(session.preview(), table_id)
+		else &"success"
+	)
+
+func _report_has_rule_failure(
+	report: ResolutionReport,
+	table_id: StringName
+) -> bool:
+	return report.rule_failures.any(
+		func(failure: Dictionary) -> bool:
+			return failure.get("rule_id", &"") == table_id
+	)
 
 func _accessibility_settings() -> Dictionary:
 	var settings_service := get_node_or_null("/root/SettingsService")

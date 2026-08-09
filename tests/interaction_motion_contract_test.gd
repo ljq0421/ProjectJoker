@@ -175,14 +175,15 @@ func _test_response_sequence_and_climax_contract() -> void:
 		)
 		layer._pulse_response_stage(
 			screen.get_node("%MiddleLane").get_instance_id(),
-			&"rule"
+			&"rule",
+			&"failure"
 		)
 		var rule_pulse := layer.get_node_or_null("ResponsePulse_rule") as Panel
 		assert_true(
 			rule_pulse != null
 			and rule_pulse.get_node_or_null("ResponseBadge") != null
-			and "规则台已响应" in rule_pulse.get_node("ResponseBadge").text,
-			"the full-lane response should carry a prominent in-lane status badge"
+			and "规则未满足" in rule_pulse.get_node("ResponseBadge").text,
+			"a failed full lane should carry a prominent semantic status badge"
 		)
 		if rule_pulse != null:
 			var rule_style := rule_pulse.get_theme_stylebox("panel") as StyleBoxFlat
@@ -190,6 +191,11 @@ func _test_response_sequence_and_climax_contract() -> void:
 				rule_style != null
 				and rule_style.get_border_width(SIDE_LEFT) >= 8,
 				"the full-lane response should use a clearly visible luminous border"
+			)
+			assert_equal(
+				rule_style.border_color,
+				InteractionMotionLayer.RULE_FAILURE,
+				"failed rule responses should use the red semantic color"
 			)
 	screen.free()
 

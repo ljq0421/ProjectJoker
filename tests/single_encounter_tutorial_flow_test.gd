@@ -72,6 +72,13 @@ func run() -> void:
 	_accept(
 		flow,
 		session,
+		&"select_die",
+		{"die_id": &"d5"},
+		func() -> bool: return session.activate_die(&"d5")
+	)
+	_accept(
+		flow,
+		session,
 		&"click_assign",
 		{"die_id": &"d5", "table_id": &"right"},
 		func() -> bool: return session.activate_table(&"right")

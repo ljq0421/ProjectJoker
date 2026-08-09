@@ -66,7 +66,17 @@ func _run() -> void:
 		"rearranging an already-full lane should not replay the full-lane pulse"
 	)
 	await _click(screen.get_node("%UndoButton"))
-	await _right_click(_find_die(&"d2"))
+	_assert_true(
+		screen.session.controller.undo_remaining() == 0
+		and screen.get_node("%UndoButton").disabled,
+		"one successful undo should exhaust and disable the per-round allowance"
+	)
+
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
 	await _right_click(_find_die(&"d1"))
 	_assert_true(
 		screen.session.controller.state.assigned_die_ids(&"left").is_empty(),
@@ -78,6 +88,11 @@ func _run() -> void:
 		"undo should restore a die returned by right-click"
 	)
 
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
 	var tray: Control = screen.get_node("%DiceTray")
 	var tray_drop_point := tray.get_global_rect().position + Vector2(12.0, tray.size.y * 0.5)
 	await _drag_to_point(_find_die(&"d1"), tray_drop_point)
@@ -91,8 +106,12 @@ func _run() -> void:
 		"undo should restore a die returned to the tray"
 	)
 
-	await _click(_find_die(&"d6"))
-	await _click_lane(left)
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d6", &"left", 0, 2)
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
 	_assert_true(
 		screen.session.controller.state.assigned_die_ids(&"left")
 		== [&"d6", &"d1"],
@@ -113,6 +132,12 @@ func _run() -> void:
 		"one undo should reverse the whole slot swap"
 	)
 
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d6", &"left", 0, 2)
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
 	await _drag(_find_die(&"d1"), _find_die(&"d6"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
@@ -126,8 +151,14 @@ func _run() -> void:
 		"one undo should reverse a drag-based slot swap"
 	)
 
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
 	var right: Control = screen.get_node("%RightLane")
-	await _drag(_find_die(&"d2"), _find_slot(right, 0))
+	screen.session.controller.assign_die_to_slot(&"d6", &"left", 0, 2)
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.session.controller.assign_die_to_slot(&"d2", &"right", 0, 1)
+	screen.refresh_from_session()
+	await process_frame
 	await _drag(_find_die(&"d1"), _find_die(&"d2"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
@@ -137,14 +168,19 @@ func _run() -> void:
 		"dragging between occupied lanes should swap both slot assignments"
 	)
 	await _click(screen.get_node("%UndoButton"))
-	await _click(screen.get_node("%UndoButton"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
 		== [&"d6", &"d1"]
-		and screen.session.controller.state.assigned_die_ids(&"right").is_empty(),
+		and screen.session.controller.state.assigned_die_ids(&"right") == [&"d2"],
 		"undo should restore both lanes after a cross-lane drag swap"
 	)
 
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d6", &"left", 0, 2)
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
 	await _click(_find_die(&"d2"))
 	await _click_lane(left)
 	_assert_true(
@@ -156,20 +192,21 @@ func _run() -> void:
 		"full lane must reject another die"
 	)
 
+	var left_evaluation_color := left.self_modulate
 	await _click(_find_card(0))
 	_assert_true(
 		_find_die(&"d2").self_modulate != Color.WHITE,
 		"die cards should highlight dice"
 	)
 	_assert_true(
-		screen.get_node("%LeftLane").self_modulate == Color.WHITE,
-		"die cards should not highlight tables"
+		screen.get_node("%LeftLane").self_modulate == left_evaluation_color,
+		"die cards should preserve rather than replace the rule evaluation color"
 	)
 	await _click(_find_card(2))
 	_assert_true(
 		screen.get_node("%LeftGap").self_modulate != Color.WHITE
-		and screen.get_node("%LeftLane").self_modulate == Color.WHITE,
-		"gap cards should highlight gaps without highlighting tables"
+		and screen.get_node("%LeftLane").self_modulate == left_evaluation_color,
+		"gap cards should highlight gaps without replacing table evaluation"
 	)
 
 	var table_card := _find_card(1)
@@ -184,8 +221,14 @@ func _run() -> void:
 	await _click(screen.get_node("%UndoButton"))
 	_assert_true(not screen.session.is_card_used(1), "undo should restore the card")
 
+	await _reset_round()
 	await _click(_find_card(0))
 	await _click(_find_die(&"d2"))
+	_assert_true(
+		_find_card(0).get_node("%CommittedBadge").visible
+		and "D2" in _find_card(0).get_node("%CommittedBadge").text,
+		"a committed point card should visibly lock its die target"
+	)
 	await _click(_find_card(3))
 	_assert_true(
 		_find_card(1).disabled,
@@ -197,14 +240,30 @@ func _run() -> void:
 		"clicking a card at the round limit must not select it"
 	)
 	await _click(screen.get_node("%UndoButton"))
-	await _click(screen.get_node("%UndoButton"))
 	_assert_true(
 		not _find_card(1).disabled,
 		"undoing below the round limit should re-enable unused cards"
 	)
+	_assert_true(
+		screen.get_node("%UndoButton").disabled,
+		"the same round should not offer a second undo"
+	)
 
+	await _reset_round()
 	await _click(_find_die(&"d5"))
 	await _click(screen.get_node("%MinusButton"))
+	_assert_true(
+		screen.session.selection.kind == InteractionState.Kind.NONE,
+		"calibration should finish immediately and clear the die selection"
+	)
+	_assert_true(
+		"已确认：D5 5→4" in screen.get_node("%SelectionHintLabel").text,
+		"calibration should show an explicit completion message"
+	)
+	screen.session.activate_die(&"d1")
+	screen.session.activate_table(&"left")
+	screen.session.activate_die(&"d6")
+	screen.session.activate_table(&"left")
 	screen.session.activate_die(&"d2")
 	screen.session.activate_table(&"middle")
 	screen.session.activate_die(&"d3")
@@ -248,6 +307,11 @@ func _find_die(id: StringName) -> DieToken:
 		if node is DieToken and not node.is_queued_for_deletion() and node.die_id == id:
 			return node
 	return null
+
+func _reset_round() -> void:
+	screen.reset_teaching_encounter()
+	await process_frame
+	await process_frame
 
 func _find_card(index: int) -> CardToken:
 	for node in screen.find_children("*", "Button", true, false):

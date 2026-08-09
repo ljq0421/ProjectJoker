@@ -4,6 +4,8 @@ extends Control
 const AreaPresentation = preload(
 	"res://scripts/ui/area_presentation_catalog.gd"
 )
+const ModifierCatalog = preload("res://scripts/run/area_run_modifier_catalog.gd")
+const LOCKED_GOLD := Color("f5c94d")
 
 signal expedition_checkpoint_reached(snapshot: Dictionary)
 signal expedition_failed(reason: String)
@@ -24,6 +26,7 @@ signal expedition_exit_requested
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
 @onready var area_chrome_label: Label = %AreaChromeLabel
+@onready var random_contract_label: Label = %RandomContractLabel
 
 var area_session: AreaRunSession
 var _configured_area: AreaDefinition
@@ -33,6 +36,7 @@ var _configured_checkpoint: Dictionary = {}
 var _expedition_mode := false
 var _expedition_has_next_area := false
 var _dealer_opening_shown := false
+var _area_modifier_reveal_pending := false
 
 func _ready() -> void:
 	move_child(navigation_bar, get_child_count() - 1)
@@ -60,7 +64,7 @@ func _ready() -> void:
 	complete_panel.continue_requested.connect(
 		func() -> void: expedition_continue_requested.emit()
 	)
-	narrative_card.confirmed.connect(_on_dealer_opening_confirmed)
+	narrative_card.confirmed.connect(_on_narrative_confirmed)
 	summary_panel.get_node("%ReturnTeachingButton").text = "返回入口"
 	reward_panel.get_node("%InstallEngravingButton").text = "安装刻印并封存区域"
 	start_run()
@@ -126,10 +130,20 @@ func start_run() -> void:
 		_show_start_error(result.reason)
 		return
 	_apply_area_presentation()
+	_apply_random_contract_presentation()
 	complete_panel.configure_expedition(
 		_expedition_mode,
 		_expedition_has_next_area
 	)
+	if _should_reveal_area_modifier():
+		_area_modifier_reveal_pending = narrative_card.show_area_modifier_reveal(
+			area_session.area_definition,
+			area_session.area_modifier_id,
+			area_session.lucky_faces,
+			_accessibility_snapshot()
+		)
+		if _area_modifier_reveal_pending:
+			return
 	_show_current_phase()
 	_emit_expedition_checkpoint()
 
@@ -152,6 +166,35 @@ func _apply_area_presentation() -> void:
 	)
 	encounter_screen.apply_area_presentation(area.id)
 	shop_screen.apply_area_presentation(area.id, area.display_name)
+
+func _apply_random_contract_presentation() -> void:
+	var definition: Dictionary = ModifierCatalog.new().find(
+		area_session.area_modifier_id
+	)
+	if definition.is_empty():
+		random_contract_label.visible = false
+		return
+	random_contract_label.visible = true
+	var lucky_parts: Array[String] = []
+	var lucky_values: Array[String] = []
+	for die_index in range(1, 7):
+		var die_id := StringName("d%d" % die_index)
+		var lucky_face: int = area_session.lucky_faces.get(die_id, 0)
+		lucky_parts.append("D%d=%d" % [
+			die_index,
+			lucky_face,
+		])
+		lucky_values.append(str(lucky_face))
+	random_contract_label.text = "★ %s｜幸运 %s" % [
+		definition["display_name"],
+		"·".join(lucky_values),
+	]
+	random_contract_label.tooltip_text = "%s\n%s\n幸运面：%s" % [
+		definition["display_name"],
+		definition["description"],
+		"　".join(lucky_parts),
+	]
+	random_contract_label.add_theme_color_override("font_color", LOCKED_GOLD)
 
 func _show_current_phase() -> void:
 	match area_session.phase:
@@ -564,6 +607,21 @@ func _on_dealer_opening_confirmed() -> void:
 		return
 	_dealer_opening_shown = true
 	call_deferred("_request_context_hint", &"dealer")
+
+func _on_narrative_confirmed() -> void:
+	if _area_modifier_reveal_pending:
+		_area_modifier_reveal_pending = false
+		_show_current_phase()
+		_emit_expedition_checkpoint()
+		return
+	_on_dealer_opening_confirmed()
+
+func _should_reveal_area_modifier() -> bool:
+	return (
+		area_session != null
+		and area_session.phase == AreaRunSession.Phase.ROUTE_CHOICE
+		and area_session.area_modifier_id != &""
+	)
 
 func _accessibility_snapshot() -> Dictionary:
 	var service := get_tree().root.get_node_or_null("SettingsService")

@@ -35,7 +35,8 @@ func bind_card(
 	selected: bool,
 	used: bool,
 	_selection_step: String = "",
-	disabled_reason: String = ""
+	disabled_reason: String = "",
+	confirmed_copy: String = ""
 ) -> void:
 	card_index = index
 	var selection_changed := _selected != selected
@@ -53,6 +54,10 @@ func bind_card(
 	disabled = used or not disabled_reason.is_empty()
 	if face != null:
 		face.set_interaction_state(selected, disabled)
+	var committed_badge := get_node_or_null("%CommittedBadge") as Label
+	if committed_badge != null:
+		committed_badge.text = confirmed_copy
+		committed_badge.visible = used and not confirmed_copy.is_empty()
 	tooltip_text = "%s · %s · %s · %s；目标：%s；%s" % [
 		definition.suit_copy(),
 		definition.rank_label,

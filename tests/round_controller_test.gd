@@ -11,6 +11,9 @@ const RoundControllerScript = preload("res://scripts/run/round_controller.gd")
 
 func run() -> void:
 	var controller = RoundControllerScript.new(_state(), _encounter())
+	assert_equal(controller.undo_remaining(), 1, "a fresh round should allow one undo")
+	assert_false(controller.undo(), "an empty history should reject undo")
+	assert_equal(controller.undo_remaining(), 1, "a rejected undo must not spend the allowance")
 	assert_true(controller.assign_die(&"d1", &"left", 2).accepted, "assign d1")
 	assert_true(controller.unassign_die(&"d1").accepted, "tray return should unassign d1")
 	assert_equal(
@@ -24,13 +27,17 @@ func run() -> void:
 		[&"d1"],
 		"undo should restore the lane assignment"
 	)
-	assert_true(controller.assign_die(&"d6", &"left", 2).accepted, "assign d6")
-	assert_true(controller.assign_die(&"d2", &"middle", 3).accepted, "assign d2")
-	assert_true(controller.assign_die(&"d3", &"middle", 3).accepted, "assign d3")
-	assert_true(controller.assign_die(&"d4", &"middle", 3).accepted, "assign d4")
-	assert_true(controller.adjust_die(&"d5", -1).accepted, "calibrate d5 from 5 to 4")
-	assert_true(controller.assign_die(&"d5", &"right", 1).accepted, "assign d5")
+	assert_equal(controller.undo_remaining(), 0, "the first successful undo spends the allowance")
+	assert_true(controller.assign_die(&"d6", &"left", 2).accepted, "actions remain legal after undo")
+	assert_false(controller.undo(), "a second undo in the same round must be rejected")
+	assert_equal(
+		controller.undo_block_reason(),
+		"本回合最多撤销 1 次",
+		"the second undo should explain the per-round cap"
+	)
 
+	controller = _completed_controller()
+	assert_equal(controller.undo_remaining(), 1, "a new round controller resets undo")
 	var played := PlayedCardScript.new(_boost_card(), &"left")
 	assert_true(controller.play_card(played).accepted, "play coefficient card")
 	var preview = controller.preview()
@@ -38,6 +45,7 @@ func run() -> void:
 
 	assert_true(controller.undo(), "card play should be undoable")
 	assert_equal(controller.preview().total, 44, "undo should remove the coefficient card")
+	assert_false(controller.undo(), "the card round should also reject a second undo")
 	assert_true(controller.play_card(played).accepted, "card should be playable again")
 
 	var final_preview = controller.preview()
@@ -49,6 +57,17 @@ func run() -> void:
 		"commit events must equal preview events"
 	)
 	assert_false(controller.adjust_die(&"d1", 1).accepted, "committed rounds reject further actions")
+
+func _completed_controller():
+	var controller = RoundControllerScript.new(_state(), _encounter())
+	assert_true(controller.assign_die(&"d1", &"left", 2).accepted, "assign d1")
+	assert_true(controller.assign_die(&"d6", &"left", 2).accepted, "assign d6")
+	assert_true(controller.assign_die(&"d2", &"middle", 3).accepted, "assign d2")
+	assert_true(controller.assign_die(&"d3", &"middle", 3).accepted, "assign d3")
+	assert_true(controller.assign_die(&"d4", &"middle", 3).accepted, "assign d4")
+	assert_true(controller.adjust_die(&"d5", -1).accepted, "calibrate d5 from 5 to 4")
+	assert_true(controller.assign_die(&"d5", &"right", 1).accepted, "assign d5")
+	return controller
 
 func _state():
 	var state := RoundStateScript.new()

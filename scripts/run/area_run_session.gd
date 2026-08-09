@@ -3,6 +3,7 @@ extends RefCounted
 
 const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
 const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd")
+const ModifierCatalog = preload("res://scripts/run/area_run_modifier_catalog.gd")
 
 enum Phase {
 	NOT_STARTED,
@@ -35,6 +36,8 @@ var market_ids: Array[StringName] = []
 var pending_route_ids: Array[StringName] = []
 var intel_tickets := 0
 var die_profiles: Array[DieState] = []
+var lucky_faces: Dictionary = {}
+var area_modifier_id: StringName = &""
 var encounter_session: ThreeRoundEncounterSession
 var shop_session: ShopSession
 var shop_purchase_history: Array[ShopPurchaseRecord] = []
@@ -127,6 +130,19 @@ func start() -> OperationResult:
 	var next_rng := RunRng.new(seed_value)
 	if not _entry_state.is_empty():
 		next_rng.restore_state(_entry_state["rng_state"])
+	var next_lucky_faces: Dictionary = (
+		_entry_state.get("lucky_faces", {}).duplicate(true)
+		if not _entry_state.is_empty()
+		else {}
+	)
+	if next_lucky_faces.is_empty():
+		next_lucky_faces = _roll_lucky_faces(next_rng)
+	var next_modifier_id := ModifierCatalog.new().choose_for_area(
+		area_definition.id,
+		next_rng
+	)
+	if next_modifier_id == &"":
+		return _fail("区域没有可用的随机异变")
 	var next_routes: Array[StringName] = []
 	next_routes.assign(next_rng.shuffle(first_ids))
 
@@ -140,6 +156,8 @@ func start() -> OperationResult:
 		else _entry_state["intel_tickets"]
 	)
 	die_profiles = next_profiles
+	lucky_faces = next_lucky_faces
+	area_modifier_id = next_modifier_id
 	room_index = 0
 	phase = Phase.ROUTE_CHOICE
 	last_error = ""
@@ -477,6 +495,8 @@ func completion_snapshot() -> Dictionary:
 		"die_id": installed_die_id,
 		"face": installed_face,
 		"die_profiles": _profile_snapshots(),
+		"lucky_faces": lucky_faces.duplicate(true),
+		"area_modifier_id": area_modifier_id,
 	}
 
 func checkpoint_snapshot() -> Dictionary:
@@ -519,7 +539,12 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.fixed_hand_ids.assign(room.fixed_hand_ids)
 	setup.round_plans.assign(room.round_plans)
 	setup.fixed_restriction = room.restriction
-	setup.resolution_context = ResolutionContext.new(null, engraving_catalog)
+	setup.resolution_context = ResolutionContext.new(
+		null,
+		engraving_catalog,
+		area_modifier_id,
+		lucky_faces
+	)
 	setup.success_intel_reward = challenges.intel_reward(room.success_intel_reward)
 	setup.prepare_shop_offers = false
 	setup.die_profiles = _clone_profiles(die_profiles)
@@ -585,7 +610,9 @@ func _create_dealer(
 	setup.round_schedule = area_definition.dealer_round_schedule
 	setup.resolution_context = ResolutionContext.new(
 		dealer_catalog.find_dealer(area_definition.dealer_id),
-		engraving_catalog
+		engraving_catalog,
+		area_modifier_id,
+		lucky_faces
 	)
 	setup.success_intel_reward = 0
 	setup.prepare_shop_offers = false
@@ -813,6 +840,23 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 		return _fail("区域检查点情报券无效")
 	if not snapshot["room_index"] is int or snapshot["room_index"] not in [0, 1]:
 		return _fail("区域检查点房间序号无效")
+	var next_lucky_faces: Dictionary = snapshot.get(
+		"lucky_faces",
+		{}
+	).duplicate(true)
+	if not next_lucky_faces.is_empty():
+		var lucky_error := _lucky_faces_error(next_lucky_faces)
+		if not lucky_error.is_empty():
+			return _fail(lucky_error)
+	var next_modifier_id: StringName = snapshot.get("area_modifier_id", &"")
+	if (
+		next_modifier_id != &""
+		and not ModifierCatalog.new().is_valid_for_area(
+			next_modifier_id,
+			area_definition.id
+		)
+	):
+		return _fail("区域检查点随机异变无效")
 
 	var next_shop: ShopSession
 	if snapshot["phase"] == Phase.SHOP:
@@ -828,6 +872,13 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 
 	run_rng = RunRng.new(seed_value)
 	run_rng.restore_state(snapshot["rng_state"])
+	if next_lucky_faces.is_empty():
+		next_lucky_faces = _roll_lucky_faces(run_rng)
+	if next_modifier_id == &"":
+		next_modifier_id = ModifierCatalog.new().choose_for_area(
+			area_definition.id,
+			run_rng
+		)
 	phase = snapshot["phase"]
 	room_index = snapshot["room_index"]
 	route_ids.assign(snapshot["route_ids"])
@@ -839,6 +890,8 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	intel_tickets = snapshot["intel_tickets"]
 	challenge_ids.assign(snapshot["challenge_ids"])
 	die_profiles = next_profiles
+	lucky_faces = next_lucky_faces
+	area_modifier_id = next_modifier_id
 	shop_purchase_history = _purchase_history_from_snapshots(snapshot["purchases"])
 	shop_service_history = _service_history_from_snapshots(snapshot["services"])
 	engraving_offer_ids.assign(snapshot["engraving_offer_ids"])
@@ -884,6 +937,8 @@ func _state_snapshot() -> Dictionary:
 		"pending_route_ids": pending_route_ids.duplicate(),
 		"intel_tickets": intel_tickets,
 		"die_profiles": _profile_snapshots(),
+		"lucky_faces": lucky_faces.duplicate(true),
+		"area_modifier_id": area_modifier_id,
 		"challenge_ids": challenge_ids.duplicate(),
 		"purchases": purchases,
 		"services": services,
@@ -913,6 +968,8 @@ func _copy_runtime_from(other: AreaRunSession) -> void:
 	intel_tickets = other.intel_tickets
 	challenge_ids = other.challenge_ids
 	die_profiles = other.die_profiles
+	lucky_faces = other.lucky_faces
+	area_modifier_id = other.area_modifier_id
 	encounter_session = other.encounter_session
 	shop_session = other.shop_session
 	shop_purchase_history = other.shop_purchase_history
@@ -956,7 +1013,28 @@ func _entry_state_error(state: Dictionary) -> String:
 		)
 		if not challenge_error.is_empty():
 			return challenge_error
+	if state.has("lucky_faces") and not state["lucky_faces"].is_empty():
+		var lucky_error := _lucky_faces_error(state["lucky_faces"])
+		if not lucky_error.is_empty():
+			return lucky_error
 	return _profiles_error(_profiles_from_snapshots(state["die_profiles"]))
+
+func _roll_lucky_faces(rng: RunRng) -> Dictionary:
+	var result: Dictionary = {}
+	for die_index in range(1, 7):
+		result[StringName("d%d" % die_index)] = rng.roll_die()
+	return result
+
+func _lucky_faces_error(faces) -> String:
+	if not faces is Dictionary or faces.size() != 6:
+		return "幸运面必须包含 d1 到 d6 六颗骰子"
+	for die_index in range(1, 7):
+		var die_id := StringName("d%d" % die_index)
+		if not faces.has(die_id):
+			return "幸运面缺少骰子：%s" % die_id
+		if not faces[die_id] is int or faces[die_id] < 1 or faces[die_id] > 6:
+			return "幸运面必须是 1 到 6 的整数"
+	return ""
 
 func _profiles_from_snapshots(snapshots: Array) -> Array[DieState]:
 	var profiles: Array[DieState] = []
@@ -1037,6 +1115,8 @@ func _reset_owned_state() -> void:
 	pending_route_ids.clear()
 	intel_tickets = 0
 	die_profiles.clear()
+	lucky_faces.clear()
+	area_modifier_id = &""
 	encounter_session = null
 	shop_session = null
 	shop_purchase_history.clear()

@@ -2,6 +2,7 @@ class_name ExpeditionSession
 extends RefCounted
 
 const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
+const ModifierCatalog = preload("res://scripts/run/area_run_modifier_catalog.gd")
 
 enum Status {
 	NOT_STARTED,
@@ -90,6 +91,7 @@ func complete_current_area(completion: Dictionary) -> OperationResult:
 		"intel_tickets": completion["intel_tickets"],
 		"die_profiles": completion["die_profiles"].duplicate(true),
 		"rng_state": completion["rng_state"],
+		"lucky_faces": completion.get("lucky_faces", {}).duplicate(true),
 		"challenge_ids": challenge_ids.duplicate(),
 	}
 	completed_areas = next_completed
@@ -247,6 +249,7 @@ func _initial_entry_state() -> Dictionary:
 		"intel_tickets": AreaCatalog.new().gold_corridor().starting_intel_tickets,
 		"die_profiles": profiles,
 		"rng_state": RunRng.new(seed_value).snapshot_state(),
+		"lucky_faces": {},
 		"challenge_ids": challenge_ids.duplicate(),
 	}
 
@@ -269,4 +272,26 @@ static func _completion_error(completion: Dictionary, expected_id: StringName) -
 		return "跨区情报券无效"
 	if not completion["die_profiles"] is Array or completion["die_profiles"].size() != 6:
 		return "跨区骰子配置必须包含六颗骰子"
+	if completion.has("lucky_faces") and not completion["lucky_faces"].is_empty():
+		var lucky_faces = completion["lucky_faces"]
+		if not lucky_faces is Dictionary or lucky_faces.size() != 6:
+			return "跨区幸运面必须包含六颗骰子"
+		for die_index in range(1, 7):
+			var die_id := StringName("d%d" % die_index)
+			if (
+				not lucky_faces.has(die_id)
+				or not lucky_faces[die_id] is int
+				or lucky_faces[die_id] < 1
+				or lucky_faces[die_id] > 6
+			):
+				return "跨区幸运面包含非法点数"
+	if (
+		completion.has("area_modifier_id")
+		and completion["area_modifier_id"] != &""
+		and not ModifierCatalog.new().is_valid_for_area(
+			completion["area_modifier_id"],
+			expected_id
+		)
+	):
+		return "区域完成记录包含错误的地区异变"
 	return ""

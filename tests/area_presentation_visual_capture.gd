@@ -26,11 +26,16 @@ func _run() -> void:
 	screen.configure(_area_definition(), 731031)
 	capture_viewport.add_child(screen)
 	await _settle()
-	_select_first_route()
-	await _settle()
+	if state == "mutation_reveal":
+		await _settle()
+	else:
+		_confirm_area_modifier_reveal_if_needed()
+		await _settle()
+		_select_first_route()
+		await _settle()
 	if state == "failure":
 		await _show_failure_review()
-	elif state != "encounter":
+	elif state not in ["encounter", "mutation_reveal"]:
 		push_error("unknown area presentation state: %s" % state)
 		quit(1)
 		return
@@ -66,6 +71,10 @@ func _select_first_route() -> void:
 	var route: RouteChoicePanel = screen.get_node("%RouteChoicePanel")
 	var button: Button = route.get_node("%LeftRouteButton")
 	screen._on_route_selected(button.get_meta("room_id"))
+
+func _confirm_area_modifier_reveal_if_needed() -> void:
+	if screen.narrative_card.is_open():
+		screen._on_narrative_confirmed()
 
 func _show_failure_review() -> void:
 	screen.area_session.encounter_session.target_total = 9999
