@@ -32,7 +32,14 @@ func shop_price(base_price: int) -> int:
 	return base_price
 
 func undo_allowed() -> bool:
-	return not has(ExpeditionConfigs.NO_UNDO)
+	return true
+
+func undo_mode() -> RoundController.UndoMode:
+	return (
+		RoundController.UndoMode.GLOBAL_ONE
+		if has(ExpeditionConfigs.NO_UNDO)
+		else RoundController.UndoMode.SPLIT
+	)
 
 func full_table_required() -> bool:
 	return has(ExpeditionConfigs.FULL_TABLE_RULE)

@@ -36,7 +36,7 @@ func _test_all_route_combinations_complete() -> void:
 		assert_equal(area.phase, AreaRunSession.Phase.COMPLETE, "%s completes" % [combination])
 		var summary := area.completion_snapshot()
 		assert_equal(summary.area_id, &"mirror_hall", "summary identifies mirror hall")
-		assert_equal(summary.deck_ids.size(), 12, "summary keeps twelve cards")
+		assert_equal(summary.deck_ids.size(), 14, "summary keeps both appended purchases")
 		assert_equal(summary.die_profiles.size(), 6, "summary keeps six dice")
 		assert_equal(summary.rooms.size(), 2, "summary keeps both rooms")
 		assert_true(summary.has("services"), "summary exposes service records")
@@ -156,6 +156,19 @@ func _complete_current_encounter(area: AreaRunSession) -> void:
 		assert_true(area.accept_encounter_report(report).accepted, "report should be accepted")
 		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "next round should begin")
+	if area.phase == AreaRunSession.Phase.EVENT:
+		_resolve_event(area)
+
+func _resolve_event(area: AreaRunSession) -> void:
+	var result: OperationResult
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			result = area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			result = area.resolve_event(&"rest")
+		_:
+			result = area.resolve_event(&"intel")
+	assert_true(result.accepted, "fixture event resolves")
 
 func _new_mirror_run() -> AreaRunSession:
 	return AreaRunSession.new(SEED, AreaCatalog.new().mirror_hall())

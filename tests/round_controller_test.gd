@@ -32,7 +32,7 @@ func run() -> void:
 	assert_false(controller.undo(), "a second undo in the same round must be rejected")
 	assert_equal(
 		controller.undo_block_reason(),
-		"本回合最多撤销 1 次",
+		"落子无悔：本回合的全局撤销已经用完",
 		"the second undo should explain the per-round cap"
 	)
 

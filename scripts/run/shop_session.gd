@@ -18,6 +18,8 @@ class RestoreResult extends RefCounted:
 const CARD_PRICE := 1
 const REFRESH_PRICE := 1
 const INTEL_PRICE := 1
+const REMOVE_CARD_PRICE := 1
+const TRANSFER_ENGRAVING_PRICE := 2
 
 var catalog: CardCatalog
 var deck_ids: Array[StringName] = []
@@ -31,9 +33,14 @@ var intel_tickets: int
 var intel_snapshot: ShopIntelSnapshot
 var shop_index := 0
 var services_enabled := false
+var append_purchases := false
 var price_modifier := 0
 var refresh_used := false
 var intel_unlocked := false
+var remove_card_used := false
+var transfer_engraving_used := false
+var area_refresh_count := 0
+var rare_guarantee_unavailable_reason := ""
 var initialization_error := ""
 var last_error: String = ""
 
@@ -45,7 +52,9 @@ func _init(
 	p_intel_snapshot: ShopIntelSnapshot = null,
 	p_shop_index: int = 0,
 	p_services_enabled: bool = false,
-	p_price_modifier: int = 0
+	p_price_modifier: int = 0,
+	p_append_purchases: bool = false,
+	p_area_refresh_count: int = 0
 ) -> void:
 	catalog = p_catalog
 	deck_ids = p_deck_ids.duplicate()
@@ -55,6 +64,8 @@ func _init(
 	shop_index = p_shop_index
 	services_enabled = p_services_enabled
 	price_modifier = p_price_modifier
+	append_purchases = p_append_purchases
+	area_refresh_count = p_area_refresh_count
 	initialization_error = _initialization_error()
 	if initialization_error.is_empty():
 		offer_ids = _next_offer_batch(deck_ids, [])
@@ -65,7 +76,7 @@ func _init(
 			shown_offer_ids.assign(offer_ids)
 	last_error = initialization_error
 
-func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
+func purchase(offer_id: StringName, replaced_id: StringName = &"") -> OperationResult:
 	if not initialization_error.is_empty():
 		return _fail(initialization_error)
 	if offer_id not in offer_ids:
@@ -74,20 +85,22 @@ func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
 		return _fail("这张候选牌已经售出")
 	if catalog.find_card(offer_id) == null:
 		return _fail("候选牌定义不存在")
-	if replaced_id not in deck_ids:
-		return _fail("要替换的旧牌不在当前牌组中")
-	if catalog.find_card(replaced_id) == null:
-		return _fail("旧牌定义不存在")
-	if intel_tickets < card_price():
+	if append_purchases and deck_ids.size() >= CardDeck.MAX_DECK_SIZE:
+		return _fail("牌组已达到十五张上限")
+	if intel_tickets < card_price(offer_id):
 		return _fail("情报券不足")
 	if offer_id in deck_ids:
 		return _fail("牌组中已经存在这张候选牌")
 
+	if not append_purchases and replaced_id not in deck_ids:
+		return _fail("待替换牌不在当前牌组中")
 	var next_deck: Array[StringName] = deck_ids.duplicate()
-	var replace_index: int = next_deck.find(replaced_id)
-	next_deck[replace_index] = offer_id
-	if next_deck.size() != 12:
-		return _fail("替换后的牌组必须保持十二张")
+	if append_purchases:
+		next_deck.append(offer_id)
+	else:
+		next_deck[next_deck.find(replaced_id)] = offer_id
+	if next_deck.size() > CardDeck.MAX_DECK_SIZE:
+		return _fail("购买后的牌组不能超过十五张")
 	var unique_ids: Dictionary = {}
 	for card_id in next_deck:
 		if catalog.find_card(card_id) == null:
@@ -97,12 +110,12 @@ func purchase(offer_id: StringName, replaced_id: StringName) -> OperationResult:
 		unique_ids[card_id] = true
 
 	deck_ids = next_deck
-	intel_tickets -= card_price()
+	intel_tickets -= card_price(offer_id)
 	sold_offer_ids.append(offer_id)
 	purchase_records.append(ShopPurchaseRecord.new(
 		offer_id,
-		replaced_id,
-		card_price()
+		&"" if append_purchases else replaced_id,
+		card_price(offer_id)
 	))
 	last_error = ""
 	return OperationResult.new(true)
@@ -116,7 +129,11 @@ func refresh_offers() -> OperationResult:
 		return _fail("本店已经刷新过候选")
 	if intel_tickets < refresh_price():
 		return _fail("情报券不足，无法刷新")
-	var next_offers := _next_offer_batch(deck_ids, shown_offer_ids)
+	var next_offers := _next_offer_batch(
+		deck_ids,
+		shown_offer_ids,
+		area_refresh_count + 1 == 2
+	)
 	if next_offers.size() != 3:
 		return _fail("没有三张未展示的新候选可供刷新")
 
@@ -125,10 +142,61 @@ func refresh_offers() -> OperationResult:
 	sold_offer_ids.clear()
 	intel_tickets -= refresh_price()
 	refresh_used = true
+	area_refresh_count += 1
 	service_records.append(ShopServiceRecord.new(
 		shop_index,
 		ShopServiceRecord.ServiceType.REFRESH,
 		refresh_price()
+	))
+	last_error = ""
+	return OperationResult.new(true)
+
+func remove_card(card_id: StringName) -> OperationResult:
+	if not services_enabled:
+		return _fail("当前商店不提供删牌服务")
+	if remove_card_used:
+		return _fail("本店已经使用过删牌服务")
+	if deck_ids.size() <= CardDeck.MIN_DECK_SIZE:
+		return _fail("牌组必须保留至少十二张牌")
+	if card_id not in deck_ids:
+		return _fail("待移除牌不在当前牌组中")
+	if intel_tickets < remove_card_price():
+		return _fail("情报券不足，无法移除卡牌")
+	deck_ids.erase(card_id)
+	intel_tickets -= remove_card_price()
+	remove_card_used = true
+	service_records.append(ShopServiceRecord.new(
+		shop_index,
+		ShopServiceRecord.ServiceType.REMOVE_CARD,
+		remove_card_price(),
+		-1,
+		card_id
+	))
+	last_error = ""
+	return OperationResult.new(true)
+
+func charge_engraving_transfer(
+	source_die_id: StringName,
+	target_die_id: StringName,
+	target_face: int
+) -> OperationResult:
+	if not services_enabled:
+		return _fail("当前商店不提供刻印转移服务")
+	if transfer_engraving_used:
+		return _fail("本店已经使用过刻印转移服务")
+	if intel_tickets < transfer_engraving_price():
+		return _fail("情报券不足，无法转移刻印")
+	intel_tickets -= transfer_engraving_price()
+	transfer_engraving_used = true
+	service_records.append(ShopServiceRecord.new(
+		shop_index,
+		ShopServiceRecord.ServiceType.TRANSFER_ENGRAVING,
+		transfer_engraving_price(),
+		-1,
+		&"",
+		source_die_id,
+		target_die_id,
+		target_face
 	))
 	last_error = ""
 	return OperationResult.new(true)
@@ -174,6 +242,10 @@ func to_snapshot() -> Dictionary:
 			"service_type": record.service_type,
 			"price": record.price,
 			"intel_kind": record.intel_kind,
+			"target_card_id": record.target_card_id,
+			"source_die_id": record.source_die_id,
+			"target_die_id": record.target_die_id,
+			"target_face": record.target_face,
 		})
 	return {
 		"deck_ids": deck_ids.duplicate(),
@@ -187,9 +259,14 @@ func to_snapshot() -> Dictionary:
 		"intel_snapshot": _intel_to_snapshot(intel_snapshot),
 		"shop_index": shop_index,
 		"services_enabled": services_enabled,
+		"append_purchases": append_purchases,
 		"price_modifier": price_modifier,
 		"refresh_used": refresh_used,
 		"intel_unlocked": intel_unlocked,
+		"remove_card_used": remove_card_used,
+		"transfer_engraving_used": transfer_engraving_used,
+		"area_refresh_count": area_refresh_count,
+		"rare_guarantee_unavailable_reason": rare_guarantee_unavailable_reason,
 	}
 
 static func from_snapshot(
@@ -254,7 +331,9 @@ static func from_snapshot(
 		intel_result.snapshot,
 		snapshot["shop_index"],
 		snapshot["services_enabled"],
-		snapshot["price_modifier"]
+		snapshot["price_modifier"],
+		bool(snapshot.get("append_purchases", false)),
+		int(snapshot.get("area_refresh_count", 0))
 	)
 	if not restored.initialization_error.is_empty():
 		return RestoreResult.new(false, restored.initialization_error)
@@ -278,21 +357,42 @@ static func from_snapshot(
 			entry.get("shop_index", -1),
 			entry.get("service_type", -1),
 			entry.get("price", -1),
-			entry.get("intel_kind", -1)
+			entry.get("intel_kind", -1),
+			entry.get("target_card_id", &""),
+			entry.get("source_die_id", &""),
+			entry.get("target_die_id", &""),
+			entry.get("target_face", 0)
 		))
 	restored.refresh_used = snapshot["refresh_used"]
 	restored.intel_unlocked = snapshot["intel_unlocked"]
+	restored.remove_card_used = bool(snapshot.get("remove_card_used", false))
+	restored.transfer_engraving_used = bool(
+		snapshot.get("transfer_engraving_used", false)
+	)
+	restored.rare_guarantee_unavailable_reason = String(
+		snapshot.get("rare_guarantee_unavailable_reason", "")
+	)
 	restored.last_error = ""
 	return RestoreResult.new(true, "", restored)
 
-func card_price() -> int:
-	return CARD_PRICE + price_modifier
+func card_price(card_id: StringName = &"") -> int:
+	var base_price := CARD_PRICE
+	var card := catalog.find_card(card_id) if catalog != null and card_id != &"" else null
+	if append_purchases and card != null and card.rarity == CardDefinition.Rarity.RARE:
+		base_price = 2
+	return base_price + price_modifier
 
 func refresh_price() -> int:
 	return REFRESH_PRICE + price_modifier
 
 func intel_price() -> int:
 	return INTEL_PRICE + price_modifier
+
+func remove_card_price() -> int:
+	return REMOVE_CARD_PRICE + price_modifier
+
+func transfer_engraving_price() -> int:
+	return TRANSFER_ENGRAVING_PRICE + price_modifier
 
 class IntelRestoreResult extends RefCounted:
 	var accepted: bool
@@ -339,8 +439,11 @@ static func _intel_from_snapshot(value: Variant) -> IntelRestoreResult:
 func _initialization_error() -> String:
 	if catalog == null:
 		return "商店卡牌目录不存在"
-	if deck_ids.size() != 12:
-		return "商店牌组必须包含十二张牌"
+	if (
+		deck_ids.size() < CardDeck.MIN_DECK_SIZE
+		or deck_ids.size() > CardDeck.MAX_DECK_SIZE
+	):
+		return "商店牌组必须包含十二至十五张牌"
 	var deck_seen: Dictionary = {}
 	for card_id in deck_ids:
 		if catalog.find_card(card_id) == null:
@@ -369,7 +472,8 @@ func _initialization_error() -> String:
 
 func _next_offer_batch(
 	current_deck_ids: Array[StringName],
-	already_shown_ids: Array[StringName]
+	already_shown_ids: Array[StringName],
+	guarantee_rare: bool = false
 ) -> Array[StringName]:
 	var next_offers: Array[StringName] = []
 	for card_id in market_priority_ids:
@@ -378,6 +482,24 @@ func _next_offer_batch(
 		next_offers.append(card_id)
 		if next_offers.size() == 3:
 			break
+	if guarantee_rare:
+		var rare_id: StringName = &""
+		for card_id in market_priority_ids:
+			var card := catalog.find_card(card_id)
+			if (
+				card_id not in current_deck_ids
+				and card != null
+				and card.rarity == CardDefinition.Rarity.RARE
+			):
+				rare_id = card_id
+				break
+		if rare_id == &"":
+			rare_guarantee_unavailable_reason = (
+				"稀有牌池已全部收集，第二次刷新无法保底"
+			)
+		elif rare_id not in next_offers and not next_offers.is_empty():
+			next_offers[-1] = rare_id
+			rare_guarantee_unavailable_reason = ""
 	return next_offers
 
 func _fail(reason: String) -> OperationResult:

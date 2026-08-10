@@ -94,6 +94,19 @@ func _complete_encounter(area: AreaRunSession, choose_restriction: bool) -> void
 				area.advance_encounter_round().accepted,
 				"next encounter round should start"
 			)
+	if area.phase == AreaRunSession.Phase.EVENT:
+		_resolve_event(area)
+
+func _resolve_event(area: AreaRunSession) -> void:
+	var result: OperationResult
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			result = area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			result = area.resolve_event(&"rest")
+		_:
+			result = area.resolve_event(&"intel")
+	assert_true(result.accepted, "fixture event should resolve")
 
 func _prepare_distribution_restriction(controller: RoundController) -> void:
 	var restriction := controller.active_restriction

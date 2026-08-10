@@ -482,6 +482,41 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "确认结算"
 
+[node name="EmergencyBar" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EmergencyTicketLabel" type="Label" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "应急情报：0"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
+
+[node name="PaidRerollButton" type="Button" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 42)
+layout_mode = 2
+text = "重投所选骰（1）"
+tooltip_text = "选择一颗未锁定骰子；保留既有校准差值和卡牌目标；不可撤销"
+
+[node name="PaidCalibrationButton" type="Button" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 42)
+layout_mode = 2
+text = "增加 1 校准（2）"
+tooltip_text = "本轮一次；不可撤销"
+
+[node name="PaidRetryButton" type="Button" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 42)
+layout_mode = 2
+text = "同种子重试（3）"
+tooltip_text = "从当前房间入口按相同种子重试；每区域一次；不可撤销"
+
 [node name="ResolutionPanel" parent="SafeArea/RootColumn/Body" instance=ExtResource("4")]
 unique_name_in_owner = true
 layout_mode = 2
@@ -509,3 +544,14 @@ grow_vertical = 2
 mouse_filter = 2
 z_index = 40
 script = ExtResource("10_motion")
+
+[node name="PaidRetryConfirmationDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "确认同种子重试"
+initial_position = 1
+size = Vector2i(580, 230)
+exclusive = true
+unresizable = true
+dialog_text = "支付 3 情报后，从当前房间入口按相同种子重试。本次消费不可撤销，且本区域仅可使用一次。"
+ok_button_text = "支付并重试"
+cancel_button_text = "保留当前进度"

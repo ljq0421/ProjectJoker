@@ -9,7 +9,7 @@ func run() -> void:
 func _test_fixed_build_starts() -> void:
 	var area := _new_run()
 	assert_true(area.start().accepted, "faceless area should start")
-	assert_equal(area.market_ids.size(), 28, "faceless market should contain twenty-eight cards")
+	assert_equal(area.market_ids.size(), 30, "faceless market should contain thirty cards")
 	assert_equal(area.intel_tickets, 8, "fixed build starts with eight intel")
 	assert_equal(area.deck_ids, area.area_definition.starting_deck_ids, "deck is fixed")
 	var d3 := area.die_profiles.filter(
@@ -92,6 +92,19 @@ func _complete_normal_encounter(area: AreaRunSession) -> void:
 		_commit_current_round(area)
 		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "advance normal round")
+	if area.phase == AreaRunSession.Phase.EVENT:
+		_resolve_event(area)
+
+func _resolve_event(area: AreaRunSession) -> void:
+	var result: OperationResult
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			result = area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			result = area.resolve_event(&"rest")
+		_:
+			result = area.resolve_event(&"intel")
+	assert_true(result.accepted, "fixture event resolves")
 
 func _prepare_fixed_restriction(controller: RoundController) -> void:
 	var restriction := controller.active_restriction

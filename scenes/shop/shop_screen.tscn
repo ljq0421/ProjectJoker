@@ -105,8 +105,9 @@ size_flags_horizontal = 3
 layout_mode = 2
 
 [node name="DeckTitle" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "当前十二张牌"
+text = "当前牌组"
 theme_override_font_sizes/font_size = 22
 
 [node name="DeckContent" type="HBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn"]
@@ -118,7 +119,7 @@ theme_override_constants/separation = 16
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-columns = 4
+columns = 5
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 
@@ -155,6 +156,58 @@ layout_mode = 2
 text = "刷新：可用　路线情报：未购"
 autowrap_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+
+[node name="FormalServicePanel" type="PanelContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+tooltip_text = "正式远征服务每家商店各限一次；消费立即写入检查点"
+
+[node name="FormalServiceColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FormalServiceTitle" type="Label" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn"]
+layout_mode = 2
+text = "远征整备 · 消费不可撤销"
+theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="RemoveCardButton" type="Button" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "移除所选牌（1 情报）"
+
+[node name="TransferRow" type="HBoxContainer" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EngravingSourceChoice" type="OptionButton" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn/TransferRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 38)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "选择拥有刻印的来源骰子"
+
+[node name="EngravingTargetChoice" type="OptionButton" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn/TransferRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 38)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "选择尚未刻印的目标骰子"
+
+[node name="EngravingFaceChoice" type="OptionButton" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn/TransferRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 38)
+layout_mode = 2
+tooltip_text = "选择目标骰面"
+
+[node name="TransferEngravingButton" type="Button" parent="SafeArea/RootColumn/Body/DeckPanel/DeckColumn/DeckContent/ShopSelectionInfoColumn/FormalServicePanel/FormalServiceColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "转移刻印（2 情报）"
 
 [node name="OfferPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
 custom_minimum_size = Vector2(320, 0)

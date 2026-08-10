@@ -16,8 +16,12 @@ const RULE_PASSED_TINT := Color(0.56, 1.0, 0.72, 1.0)
 const RULE_FAILED_TINT := Color(1.0, 0.38, 0.48, 1.0)
 const TARGET_TINT := Color(0.68, 1.0, 0.96, 1.0)
 const ILLEGAL_TINT := Color(0.48, 0.48, 0.58, 0.58)
+const ENGRAVING_MISS_COLOR := Color(0.68, 0.66, 0.76, 1.0)
+const ENGRAVING_HIT_COLOR := Color(0.72, 1.0, 0.86, 1.0)
+const ENGRAVING_ACTIVE_COLOR := Color(0.92, 0.72, 1.0, 1.0)
 
 enum EvaluationState { NEUTRAL, PASSED, FAILED }
+enum EngravingState { NONE, UNHIT, HIT, ACTIVE }
 
 var die_id: StringName
 var _motion_reduced := false
@@ -29,6 +33,7 @@ var _motion_tween: Tween
 var _evaluation_state := EvaluationState.NEUTRAL
 var _target_active := false
 var _target_legal := false
+var _engraving_state := EngravingState.NONE
 
 func _ready() -> void:
 	pressed.connect(func() -> void: die_activated.emit(die_id))
@@ -51,6 +56,7 @@ func bind_die(
 	_evaluation_state = EvaluationState.NEUTRAL
 	_target_active = false
 	_target_legal = false
+	_engraving_state = EngravingState.NONE
 	var selection_changed := _selected != selected
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
@@ -65,6 +71,7 @@ func bind_die(
 	if engraving_status != null:
 		engraving_status.visible = false
 		engraving_status.text = ""
+	set_meta("engraving_state", EngravingState.NONE)
 	button_pressed = selected
 	_selected = selected
 	_refresh_face_cue()
@@ -99,14 +106,11 @@ func bind_die_with_engravings(
 	if engraving == null:
 		return
 	var face_hit := state.rolled_value == state.engraved_face
-	var active := assigned and face_hit
 	var displayed_effective := (
 		state.value if effective_value < 1 else effective_value
 	)
-	var engraving_status := _engraving_status()
-	if engraving_status != null:
-		engraving_status.text = "激活" if active else ("命中" if face_hit else "刻印")
-		engraving_status.visible = true
+	_engraving_state = EngravingState.HIT if face_hit else EngravingState.UNHIT
+	_apply_engraving_state()
 	tooltip_text = (
 		"骰子 %s：掷出 %d，初始 %d，手法牌后 %d；%s" % [
 			state.id,
@@ -123,6 +127,35 @@ func bind_die_with_engravings(
 			engraving.rule_text,
 		]
 	)
+
+func set_engraving_playback_active(value: bool) -> void:
+	if _engraving_state == EngravingState.NONE:
+		return
+	if value and _engraving_state == EngravingState.HIT:
+		_engraving_state = EngravingState.ACTIVE
+	elif not value and _engraving_state == EngravingState.ACTIVE:
+		_engraving_state = EngravingState.HIT
+	_apply_engraving_state()
+
+func _apply_engraving_state() -> void:
+	var engraving_status := _engraving_status()
+	if engraving_status == null:
+		return
+	engraving_status.visible = _engraving_state != EngravingState.NONE
+	engraving_status.text = {
+		EngravingState.UNHIT: "未命中",
+		EngravingState.HIT: "命中",
+		EngravingState.ACTIVE: "激活",
+	}.get(_engraving_state, "")
+	engraving_status.add_theme_color_override(
+		"font_color",
+		{
+			EngravingState.UNHIT: ENGRAVING_MISS_COLOR,
+			EngravingState.HIT: ENGRAVING_HIT_COLOR,
+			EngravingState.ACTIVE: ENGRAVING_ACTIVE_COLOR,
+		}.get(_engraving_state, ENGRAVING_MISS_COLOR)
+	)
+	set_meta("engraving_state", _engraving_state)
 
 func set_legal_target(value: bool) -> void:
 	self_modulate = TARGET_TINT if value else Color.WHITE

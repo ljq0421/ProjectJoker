@@ -17,3 +17,5 @@ var die_profiles: Array[DieState] = []
 var forced_rolls: Dictionary = {}
 var hand_size := CardDeck.HAND_SIZE
 var undo_allowed := true
+var undo_mode: RoundController.UndoMode = RoundController.UndoMode.GLOBAL_ONE
+var initial_calibration_bonus := 0

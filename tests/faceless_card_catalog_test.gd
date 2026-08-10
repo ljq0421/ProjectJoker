@@ -21,13 +21,13 @@ const EXPECTED_IDS: Array[StringName] = [
 
 func run() -> void:
 	var catalog := CardCatalog.new()
-	assert_equal(catalog.all_cards().size(), 40, "catalog should expose forty cards")
+	assert_equal(catalog.all_cards().size(), 42, "catalog should expose forty-two cards")
 	assert_equal(
 		catalog.faceless_hub_card_ids().size(),
 		16,
 		"faceless group should contain sixteen cards"
 	)
-	assert_equal(catalog.validate(), [], "all forty cards should validate")
+	assert_equal(catalog.validate(), [], "all forty-two cards should validate")
 	var seen: Dictionary = {}
 	for card in catalog.all_cards():
 		assert_false(seen.has(card.id), "all card IDs should remain unique")

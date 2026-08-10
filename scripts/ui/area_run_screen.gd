@@ -23,6 +23,7 @@ signal expedition_exit_requested
 @onready var complete_panel: AreaCompletePanel = %AreaCompletePanel
 @onready var intel_panel: ShopIntelPanel = %ShopIntelPanel
 @onready var narrative_card: Control = %NarrativeCard
+@onready var event_panel: Control = %AreaEventPanel
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
 @onready var area_chrome_label: Label = %AreaChromeLabel
@@ -44,6 +45,11 @@ func _ready() -> void:
 	home_button.pressed.connect(_on_home_pressed)
 	encounter_screen.round_committed.connect(_on_round_committed)
 	encounter_screen.card_selected.connect(_after_card_selected)
+	encounter_screen.paid_reroll_requested.connect(_on_paid_reroll_requested)
+	encounter_screen.paid_calibration_requested.connect(
+		_on_paid_calibration_requested
+	)
+	encounter_screen.paid_retry_requested.connect(_on_paid_retry_requested)
 	summary_panel.next_round_requested.connect(_on_next_round_requested)
 	summary_panel.shop_requested.connect(_on_shop_requested)
 	summary_panel.retry_requested.connect(_on_restart_requested)
@@ -51,6 +57,10 @@ func _ready() -> void:
 	shop_screen.leave_requested.connect(_on_shop_leave_requested)
 	shop_screen.state_changed.connect(_on_shop_state_changed)
 	shop_screen.intel_view_requested.connect(_on_shop_intel_view_requested)
+	shop_screen.remove_card_requested.connect(_on_remove_shop_card_requested)
+	shop_screen.engraving_transfer_requested.connect(
+		_on_transfer_shop_engraving_requested
+	)
 	route_panel.route_selected.connect(_on_route_selected)
 	reward_panel.engraving_selected.connect(_on_engraving_selected)
 	reward_panel.install_requested.connect(_on_install_requested)
@@ -65,6 +75,7 @@ func _ready() -> void:
 		func() -> void: expedition_continue_requested.emit()
 	)
 	narrative_card.confirmed.connect(_on_narrative_confirmed)
+	event_panel.choice_requested.connect(_on_event_choice_requested)
 	summary_panel.get_node("%ReturnTeachingButton").text = "返回入口"
 	reward_panel.get_node("%InstallEngravingButton").text = "安装刻印并封存区域"
 	start_run()
@@ -210,13 +221,14 @@ func _show_current_phase() -> void:
 				summary_panel.show_room_checkpoint(
 					area_session.completed_rooms[-1]
 				)
+		AreaRunSession.Phase.EVENT:
+			encounter_screen.visible = false
+			summary_panel.close()
+			event_panel.bind_session(area_session)
 		AreaRunSession.Phase.SHOP:
 			encounter_screen.visible = false
 			_request_music_for_phase(&"shop")
-			shop_screen.bind_session(
-				area_session.shop_session,
-				area_session.card_catalog
-			)
+			_bind_shop_screen()
 		AreaRunSession.Phase.ENGRAVING_REWARD, AreaRunSession.Phase.ENGRAVING_INSTALL:
 			encounter_screen.visible = false
 			_request_music_for_phase(
@@ -247,6 +259,7 @@ func _show_route_choice() -> void:
 	_request_music_for_phase(&"route_choice")
 	intel_panel.close()
 	shop_screen.visible = false
+	event_panel.close()
 	reward_panel.close()
 	complete_panel.close()
 	summary_panel.close()
@@ -294,6 +307,7 @@ func bind_current_encounter() -> void:
 	route_panel.close()
 	intel_panel.close()
 	shop_screen.visible = false
+	event_panel.close()
 	reward_panel.close()
 	complete_panel.close()
 	summary_panel.close()
@@ -311,6 +325,7 @@ func bind_current_encounter() -> void:
 		_area_copy(),
 		_encounter_goal_copy()
 	)
+	_sync_emergency_context()
 	_after_encounter_bound()
 	if area_session.phase == AreaRunSession.Phase.DEALER:
 		_after_dealer_bound()
@@ -393,12 +408,32 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		call_deferred("_request_context_hint", &"engraving")
 		_emit_expedition_checkpoint()
 		return
+	if area_session.phase == AreaRunSession.Phase.EVENT:
+		summary_panel.close()
+		encounter_screen.visible = false
+		event_panel.bind_session(area_session)
+		_emit_expedition_checkpoint()
+		return
 	if _show_restriction_choice_if_needed():
 		return
 	encounter_screen.set_run_status(_area_copy(), _encounter_goal_copy())
 	summary_panel.show_run_state(area_session.encounter_session)
 	if area_session.phase == AreaRunSession.Phase.AFTER_NORMAL_ROOM:
 		_emit_expedition_checkpoint()
+
+func _on_event_choice_requested(
+	choice_id: StringName,
+	target_die_id: StringName
+) -> void:
+	var result := area_session.resolve_event(choice_id, target_die_id)
+	if not result.accepted:
+		event_panel.show_error(result.reason)
+		return
+	SfxAccess.play(self, &"ui_confirm")
+	event_panel.close()
+	_apply_random_contract_presentation()
+	_show_current_phase()
+	_emit_expedition_checkpoint()
 
 func _on_next_round_requested() -> void:
 	_close_context_hint()
@@ -419,7 +454,7 @@ func _on_shop_requested() -> void:
 	summary_panel.close()
 	encounter_screen.visible = false
 	_request_music_for_phase(&"shop")
-	shop_screen.bind_session(area_session.shop_session, area_session.card_catalog)
+	_bind_shop_screen()
 	SfxAccess.play(self, &"panel_open")
 	call_deferred("_request_context_hint", &"shop")
 	_emit_expedition_checkpoint()
@@ -462,6 +497,96 @@ func _on_shop_leave_requested() -> void:
 	_emit_expedition_checkpoint()
 
 func _on_shop_state_changed() -> void:
+	_emit_expedition_checkpoint()
+
+func _bind_shop_screen() -> void:
+	if area_session == null or area_session.shop_session == null:
+		return
+	shop_screen.bind_session(area_session.shop_session, area_session.card_catalog)
+	shop_screen.bind_formal_context(
+		area_session.die_profiles,
+		area_session.engraving_catalog
+	)
+
+func _on_remove_shop_card_requested(card_id: StringName) -> void:
+	var result := area_session.remove_shop_card(card_id)
+	if not result.accepted:
+		shop_screen.show_service_error(result.reason)
+		shop_screen.refresh_from_session()
+		return
+	SfxAccess.play(self, &"shop_purchase")
+	shop_screen.show_service_error("")
+	shop_screen.refresh_from_session(true)
+	_emit_expedition_checkpoint()
+
+func _on_transfer_shop_engraving_requested(
+	source_die_id: StringName,
+	target_die_id: StringName,
+	target_face: int
+) -> void:
+	var result := area_session.transfer_shop_engraving(
+		source_die_id,
+		target_die_id,
+		target_face
+	)
+	if not result.accepted:
+		shop_screen.show_service_error(result.reason)
+		shop_screen.refresh_from_session()
+		return
+	SfxAccess.play(self, &"engraving_select")
+	shop_screen.show_service_error("")
+	shop_screen.bind_formal_context(
+		area_session.die_profiles,
+		area_session.engraving_catalog
+	)
+	_emit_expedition_checkpoint()
+
+func _sync_emergency_context() -> void:
+	if area_session == null or area_session.encounter_session == null:
+		encounter_screen.set_formal_emergency_context(false)
+		return
+	var run_session := area_session.encounter_session
+	encounter_screen.set_formal_emergency_context(
+		area_session.phase in [
+			AreaRunSession.Phase.NORMAL_ROOM,
+			AreaRunSession.Phase.DEALER,
+		],
+		area_session.intel_tickets,
+		run_session.paid_reroll_rounds.has(run_session.current_round),
+		run_session.paid_calibration_rounds.has(run_session.current_round),
+		area_session.area_retry_used
+	)
+
+func _on_paid_reroll_requested(die_id: StringName) -> void:
+	var result := area_session.emergency_reroll(die_id)
+	if not result.accepted:
+		encounter_screen.show_external_error(result.reason)
+		_sync_emergency_context()
+		return
+	SfxAccess.play(self, &"die_place")
+	encounter_screen.refresh_from_session()
+	_sync_emergency_context()
+	_emit_expedition_checkpoint()
+
+func _on_paid_calibration_requested() -> void:
+	var result := area_session.emergency_add_calibration()
+	if not result.accepted:
+		encounter_screen.show_external_error(result.reason)
+		_sync_emergency_context()
+		return
+	SfxAccess.play(self, &"ui_confirm")
+	encounter_screen.refresh_from_session()
+	_sync_emergency_context()
+	_emit_expedition_checkpoint()
+
+func _on_paid_retry_requested() -> void:
+	var result := area_session.emergency_retry_encounter()
+	if not result.accepted:
+		encounter_screen.show_external_error(result.reason)
+		_sync_emergency_context()
+		return
+	SfxAccess.play(self, &"page_transition")
+	bind_current_encounter()
 	_emit_expedition_checkpoint()
 
 func _on_engraving_selected(engraving_id: StringName) -> void:

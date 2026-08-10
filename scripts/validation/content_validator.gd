@@ -193,6 +193,15 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append("card %s link effect requires a gap target" % card.id)
 					if effect.amount != 1:
 						errors.append("card %s link amount must equal one" % card.id)
+				EffectSpec.Operation.QUEUE_SEARCH:
+					if card.target_type != CardDefinition.TargetType.GLOBAL:
+						errors.append(
+							"card %s queued search requires a global target" % card.id
+						)
+					if effect.search_identity not in BuildIdentities.IDS:
+						errors.append(
+							"card %s has an unknown search identity" % card.id
+						)
 		if not card.mirror_effects.is_empty():
 			if card.target_type != CardDefinition.TargetType.GAP:
 				errors.append(

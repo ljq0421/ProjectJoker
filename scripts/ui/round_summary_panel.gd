@@ -2,6 +2,7 @@ class_name RoundSummaryPanel
 extends Control
 
 const FailureReview = preload("res://scripts/run/failure_review_builder.gd")
+const ScoreLedger = preload("res://scripts/ui/score_ledger_formatter.gd")
 
 signal next_round_requested
 signal shop_requested
@@ -17,6 +18,10 @@ signal verification_retry_requested
 @onready var panel_card: PanelContainer = $Center/Panel
 @onready var score_block: VBoxContainer = %RoundScoreBlock
 @onready var score_value: Label = %RoundScoreValue
+@onready var score_ledger: Label = %RoundScoreLedger
+@onready var engraving_total: Label = %RoundEngravingTotal
+@onready var retention_block: VBoxContainer = %RetentionBlock
+@onready var retention_choice: OptionButton = %RetentionChoice
 @onready var next_button: Button = %NextRoundButton
 @onready var shop_button: Button = %EnterShopButton
 @onready var retry_button: Button = %RetryRunButton
@@ -30,6 +35,7 @@ signal verification_retry_requested
 @onready var failure_suggestion_label: Label = %FailureSuggestionLabel
 
 var _summary_tween: Tween
+var _retention_session: ThreeRoundEncounterSession
 
 func _ready() -> void:
 	visible = false
@@ -42,6 +48,7 @@ func _ready() -> void:
 	verification_retry_button.pressed.connect(
 		func() -> void: verification_retry_requested.emit()
 	)
+	retention_choice.item_selected.connect(_on_retention_selected)
 
 func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	visible = true
@@ -55,7 +62,20 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 			SfxAccess.play(self, &"resolution_climax")
 	var last_total := 0
 	if not run_session.committed_reports.is_empty():
-		last_total = run_session.committed_reports[-1].total
+		var last_report: ResolutionReport = run_session.committed_reports[-1]
+		last_total = last_report.total
+		score_ledger.text = ScoreLedger.compact_copy(
+			last_report
+		)
+		engraving_total.text = "本轮刻印贡献：%+d" % int(
+			last_report.score_breakdown.get(
+				ResolutionEvent.ScoreSource.ENGRAVING,
+				0
+			)
+		)
+	else:
+		score_ledger.text = ScoreLedger.compact_copy(ResolutionReport.new())
+		engraving_total.text = "本轮刻印贡献：+0"
 	score_block.visible = true
 	score_value.text = str(last_total)
 	title_label.text = _title_for_status(run_session.status)
@@ -71,6 +91,7 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	if run_session.status == ThreeRoundEncounterSession.Status.FAILED:
 		_bind_failure_review(run_session, false)
 	next_button.visible = run_session.status == ThreeRoundEncounterSession.Status.ROUND_SUMMARY
+	_bind_retention(run_session)
 	shop_button.visible = run_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	retry_button.visible = run_session.status == ThreeRoundEncounterSession.Status.FAILED
 	retry_button.text = "同种子重试"
@@ -186,6 +207,8 @@ func close() -> void:
 func _hide_actions() -> void:
 	failure_review.visible = false
 	score_block.visible = false
+	retention_block.visible = false
+	_retention_session = null
 	for button in [
 		next_button,
 		shop_button,
@@ -196,6 +219,33 @@ func _hide_actions() -> void:
 		verification_retry_button,
 	]:
 		button.visible = false
+
+func _bind_retention(run_session: ThreeRoundEncounterSession) -> void:
+	retention_choice.clear()
+	retention_choice.add_item("不保留手牌")
+	retention_choice.set_item_metadata(0, &"")
+	if not run_session.retention_available():
+		retention_block.visible = false
+		return
+	_retention_session = run_session
+	for card_id in run_session.retainable_card_ids():
+		var card := run_session.catalog.find_card(card_id)
+		retention_choice.add_item(
+			"保留｜%s" % (card.display_name if card != null else String(card_id))
+		)
+		retention_choice.set_item_metadata(
+			retention_choice.item_count - 1,
+			card_id
+		)
+	retention_block.visible = retention_choice.item_count > 1
+
+func _on_retention_selected(index: int) -> void:
+	if _retention_session == null:
+		return
+	var card_id := StringName(retention_choice.get_item_metadata(index))
+	var result := _retention_session.retain_card(card_id)
+	if not result.accepted:
+		retention_choice.select(0)
 
 
 func _play_round_summary_climax() -> void:

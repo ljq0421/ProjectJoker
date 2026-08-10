@@ -52,7 +52,7 @@ theme_override_font_sizes/font_size = 30
 [node name="RewardRule" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "稀有牌会替换当前一张牌并保持 12 张；刻印会安装到一颗未刻印骰子。两类奖励只能选择其一。"
+text = "牌组不足 15 张时稀有牌直接加入；满 15 张时才需替换。刻印会安装到一颗未刻印骰子，两类奖励只能选择其一。"
 horizontal_alignment = 1
 autowrap_mode = 2
 

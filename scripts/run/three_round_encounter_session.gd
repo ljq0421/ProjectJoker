@@ -1,6 +1,22 @@
 class_name ThreeRoundEncounterSession
 extends RefCounted
 
+const SnapshotCodec = preload("res://scripts/run/run_snapshot_codec.gd")
+
+class RestoreResult extends RefCounted:
+	var accepted: bool
+	var reason: String
+	var session: ThreeRoundEncounterSession
+
+	func _init(
+		p_accepted: bool,
+		p_reason: String = "",
+		p_session: ThreeRoundEncounterSession = null
+	) -> void:
+		accepted = p_accepted
+		reason = p_reason
+		session = p_session
+
 enum Status {
 	NOT_STARTED,
 	PLAYING,
@@ -32,6 +48,11 @@ var earned_intel_tickets: int = 0
 var shop_offer_ids: Array[StringName] = []
 var last_error: String = ""
 var selected_final_restriction: FinalRestrictionDefinition
+var next_round_calibration_bonus := 0
+var retained_card_id: StringName = &""
+var queued_search_identity_ids: Array[StringName] = []
+var paid_reroll_rounds: Dictionary = {}
+var paid_calibration_rounds: Dictionary = {}
 
 var _run_rng: RunRng
 var _deck := CardDeck.new()
@@ -66,6 +87,7 @@ func start() -> OperationResult:
 	)
 	_deck.start_encounter(starter_deck_ids, _run_rng)
 	current_round = 1
+	next_round_calibration_bonus += setup.initial_calibration_bonus
 	var begin_result := _begin_round()
 	if not begin_result.accepted:
 		return begin_result
@@ -83,8 +105,15 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 		return _fail("提交的结算报告不是当前轮正式结果")
 
 	committed_reports.append(report)
+	_queue_played_searches()
 	cumulative_total += report.total
 	earned_intel_tickets += report.intel_delta
+	if report.consolation_awarded and current_round < round_count:
+		next_round_calibration_bonus += 1
+	elif current_round >= round_count:
+		next_round_calibration_bonus = 0
+	if report.full_clear_calibration_awarded and current_round < round_count:
+		next_round_calibration_bonus += 1
 	if current_round < round_count:
 		if setup.round_schedule != null and current_round == 2:
 			status = Status.AWAITING_RESTRICTION
@@ -120,6 +149,68 @@ func advance_round() -> OperationResult:
 		_deck.restore_draw_pile(deck_snapshot)
 		return begin_result
 	status = Status.PLAYING
+	last_error = ""
+	return OperationResult.new(true)
+
+func retention_available() -> bool:
+	return (
+		status == Status.ROUND_SUMMARY
+		and current_round < round_count
+		and setup.fixed_hand_ids.is_empty()
+		and setup.round_schedule == null
+	)
+
+func retain_card(card_id: StringName) -> OperationResult:
+	if not retention_available():
+		return _fail("当前轮次不提供手牌保留")
+	if card_id == &"":
+		retained_card_id = &""
+		last_error = ""
+		return OperationResult.new(true)
+	if card_id not in current_hand_ids:
+		return _fail("只能保留当前手牌中的牌")
+	if current_session == null:
+		return _fail("当前手牌状态不存在")
+	for card_index in range(current_session.hand.size()):
+		if current_session.hand[card_index].id == card_id:
+			if current_session.is_card_used(card_index):
+				return _fail("已经使用的手法牌不能保留")
+			retained_card_id = card_id
+			last_error = ""
+			return OperationResult.new(true)
+	return _fail("当前手牌状态不包含这张牌")
+
+func retainable_card_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	if not retention_available() or current_session == null:
+		return result
+	for card_index in range(current_session.hand.size()):
+		if not current_session.is_card_used(card_index):
+			result.append(current_session.hand[card_index].id)
+	return result
+
+func paid_reroll(die_id: StringName) -> OperationResult:
+	if status != Status.PLAYING or current_session == null:
+		return _fail("当前不能使用付费重投")
+	if paid_reroll_rounds.has(current_round):
+		return _fail("本轮已经使用过付费重投")
+	var new_value := _run_rng.roll_die()
+	var result := current_session.controller.apply_paid_reroll(die_id, new_value)
+	if not result.accepted:
+		return _fail(result.reason)
+	paid_reroll_rounds[current_round] = true
+	last_error = ""
+	return OperationResult.new(true)
+
+func paid_add_calibration() -> OperationResult:
+	if status != Status.PLAYING or current_session == null:
+		return _fail("当前不能购买额外校准")
+	if paid_calibration_rounds.has(current_round):
+		return _fail("本轮已经购买过额外校准")
+	var result := current_session.controller.apply_paid_calibration()
+	if not result.accepted:
+		return _fail(result.reason)
+	paid_calibration_rounds[current_round] = true
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -178,11 +269,23 @@ func active_restriction() -> FinalRestrictionDefinition:
 	return setup.fixed_restriction
 
 func _begin_round() -> OperationResult:
-	var next_hand_ids: Array[StringName] = (
-		setup.fixed_hand_ids.duplicate()
-		if not setup.fixed_hand_ids.is_empty()
-		else _deck.draw_round(setup.hand_size)
-	)
+	var next_hand_ids: Array[StringName] = []
+	if not setup.fixed_hand_ids.is_empty():
+		next_hand_ids.assign(setup.fixed_hand_ids)
+	else:
+		if retained_card_id != &"":
+			next_hand_ids.append(retained_card_id)
+			retained_card_id = &""
+		for identity_id in queued_search_identity_ids:
+			if next_hand_ids.size() >= setup.hand_size:
+				break
+			var searched_id := _take_first_identity(identity_id)
+			if searched_id != &"":
+				next_hand_ids.append(searched_id)
+		queued_search_identity_ids.clear()
+		next_hand_ids.append_array(
+			_deck.draw_round(setup.hand_size - next_hand_ids.size())
+		)
 	var expected_hand_size := (
 		setup.fixed_hand_ids.size()
 		if not setup.fixed_hand_ids.is_empty()
@@ -199,6 +302,8 @@ func _begin_round() -> OperationResult:
 		hand.append(card)
 
 	var state := RoundState.new()
+	state.calibration_points += next_round_calibration_bonus
+	next_round_calibration_bonus = 0
 	for die_index in range(1, 7):
 		var die_id := StringName("d%d" % die_index)
 		var rolled_value: int
@@ -235,11 +340,31 @@ func _begin_round() -> OperationResult:
 		context,
 		active_restriction(),
 		setup.additional_restrictions,
-		setup.undo_allowed
+		setup.undo_allowed,
+		setup.undo_mode,
+		current_round >= round_count
 	)
 	current_hand_ids.assign(next_hand_ids)
 	current_session = next_session
 	return OperationResult.new(true)
+
+func _queue_played_searches() -> void:
+	if current_round >= round_count or current_session == null:
+		return
+	for played_card in current_session.controller.state.played_cards:
+		if played_card is not PlayedCard or played_card.is_mirror_copy:
+			continue
+		for effect in played_card.effective_effects():
+			if effect.operation == EffectSpec.Operation.QUEUE_SEARCH:
+				queued_search_identity_ids.append(effect.search_identity)
+
+func _take_first_identity(identity_id: StringName) -> StringName:
+	var identities := BuildIdentityCatalog.new()
+	for card_id in _deck.snapshot_draw_pile():
+		if identities.identity_for_card(catalog.find_card(card_id)) == identity_id:
+			_deck.take_card(card_id)
+			return card_id
+	return &""
 
 func _profile_for(die_id: StringName) -> DieState:
 	for profile in setup.die_profiles:
@@ -285,8 +410,11 @@ func _validate_setup() -> String:
 		if not setup.deck_ids.is_empty()
 		else catalog.starter_ids()
 	)
-	if candidate_deck.size() != 12:
-		return "遭遇牌组必须正好包含十二张牌"
+	if (
+		candidate_deck.size() < CardDeck.MIN_DECK_SIZE
+		or candidate_deck.size() > CardDeck.MAX_DECK_SIZE
+	):
+		return "遭遇牌组必须包含十二至十五张牌"
 	var deck_ids: Dictionary = {}
 	for card_id in candidate_deck:
 		if catalog.find_card(card_id) == null:
@@ -350,3 +478,134 @@ func _validate_setup() -> String:
 func _fail(reason: String) -> OperationResult:
 	last_error = reason
 	return OperationResult.new(false, reason)
+
+func to_snapshot() -> Dictionary:
+	var reports: Array[Dictionary] = []
+	for report in committed_reports:
+		reports.append(SnapshotCodec.report_to_snapshot(report))
+	return {
+		"seed_value": seed_value,
+		"target_total": target_total,
+		"round_count": round_count,
+		"status": status,
+		"current_round": current_round,
+		"current_hand_ids": current_hand_ids.duplicate(),
+		"starter_deck_ids": starter_deck_ids.duplicate(),
+		"committed_reports": reports,
+		"cumulative_total": cumulative_total,
+		"intel_tickets": intel_tickets,
+		"earned_intel_tickets": earned_intel_tickets,
+		"shop_offer_ids": shop_offer_ids.duplicate(),
+		"last_error": last_error,
+		"selected_restriction_id": (
+			selected_final_restriction.id
+			if selected_final_restriction != null
+			else &""
+		),
+		"next_round_calibration_bonus": next_round_calibration_bonus,
+		"retained_card_id": retained_card_id,
+		"queued_search_identity_ids": queued_search_identity_ids.duplicate(),
+		"paid_reroll_rounds": paid_reroll_rounds.duplicate(true),
+		"paid_calibration_rounds": paid_calibration_rounds.duplicate(true),
+		"rng_state": _run_rng.snapshot_state(),
+		"draw_pile": _deck.snapshot_draw_pile(),
+		"current_session": (
+			current_session.to_snapshot() if current_session != null else {}
+		),
+	}
+
+static func from_snapshot(
+	p_catalog: CardCatalog,
+	p_setup: EncounterRunSetup,
+	snapshot: Dictionary
+) -> RestoreResult:
+	if snapshot.is_empty() or not snapshot.get("current_session", {}) is Dictionary:
+		return RestoreResult.new(false, "活跃遭遇检查点格式无效")
+	var restored := ThreeRoundEncounterSession.new(
+		p_catalog,
+		int(snapshot.get("seed_value", DEFAULT_SEED)),
+		int(snapshot.get("target_total", DEFAULT_TARGET)),
+		p_setup
+	)
+	restored.round_count = int(snapshot.get("round_count", p_setup.round_count))
+	restored.status = int(snapshot.get("status", Status.PLAYING))
+	restored.current_round = int(snapshot.get("current_round", 1))
+	restored.current_hand_ids.assign(snapshot.get("current_hand_ids", []))
+	restored.starter_deck_ids.assign(snapshot.get("starter_deck_ids", []))
+	restored.cumulative_total = int(snapshot.get("cumulative_total", 0))
+	restored.intel_tickets = int(snapshot.get("intel_tickets", 0))
+	restored.earned_intel_tickets = int(snapshot.get("earned_intel_tickets", 0))
+	restored.shop_offer_ids.assign(snapshot.get("shop_offer_ids", []))
+	restored.last_error = String(snapshot.get("last_error", ""))
+	restored.next_round_calibration_bonus = int(
+		snapshot.get("next_round_calibration_bonus", 0)
+	)
+	restored.retained_card_id = snapshot.get("retained_card_id", &"")
+	restored.queued_search_identity_ids.assign(
+		snapshot.get("queued_search_identity_ids", [])
+	)
+	restored.paid_reroll_rounds = snapshot.get("paid_reroll_rounds", {}).duplicate(true)
+	restored.paid_calibration_rounds = snapshot.get(
+		"paid_calibration_rounds", {}
+	).duplicate(true)
+	restored._run_rng = p_setup.run_rng if p_setup.run_rng != null else RunRng.new(restored.seed_value)
+	restored._run_rng.restore_state(int(snapshot.get("rng_state", restored.seed_value)))
+	var draw_pile: Array[StringName] = []
+	draw_pile.assign(snapshot.get("draw_pile", []))
+	restored._deck.restore_draw_pile(draw_pile)
+	for report_snapshot in snapshot.get("committed_reports", []):
+		restored.committed_reports.append(
+			SnapshotCodec.report_from_snapshot(report_snapshot)
+		)
+	var restriction_id: StringName = snapshot.get("selected_restriction_id", &"")
+	if restriction_id != &"" and p_setup.round_schedule != null:
+		for option in p_setup.round_schedule.restriction_options():
+			if option.id == restriction_id:
+				restored.selected_final_restriction = option
+				break
+	var single_snapshot: Dictionary = snapshot["current_session"]
+	var controller_snapshot: Dictionary = single_snapshot.get("controller", {})
+	var history: Array = controller_snapshot.get("history", [])
+	if history.is_empty():
+		return RestoreResult.new(false, "活跃遭遇缺少动作历史")
+	var state: RoundState = SnapshotCodec.round_state_from_snapshot(
+		history[-1].get("state", {}),
+		p_catalog
+	)
+	var hand: Array[CardDefinition] = []
+	for card_id in single_snapshot.get("hand_ids", []):
+		var card := p_catalog.find_card(card_id)
+		if card == null:
+			return RestoreResult.new(false, "活跃遭遇手牌包含未知卡牌")
+		hand.append(card)
+	var encounter := restored._encounter_for_round(restored.current_round)
+	if encounter == null:
+		return RestoreResult.new(false, "活跃遭遇规则不存在")
+	restored.current_session = SingleEncounterSession.new(
+		state,
+		encounter,
+		hand,
+		p_setup.resolution_context,
+		restored.active_restriction(),
+		p_setup.additional_restrictions,
+		bool(single_snapshot.get("undo_allowed", true)),
+		controller_snapshot.get("undo_mode", p_setup.undo_mode),
+		bool(single_snapshot.get("is_final_round", false))
+	)
+	var single_result := restored.current_session.restore_snapshot(
+		single_snapshot,
+		p_catalog
+	)
+	if not single_result.accepted:
+		return RestoreResult.new(false, single_result.reason)
+	return RestoreResult.new(true, "", restored)
+
+func _encounter_for_round(round_number: int) -> EncounterDefinition:
+	var plans: Array[EncounterRoundPlan] = setup.round_plans
+	if plans.is_empty() and setup.round_schedule != null:
+		plans = setup.round_schedule.round_plans
+	if round_number >= 1 and round_number <= plans.size():
+		return plans[round_number - 1].encounter
+	if setup.encounter != null:
+		return setup.encounter
+	return SingleEncounterFixture.make_encounter()

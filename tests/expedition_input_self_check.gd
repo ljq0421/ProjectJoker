@@ -82,6 +82,9 @@ func _run() -> void:
 	if area == null:
 		_finish()
 		return
+	if area.narrative_card.is_open():
+		await _click(area.narrative_card.get_node("%NarrativeContinueButton") as Button)
+		await _settle(4)
 
 	await _click(area.route_panel.get_node("%LeftRouteButton") as Button)
 	await _settle(5)

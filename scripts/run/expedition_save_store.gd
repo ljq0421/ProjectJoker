@@ -15,8 +15,8 @@ class LoadResult extends RefCounted:
 		reason = p_reason
 		snapshot = p_snapshot
 
-const FORMAT_VERSION := 2
-const CONTENT_VERSION := 1
+const FORMAT_VERSION := 3
+const CONTENT_VERSION := 2
 
 var config_path := "user://expedition_save.cfg"
 
@@ -103,16 +103,21 @@ func _load_path(path: String) -> LoadResult:
 	if error != OK:
 		return LoadResult.new(false, "无法读取远征存档：%s" % error)
 	var format_version: int = config.get_value("meta", "format_version", -1)
-	if (
-		format_version not in [1, FORMAT_VERSION]
-		or config.get_value("meta", "content_version", -1) != CONTENT_VERSION
-	):
+	var content_version: int = config.get_value("meta", "content_version", -1)
+	if format_version not in [1, 2, FORMAT_VERSION]:
 		return LoadResult.new(false, "远征存档版本不受支持")
+	if (
+		(format_version < FORMAT_VERSION and content_version != 1)
+		or (format_version == FORMAT_VERSION and content_version != CONTENT_VERSION)
+	):
+		return LoadResult.new(false, "远征存档内容版本不受支持")
 	var snapshot = config.get_value("run", "snapshot", null)
 	if not snapshot is Dictionary:
 		return LoadResult.new(false, "远征存档主体格式无效")
 	if format_version == 1:
 		snapshot = _migrate_v1_snapshot(snapshot)
+	if format_version < FORMAT_VERSION:
+		snapshot = _migrate_v2_snapshot(snapshot)
 	var snapshot_error := ExpeditionSession.snapshot_error(snapshot)
 	if not snapshot_error.is_empty():
 		return LoadResult.new(false, snapshot_error)
@@ -156,6 +161,30 @@ func _migrate_v1_snapshot(legacy: Dictionary) -> Dictionary:
 		if checkpoint.has("shop") and checkpoint["shop"] is Dictionary:
 			var shop: Dictionary = checkpoint["shop"].duplicate(true)
 			shop["price_modifier"] = 0
+			checkpoint["shop"] = shop
+	snapshot["area_checkpoint"] = checkpoint
+	return snapshot
+
+func _migrate_v2_snapshot(legacy: Dictionary) -> Dictionary:
+	var snapshot := legacy.duplicate(true)
+	var checkpoint: Dictionary = snapshot.get("area_checkpoint", {}).duplicate(true)
+	if not checkpoint.is_empty():
+		checkpoint["area_retry_used"] = bool(checkpoint.get("area_retry_used", false))
+		checkpoint["current_event_id"] = checkpoint.get("current_event_id", &"")
+		checkpoint["event_history"] = checkpoint.get("event_history", [])
+		checkpoint["next_encounter_calibration_bonus"] = int(
+			checkpoint.get("next_encounter_calibration_bonus", 0)
+		)
+		if checkpoint.has("shop") and checkpoint["shop"] is Dictionary:
+			var shop: Dictionary = checkpoint["shop"].duplicate(true)
+			shop["remove_card_used"] = bool(shop.get("remove_card_used", false))
+			shop["transfer_engraving_used"] = bool(
+				shop.get("transfer_engraving_used", false)
+			)
+			shop["area_refresh_count"] = int(shop.get("area_refresh_count", 0))
+			shop["rare_guarantee_unavailable_reason"] = String(
+				shop.get("rare_guarantee_unavailable_reason", "")
+			)
 			checkpoint["shop"] = shop
 	snapshot["area_checkpoint"] = checkpoint
 	return snapshot

@@ -22,18 +22,35 @@ func _run() -> void:
 	await _settle()
 
 	var area := AreaCatalog.new().gold_corridor()
-	var market: Array[StringName] = area.starting_deck_ids.duplicate()
-	market.append_array(area.shop_offer_ids)
+	var catalog := CardCatalog.new()
+	var full_deck: Array[StringName] = area.starting_deck_ids.duplicate()
+	for card_id in area.shop_offer_ids:
+		if card_id not in full_deck:
+			full_deck.append(card_id)
+		if full_deck.size() == CardDeck.MAX_DECK_SIZE:
+			break
+	var market: Array[StringName] = []
+	for card_id in area.shop_offer_ids:
+		if card_id not in full_deck:
+			market.append(card_id)
 	var session := ShopSession.new(
-		CardCatalog.new(),
-		area.starting_deck_ids,
+		catalog,
+		full_deck,
 		market,
 		10,
 		ShopIntelSnapshot.routes(area.second_route_ids),
 		0,
+		true,
+		0,
 		true
 	)
-	shop.bind_session(session, CardCatalog.new())
+	shop.bind_session(session, catalog)
+	var profiles: Array[DieState] = []
+	for die_index in range(1, 7):
+		profiles.append(DieState.new(StringName("d%d" % die_index), die_index))
+	profiles[0].engraving_id = &"engraving_echo"
+	profiles[0].engraved_face = 1
+	shop.bind_formal_context(profiles, EngravingCatalog.new())
 	await _settle()
 
 	var body: Control = shop.get_node("SafeArea/RootColumn/Body")
@@ -67,6 +84,28 @@ func _run() -> void:
 		shop.get_node("%ShopCardDetailPanel").visible,
 		"selecting a card should reveal its comparison copy"
 	)
+	_assert_true(
+		shop.get_node("%DeckGrid").get_child_count() == CardDeck.MAX_DECK_SIZE,
+		"formal shop should render all fifteen deck cards"
+	)
+	_assert_true(
+		shop.get_node("%FormalServicePanel").visible,
+		"formal services should remain visible beside a fifteen-card deck"
+	)
+	for node_path in [
+		"%FormalServicePanel",
+		"%RemoveCardButton",
+		"%EngravingSourceChoice",
+		"%EngravingTargetChoice",
+		"%EngravingFaceChoice",
+		"%TransferEngravingButton",
+		"%LeaveShopButton",
+	]:
+		var control: Control = shop.get_node(node_path)
+		_assert_true(
+			Rect2(Vector2.ZERO, LOGICAL_SIZE).encloses(control.get_global_rect()),
+			"%s should stay inside the logical viewport" % node_path
+		)
 	_assert_true(
 		is_equal_approx(body.size.y, body_height_before),
 		"selecting a card should not resize the main shop body"

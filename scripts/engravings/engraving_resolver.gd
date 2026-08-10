@@ -91,15 +91,19 @@ func table_outcomes(
 		if definition == null:
 			continue
 		if not source_valid:
-			outcomes.append(EngravingOutcome.new(
+			var missed := EngravingOutcome.new(
 				definition.id,
 				"%s：来源规则台未通过" % definition.display_name,
 				0,
 				&"",
-				false
-			))
+				false,
+				&"",
+				die_id
+			)
+			outcomes.append(missed)
 			continue
 
+		var first_outcome_index := outcomes.size()
 		match definition.operation:
 			EngravingDefinition.Operation.ECHO_ADJACENT:
 				var neighbor_values: Array[int] = []
@@ -198,7 +202,9 @@ func table_outcomes(
 							target_table_id,
 						],
 						int(die_values.get(die_id, die.value)),
-						target_table_id
+						target_table_id,
+						true,
+						ordered_rule_ids[rule_index]
 					))
 			EngravingDefinition.Operation.BRIDGE_BACKWARD:
 				if rule_index <= 0:
@@ -219,7 +225,9 @@ func table_outcomes(
 							target_table_id,
 						],
 						int(die_values.get(die_id, die.value)),
-						target_table_id
+						target_table_id,
+						true,
+						ordered_rule_ids[rule_index]
 					))
 			EngravingDefinition.Operation.BRIDGE_BIDIRECTIONAL:
 				var transfer_value := floori(
@@ -244,7 +252,9 @@ func table_outcomes(
 							target_table_id,
 						],
 						transfer_value,
-						target_table_id
+						target_table_id,
+						true,
+						ordered_rule_ids[rule_index]
 					))
 			EngravingDefinition.Operation.PRISM_PARITY:
 				outcomes.append(EngravingOutcome.new(
@@ -275,6 +285,8 @@ func table_outcomes(
 					"%s：关系值可视为高一或低一" % definition.display_name,
 					0
 				))
+		for outcome_index in range(first_outcome_index, outcomes.size()):
+			outcomes[outcome_index].source_die_id = die_id
 	return outcomes
 
 func _has_adjacent_mirror_copy(

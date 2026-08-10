@@ -19,6 +19,7 @@ func _test_scene_contract() -> void:
 	for node_name in [
 		"ResolutionHeading",
 		"PlaybackStatus",
+		"ScoreLedger",
 		"EventList",
 		"Total",
 		"PlaybackActions",
@@ -37,6 +38,14 @@ func _test_preview_and_committed_playback_contract() -> void:
 	tree.root.add_child(panel)
 	var report := _fixture_report()
 	panel.bind_report(report)
+	assert_true(
+		panel.get_node("%ScoreLedger").text.contains("基础分"),
+		"preview should expose the eight-part score ledger"
+	)
+	assert_true(
+		panel.get_node("%ScoreLedger").text.contains("庄家奖励"),
+		"ledger should retain the eighth category"
+	)
 	assert_equal(
 		panel.get_node("%EventList").get_child_count(),
 		report.events.size(),
@@ -141,4 +150,6 @@ func _fixture_report() -> ResolutionReport:
 		ResolutionEvent.new(&"bridge", "桥接手法", 4, 12),
 	]
 	report.total = 12
+	report.score_breakdown[ResolutionEvent.ScoreSource.BASE] = 8
+	report.score_breakdown[ResolutionEvent.ScoreSource.CARD] = 4
 	return report

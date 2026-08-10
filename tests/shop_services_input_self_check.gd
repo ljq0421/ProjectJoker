@@ -12,26 +12,27 @@ func _run() -> void:
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
 	root.size = Vector2i(1920, 1080)
-	var fixture := _find_buyback_fixture()
-	_assert_true(not fixture.is_empty(), "a deterministic buyback fixture should exist")
-	if fixture.is_empty():
-		await _finish()
-		return
-
 	screen = load(
 		"res://scenes/run/gold_corridor_run_screen.tscn"
 	).instantiate()
 	screen.guide_auto_start = false
-	screen.configure(AreaCatalog.new().gold_corridor(), fixture["seed"])
+	screen.configure(AreaCatalog.new().gold_corridor(), 20260729)
 	root.add_child(screen)
 	current_scene = screen
 	await _settle()
 	screen.get_node("%GoldCorridorGuideOverlay").close_card()
+	var narrative := screen.get_node("%NarrativeCard")
+	if narrative.is_open():
+		await _click(narrative.get_node("%NarrativeContinueButton"))
+		await _settle()
 
 	await _click(_route_button_at(0))
 	await _settle()
 	await _complete_encounter()
-	screen.area_session.intel_tickets = 10
+	screen.area_session.intel_tickets = 20
+	var source_profile: DieState = screen.area_session.die_profiles[0]
+	source_profile.engraving_id = &"engraving_echo"
+	source_profile.engraved_face = 1
 	await _click(screen.get_node("%RoundSummaryPanel").get_node("%EnterShopButton"))
 	await _settle()
 
@@ -105,14 +106,32 @@ func _run() -> void:
 	await _click(intel.get_node("%CloseIntelButton"))
 	await _settle()
 
-	var outgoing_id: StringName = fixture["outgoing_id"]
-	var purchased_id: StringName = fixture["purchased_id"]
+	var outgoing_id: StringName = screen.area_session.area_definition.starting_deck_ids[0]
+	var purchased_id: StringName = first_session.offer_ids[0]
 	await _click(_find_shop_card(&"offer", purchased_id))
 	await _settle()
-	await _click(_find_shop_card(&"deck", outgoing_id))
 	await _click(shop.get_node("%ConfirmReplacementButton"))
 	await _settle()
 	_assert_true(purchased_id in first_session.deck_ids, "first purchase should enter deck")
+	_assert_equal(first_session.deck_ids.size(), 13, "formal purchase should append below cap")
+	await _click(_find_shop_card(&"deck", outgoing_id))
+	await _click(shop.get_node("%RemoveCardButton"))
+	await _settle()
+	_assert_false(outgoing_id in first_session.deck_ids, "remove service should remove selected card")
+	_assert_true(first_session.remove_card_used, "remove service should be marked used")
+	await _click(shop.get_node("%TransferEngravingButton"))
+	await _settle()
+	_assert_true(first_session.transfer_engraving_used, "transfer service should be marked used")
+	_assert_equal(
+		screen.area_session.die_profiles[0].engraving_id,
+		&"",
+		"transfer should clear the source die engraving"
+	)
+	_assert_equal(
+		screen.area_session.die_profiles[1].engraving_id,
+		&"engraving_echo",
+		"transfer should install the engraving on the first unengraved target"
+	)
 	await _click(shop.get_node("%LeaveShopButton"))
 	await _settle()
 	_assert_equal(
@@ -127,10 +146,16 @@ func _run() -> void:
 	await _click(screen.get_node("%RoundSummaryPanel").get_node("%EnterShopButton"))
 	await _settle()
 	var second_session := screen.area_session.shop_session
-	_assert_true(
-		outgoing_id in second_session.offer_ids,
-		"second shop should expose the outgoing first-shop card"
-	)
+	await _click(shop.get_node("%RefreshOffersButton"))
+	await _settle()
+	await _click(shop.get_node("%RefreshConfirmationDialog").get_ok_button())
+	await _settle()
+	var rare_found := false
+	for card_id in second_session.offer_ids:
+		var card := screen.area_session.card_catalog.find_card(card_id)
+		if card != null and card.rarity == CardDefinition.Rarity.RARE:
+			rare_found = true
+	_assert_true(rare_found, "the area's second refresh should guarantee an unowned rare")
 	var dealer_preview: ShopIntelSnapshot = second_session.intel_snapshot
 	var before_dealer_intel := second_session.intel_tickets
 	await _click(shop.get_node("%PurchaseIntelButton"))
@@ -162,13 +187,12 @@ func _run() -> void:
 	await _click(intel.get_node("%CloseIntelButton"))
 	await _settle()
 
-	await _click(_find_shop_card(&"offer", outgoing_id))
+	var second_offer_id: StringName = second_session.offer_ids[0]
+	await _click(_find_shop_card(&"offer", second_offer_id))
 	await _settle()
-	var second_replaced := _first_deck_id_except(outgoing_id)
-	await _click(_find_shop_card(&"deck", second_replaced))
 	await _click(shop.get_node("%ConfirmReplacementButton"))
 	await _settle()
-	_assert_true(outgoing_id in second_session.deck_ids, "old card should be bought back")
+	_assert_true(second_offer_id in second_session.deck_ids, "second purchase should append")
 	await _click(shop.get_node("%LeaveShopButton"))
 	await _settle()
 	_assert_equal(
@@ -208,6 +232,7 @@ func _find_buyback_fixture() -> Dictionary:
 			if not area.select_route(area.current_route_ids()[0]).accepted:
 				continue
 			_complete_domain_encounter(area)
+			_resolve_domain_event(area)
 			area.intel_tickets = 10
 			if not area.open_shop().accepted:
 				continue
@@ -221,6 +246,7 @@ func _find_buyback_fixture() -> Dictionary:
 			if not area.select_route(area.current_route_ids()[0]).accepted:
 				continue
 			_complete_domain_encounter(area)
+			_resolve_domain_event(area)
 			if not area.open_shop().accepted:
 				continue
 			if outgoing_id in area.shop_session.offer_ids:
@@ -240,6 +266,17 @@ func _complete_domain_encounter(area: AreaRunSession) -> void:
 		if round_index < round_count - 1:
 			area.advance_encounter_round()
 
+func _resolve_domain_event(area: AreaRunSession) -> void:
+	if area.phase != AreaRunSession.Phase.EVENT:
+		return
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			area.resolve_event(&"rest")
+		_:
+			area.resolve_event(&"intel")
+
 func _complete_encounter() -> void:
 	screen.area_session.encounter_session.target_total = 0
 	var round_count := screen.area_session.encounter_session.round_count
@@ -255,6 +292,19 @@ func _complete_encounter() -> void:
 				screen.get_node("%RoundSummaryPanel").get_node("%NextRoundButton")
 			)
 			await _settle()
+	await _resolve_visible_event()
+
+func _resolve_visible_event() -> void:
+	if screen.area_session.phase != AreaRunSession.Phase.EVENT:
+		return
+	var panel: AreaEventPanel = screen.get_node("%AreaEventPanel")
+	await _settle()
+	for child in panel.get_node("%EventOptions").get_children():
+		if child is Button and not child.disabled:
+			await _click(child)
+			await _settle()
+			return
+	_assert_true(false, "event should expose an enabled choice before shop")
 
 func _route_button_at(index: int) -> Button:
 	var panel: RouteChoicePanel = screen.get_node("%RouteChoicePanel")

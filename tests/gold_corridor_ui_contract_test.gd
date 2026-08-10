@@ -94,6 +94,17 @@ func _test_route_panel_contract() -> void:
 	assert_false(panel.get_node("%RightRouteName").text.is_empty(), "right route should bind")
 	assert_false(panel.get_node("%LeftLaneOne").text.is_empty(), "left lanes should bind")
 	assert_false(panel.get_node("%RightRouteSynergy").text.is_empty(), "synergy should bind")
+	assert_true(
+		panel.get_node("%LeftRouteTags").text.contains("策略｜"),
+		"route tags should expose the relative pressure strategy"
+	)
+	var strategy_copy: String = panel.get_node("%LeftRouteTags").text
+	assert_true(
+		strategy_copy.contains("稳健")
+			or strategy_copy.contains("进阶")
+			or strategy_copy.contains("高压"),
+		"strategy tag should use the public three-level vocabulary"
+	)
 	assert_equal(
 		panel.get_node("%RouteTitle").text,
 		"金线回廊 · 路线账簿",

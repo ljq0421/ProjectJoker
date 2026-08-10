@@ -8,6 +8,7 @@ func run() -> void:
 	)
 	_test_round_trip_and_clear()
 	_test_v1_snapshot_migrates_without_changing_legacy_deck()
+	_test_v2_snapshot_migrates_to_safe_phase_two_defaults()
 	_test_corrupt_file_is_preserved()
 	_cleanup()
 
@@ -64,6 +65,28 @@ func _test_v1_snapshot_migrates_without_changing_legacy_deck() -> void:
 		loaded.snapshot.get("inherited_state", {}).get("deck_ids"),
 		AreaCatalog.new().gold_corridor().starting_deck_ids,
 		"migration should preserve the old starting deck"
+	)
+	ExpeditionSaveStore.new(_base_path).clear()
+
+func _test_v2_snapshot_migrates_to_safe_phase_two_defaults() -> void:
+	var expedition := ExpeditionSession.new()
+	expedition.start_new(20260731)
+	var legacy := expedition.to_snapshot()
+	var config := ConfigFile.new()
+	config.set_value("meta", "format_version", 2)
+	config.set_value("meta", "content_version", 1)
+	config.set_value("run", "snapshot", legacy)
+	assert_equal(
+		config.save(ProjectSettings.globalize_path(_base_path)),
+		OK,
+		"v2 fixture should write"
+	)
+	var loaded := ExpeditionSaveStore.new(_base_path).load_snapshot()
+	assert_true(loaded.accepted, "v2 save should migrate")
+	assert_equal(
+		loaded.snapshot.get("area_checkpoint", {}).get("event_history", []),
+		[],
+		"v2 save receives empty event history"
 	)
 	ExpeditionSaveStore.new(_base_path).clear()
 

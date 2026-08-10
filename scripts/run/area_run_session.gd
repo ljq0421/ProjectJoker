@@ -16,9 +16,21 @@ enum Phase {
 	ENGRAVING_INSTALL,
 	COMPLETE,
 	FAILED,
+	EVENT,
 }
 
 const DEFAULT_SEED := 20260726
+const EMERGENCY_REROLL_PRICE := 1
+const EMERGENCY_CALIBRATION_PRICE := 2
+const EMERGENCY_RETRY_PRICE := 3
+const EVENT_DICE_ARTISAN := &"dice_artisan"
+const EVENT_REST_STOP := &"rest_stop"
+const EVENT_MYSTERY_GAMBLE := &"mystery_gamble"
+const EVENT_IDS: Array[StringName] = [
+	EVENT_DICE_ARTISAN,
+	EVENT_REST_STOP,
+	EVENT_MYSTERY_GAMBLE,
+]
 
 var phase: Phase = Phase.NOT_STARTED
 var seed_value: int
@@ -53,6 +65,11 @@ var installed_die_id: StringName = &""
 var installed_face := 0
 var challenge_ids: Array[StringName] = []
 var failure_origin: Phase = Phase.NOT_STARTED
+var area_retry_used := false
+var current_event_id: StringName = &""
+var event_history: Array[Dictionary] = []
+var next_encounter_calibration_bonus := 0
+var balance_telemetry: Dictionary = {}
 var last_error := ""
 var _entry_state: Dictionary = {}
 var _encounter_entry_checkpoint: Dictionary = {}
@@ -160,6 +177,8 @@ func start() -> OperationResult:
 	lucky_faces = next_lucky_faces
 	area_modifier_id = next_modifier_id
 	room_index = 0
+	balance_telemetry = _empty_balance_telemetry()
+	_record_balance_sample()
 	phase = Phase.ROUTE_CHOICE
 	last_error = ""
 	return OperationResult.new(true)
@@ -218,6 +237,7 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 	var result := encounter_session.accept_committed_report(report)
 	if not result.accepted:
 		return _fail(result.reason)
+	_record_balance_report(report)
 	if encounter_session.status == ThreeRoundEncounterSession.Status.FAILED:
 		failure_origin = active_phase
 		phase = Phase.FAILED
@@ -231,14 +251,18 @@ func accept_encounter_report(report: ResolutionReport) -> OperationResult:
 			"cumulative_total": encounter_session.cumulative_total,
 		})
 		intel_tickets += encounter_session.intel_tickets
-		phase = Phase.AFTER_NORMAL_ROOM
+		var event_result := _prepare_random_event()
+		if not event_result.accepted:
+			return event_result
 	elif (
 		active_phase == Phase.DEALER
 		and encounter_session.status == ThreeRoundEncounterSession.Status.SUCCEEDED
 	):
+		intel_tickets += encounter_session.earned_intel_tickets * 2
 		var reward_result := _prepare_dealer_rewards()
 		if not reward_result.accepted:
 			return reward_result
+	_record_balance_sample()
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -250,6 +274,73 @@ func advance_encounter_round() -> OperationResult:
 	var result := encounter_session.advance_round()
 	if not result.accepted:
 		return _fail(result.reason)
+	last_error = ""
+	return OperationResult.new(true)
+
+func event_choice_block_reason(choice_id: StringName) -> String:
+	if phase != Phase.EVENT:
+		return "当前不在随机事件阶段"
+	if current_event_id == EVENT_MYSTERY_GAMBLE and choice_id == &"rare_card":
+		if intel_tickets < 2:
+			return "情报不足：稀有牌选项需要 2 情报"
+		if deck_ids.size() >= CardDeck.MAX_DECK_SIZE:
+			return "牌组已满：十五张时不能再获得稀有牌"
+		if _available_event_rare_cards().is_empty():
+			return "当前区域没有尚未拥有的可用稀有牌"
+	return ""
+
+func resolve_event(
+	choice_id: StringName,
+	target_die_id: StringName = &""
+) -> OperationResult:
+	if phase != Phase.EVENT:
+		return _fail("当前不在随机事件阶段")
+	var outcome := ""
+	match current_event_id:
+		EVENT_DICE_ARTISAN:
+			var profile := _profile_for(target_die_id)
+			if profile == null:
+				return _fail("请选择一颗有效骰子")
+			var old_face := int(lucky_faces.get(target_die_id, 0))
+			if old_face < 1 or old_face > 6:
+				return _fail("目标骰子的幸运面不存在")
+			var new_face := run_rng.roll_die()
+			if new_face == old_face:
+				new_face = old_face % 6 + 1
+			lucky_faces[target_die_id] = new_face
+			outcome = "%s 幸运面 %d→%d" % [
+				String(target_die_id).to_upper(), old_face, new_face,
+			]
+		EVENT_REST_STOP:
+			if choice_id != &"rest":
+				return _fail("休息站只有整备选项")
+			next_encounter_calibration_bonus += 1
+			outcome = "下一场遭遇第一轮校准 +1"
+		EVENT_MYSTERY_GAMBLE:
+			if choice_id == &"intel":
+				intel_tickets += 1
+				outcome = "获得 1 情报"
+			elif choice_id == &"rare_card":
+				var reason := event_choice_block_reason(choice_id)
+				if not reason.is_empty():
+					return _fail(reason)
+				var candidates := _available_event_rare_cards()
+				var card_id: StringName = run_rng.shuffle(candidates)[0]
+				intel_tickets -= 2
+				deck_ids.append(card_id)
+				outcome = "支付 2 情报，获得%s" % card_catalog.find_card(card_id).display_name
+			else:
+				return _fail("神秘赌局选项不存在")
+		_:
+			return _fail("随机事件定义不存在")
+	event_history.append({
+		"event_id": current_event_id,
+		"choice_id": choice_id,
+		"target_die_id": target_die_id,
+		"outcome": outcome,
+	})
+	phase = Phase.AFTER_NORMAL_ROOM
+	_record_balance_sample()
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -307,7 +398,9 @@ func open_shop() -> OperationResult:
 		intel,
 		room_index,
 		true,
-		ChallengeRules.new(challenge_ids).shop_price(0)
+		ChallengeRules.new(challenge_ids).shop_price(0),
+		true,
+		_area_refresh_count()
 	)
 	if not next_shop.initialization_error.is_empty():
 		run_rng.restore_state(rng_before)
@@ -322,6 +415,96 @@ func current_shop_intel() -> ShopIntelSnapshot:
 	if phase != Phase.SHOP or shop_session == null:
 		return null
 	return shop_session.intel_snapshot
+
+func remove_shop_card(card_id: StringName) -> OperationResult:
+	if phase != Phase.SHOP or shop_session == null:
+		return _fail("当前不在商店中")
+	var result := shop_session.remove_card(card_id)
+	if not result.accepted:
+		return _fail(result.reason)
+	last_error = ""
+	return OperationResult.new(true)
+
+func transfer_shop_engraving(
+	source_die_id: StringName,
+	target_die_id: StringName,
+	target_face: int
+) -> OperationResult:
+	if phase != Phase.SHOP or shop_session == null:
+		return _fail("当前不在商店中")
+	if source_die_id == target_die_id:
+		return _fail("刻印来源与目标骰子不能相同")
+	if target_face < 1 or target_face > 6:
+		return _fail("目标骰面必须在一到六之间")
+	var source := _profile_for(source_die_id)
+	var target := _profile_for(target_die_id)
+	if source == null or source.engraving_id == &"":
+		return _fail("来源骰子没有可转移的刻印")
+	if target == null:
+		return _fail("目标骰子不存在")
+	if target.engraving_id != &"":
+		return _fail("目标骰子已经拥有刻印")
+	var charge := shop_session.charge_engraving_transfer(
+		source_die_id,
+		target_die_id,
+		target_face
+	)
+	if not charge.accepted:
+		return _fail(charge.reason)
+	var engraving_id := source.engraving_id
+	source.engraving_id = &""
+	source.engraved_face = 0
+	target.engraving_id = engraving_id
+	target.engraved_face = target_face
+	last_error = ""
+	return OperationResult.new(true)
+
+func emergency_reroll(die_id: StringName) -> OperationResult:
+	if phase not in [Phase.NORMAL_ROOM, Phase.DEALER] or encounter_session == null:
+		return _fail("当前没有可使用应急重投的遭遇")
+	if intel_tickets < EMERGENCY_REROLL_PRICE:
+		return _fail("情报券不足，无法应急重投")
+	var result := encounter_session.paid_reroll(die_id)
+	if not result.accepted:
+		return _fail(result.reason)
+	intel_tickets -= EMERGENCY_REROLL_PRICE
+	_record_emergency_balance(&"reroll", EMERGENCY_REROLL_PRICE)
+	last_error = ""
+	return OperationResult.new(true)
+
+func emergency_add_calibration() -> OperationResult:
+	if phase not in [Phase.NORMAL_ROOM, Phase.DEALER] or encounter_session == null:
+		return _fail("当前没有可购买校准的遭遇")
+	if intel_tickets < EMERGENCY_CALIBRATION_PRICE:
+		return _fail("情报券不足，无法购买额外校准")
+	var result := encounter_session.paid_add_calibration()
+	if not result.accepted:
+		return _fail(result.reason)
+	intel_tickets -= EMERGENCY_CALIBRATION_PRICE
+	_record_emergency_balance(&"calibration", EMERGENCY_CALIBRATION_PRICE)
+	last_error = ""
+	return OperationResult.new(true)
+
+func emergency_retry_encounter() -> OperationResult:
+	if phase not in [Phase.NORMAL_ROOM, Phase.DEALER]:
+		return _fail("当前没有可从入口重试的遭遇")
+	if area_retry_used:
+		return _fail("本区域已经使用过付费重试")
+	if intel_tickets < EMERGENCY_RETRY_PRICE:
+		return _fail("情报券不足，无法从入口重试")
+	if _encounter_entry_checkpoint.is_empty():
+		return _fail("当前遭遇入口检查点不存在")
+	var paid_tickets := intel_tickets - EMERGENCY_RETRY_PRICE
+	var telemetry_before_retry := balance_telemetry.duplicate(true)
+	var result := restore_checkpoint(_encounter_entry_checkpoint)
+	if not result.accepted:
+		return result
+	intel_tickets = paid_tickets
+	area_retry_used = true
+	balance_telemetry = telemetry_before_retry
+	_record_emergency_balance(&"retry", EMERGENCY_RETRY_PRICE)
+	last_error = ""
+	return OperationResult.new(true)
 
 func leave_shop() -> OperationResult:
 	if phase != Phase.SHOP or shop_session == null:
@@ -353,6 +536,7 @@ func leave_shop() -> OperationResult:
 		room_index = 1
 		shop_session = null
 		phase = Phase.ROUTE_CHOICE
+		_record_balance_sample()
 		last_error = ""
 		return OperationResult.new(true)
 	if room_index == 1:
@@ -366,6 +550,7 @@ func leave_shop() -> OperationResult:
 		)
 		if result.accepted:
 			_encounter_entry_checkpoint = entry_checkpoint
+			_record_balance_sample()
 		return result
 	return _fail("普通房序号无效")
 
@@ -399,7 +584,7 @@ func select_reward_replacement(card_id: StringName) -> OperationResult:
 
 func claim_rare_card_reward(
 	card_id: StringName,
-	replaced_id: StringName
+	replaced_id: StringName = &""
 ) -> OperationResult:
 	if phase != Phase.ENGRAVING_REWARD:
 		return _fail("当前不能领取稀有手法牌")
@@ -407,30 +592,35 @@ func claim_rare_card_reward(
 		return _fail("庄家完成摘要不存在")
 	if card_id not in rare_card_offer_ids:
 		return _fail("所选稀有手法牌不在本次候选中")
-	if replaced_id not in deck_ids:
-		return _fail("待替换手法牌不在当前牌组中")
+	var replacement_required := deck_ids.size() >= CardDeck.MAX_DECK_SIZE
+	if replacement_required and replaced_id not in deck_ids:
+		return _fail("牌组已满，请选择一张待替换手法牌")
 	if card_id in deck_ids:
 		return _fail("稀有手法牌已在当前牌组中")
 	if not select_rare_card_reward(card_id).accepted:
 		return _fail(last_error)
-	if not select_reward_replacement(replaced_id).accepted:
+	if replacement_required and not select_reward_replacement(replaced_id).accepted:
 		return _fail(last_error)
 	var card := card_catalog.find_card(card_id)
 	if card == null or card.rarity != CardDefinition.Rarity.RARE:
 		return _fail("所选奖励不是有效稀有手法牌")
-	var index := deck_ids.find(replaced_id)
-	deck_ids[index] = card_id
+	var previous_deck := deck_ids.duplicate()
+	if replacement_required:
+		deck_ids[deck_ids.find(replaced_id)] = card_id
+	else:
+		deck_ids.append(card_id)
 	var deck_error := _deck_error(deck_ids)
 	if not deck_error.is_empty():
-		deck_ids[index] = replaced_id
+		deck_ids.assign(previous_deck)
 		return _fail(deck_error)
 	selected_reward_kind = &"rare_card"
 	selected_reward_card_id = card_id
-	replaced_reward_card_id = replaced_id
+	replaced_reward_card_id = replaced_id if replacement_required else &""
 	selected_engraving_id = &""
 	installed_die_id = &""
 	installed_face = 0
 	phase = Phase.COMPLETE
+	_record_balance_sample()
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -459,6 +649,7 @@ func install_selected_engraving(
 	selected_reward_card_id = &""
 	replaced_reward_card_id = &""
 	phase = Phase.COMPLETE
+	_record_balance_sample()
 	last_error = ""
 	return OperationResult.new(true)
 
@@ -481,6 +672,10 @@ func completion_snapshot() -> Dictionary:
 			"service_type": record.service_type,
 			"price": record.price,
 			"intel_kind": record.intel_kind,
+			"target_card_id": record.target_card_id,
+			"source_die_id": record.source_die_id,
+			"target_die_id": record.target_die_id,
+			"target_face": record.target_face,
 		})
 	return {
 		"area_id": area_definition.id,
@@ -500,14 +695,11 @@ func completion_snapshot() -> Dictionary:
 		"die_profiles": _profile_snapshots(),
 		"lucky_faces": lucky_faces.duplicate(true),
 		"area_modifier_id": area_modifier_id,
+		"events": event_history.duplicate(true),
+		"balance_telemetry": balance_telemetry_snapshot(),
 	}
 
 func checkpoint_snapshot() -> Dictionary:
-	if (
-		phase in [Phase.NORMAL_ROOM, Phase.DEALER]
-		and not _encounter_entry_checkpoint.is_empty()
-	):
-		return _encounter_entry_checkpoint.duplicate(true)
 	return _state_snapshot()
 
 func restore_checkpoint(snapshot: Dictionary) -> OperationResult:
@@ -553,6 +745,8 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 	setup.die_profiles = _clone_profiles(die_profiles)
 	setup.hand_size = challenges.hand_size(not room.fixed_hand_ids.is_empty())
 	setup.undo_allowed = challenges.undo_allowed()
+	setup.undo_mode = challenges.undo_mode()
+	setup.initial_calibration_bonus = next_encounter_calibration_bonus
 	var extra_restriction := challenges.full_table_restriction()
 	if extra_restriction != null:
 		setup.additional_restrictions.append(extra_restriction)
@@ -567,6 +761,7 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 		run_rng.restore_state(rng_before)
 		return _fail(result.reason)
 	encounter_session = next
+	next_encounter_calibration_bonus = 0
 	selected_room_ids.append(room.id)
 	route_ids.clear()
 	phase = Phase.NORMAL_ROOM
@@ -582,9 +777,9 @@ func _prepare_dealer_rewards() -> OperationResult:
 	for card_id in area_definition.rare_reward_card_ids:
 		if card_id not in deck_ids:
 			rare_candidates.append(card_id)
-	if rare_candidates.is_empty():
-		return _fail("当前牌组外没有可用的区域稀有手法牌")
-	var shuffled_cards := run_rng.shuffle(rare_candidates)
+	var shuffled_cards: Array = []
+	if not rare_candidates.is_empty():
+		shuffled_cards = run_rng.shuffle(rare_candidates)
 	var shuffled_engravings := run_rng.shuffle(area_definition.engraving_offer_ids)
 	if shuffled_engravings.size() < 2:
 		return _fail("区域刻印奖励候选不足两枚")
@@ -592,8 +787,12 @@ func _prepare_dealer_rewards() -> OperationResult:
 		"id": area_definition.dealer_id,
 		"target_total": encounter_session.target_total,
 		"cumulative_total": encounter_session.cumulative_total,
+		"intel_card_base": encounter_session.earned_intel_tickets,
+		"intel_card_awarded": encounter_session.earned_intel_tickets * 2,
 	}
-	rare_card_offer_ids.assign(shuffled_cards.slice(0, 1))
+	rare_card_offer_ids.clear()
+	if not shuffled_cards.is_empty():
+		rare_card_offer_ids.assign(shuffled_cards.slice(0, 1))
 	engraving_offer_ids.assign(shuffled_engravings.slice(0, 2))
 	selected_reward_kind = &""
 	selected_reward_card_id = &""
@@ -629,6 +828,8 @@ func _create_dealer(
 	setup.die_profiles = _clone_profiles(die_profiles)
 	setup.hand_size = challenges.hand_size(false)
 	setup.undo_allowed = challenges.undo_allowed()
+	setup.undo_mode = challenges.undo_mode()
+	setup.initial_calibration_bonus = next_encounter_calibration_bonus
 	var extra_restriction := challenges.full_table_restriction()
 	if extra_restriction != null:
 		setup.additional_restrictions.append(extra_restriction)
@@ -647,6 +848,7 @@ func _create_dealer(
 	shop_purchase_history = next_history
 	shop_service_history = next_service_history
 	encounter_session = next
+	next_encounter_calibration_bonus = 0
 	shop_session = null
 	phase = Phase.DEALER
 	last_error = ""
@@ -665,8 +867,8 @@ func _route_error(ids: Array[StringName]) -> String:
 	return ""
 
 func _deck_error(ids: Array[StringName]) -> String:
-	if ids.size() != 12:
-		return "区域牌组必须正好包含十二张牌"
+	if ids.size() < CardDeck.MIN_DECK_SIZE or ids.size() > CardDeck.MAX_DECK_SIZE:
+		return "区域牌组必须包含十二至十五张牌"
 	var seen: Dictionary = {}
 	for card_id in ids:
 		if card_catalog.find_card(card_id) == null:
@@ -719,8 +921,8 @@ func _market_error(
 	for card_id in ids:
 		if card_id not in current_deck_ids:
 			outside_count += 1
-	if outside_count < 6:
-		return "当前牌组之外的地区市场牌不足六张"
+	if outside_count < 3:
+		return "当前牌组之外的地区市场牌不足三张"
 	return ""
 
 func _blank_profiles() -> Array[DieState]:
@@ -760,6 +962,81 @@ func _clone_profiles(profiles: Array[DieState]) -> Array[DieState]:
 	for profile in profiles:
 		copies.append(profile.clone())
 	return copies
+
+func _profile_for(die_id: StringName) -> DieState:
+	for profile in die_profiles:
+		if profile.id == die_id:
+			return profile
+	return null
+
+func _prepare_random_event() -> OperationResult:
+	var used_ids: Array[StringName] = []
+	for entry in event_history:
+		used_ids.append(entry.get("event_id", &""))
+	var candidates: Array[StringName] = []
+	for event_id in EVENT_IDS:
+		if event_id not in used_ids:
+			candidates.append(event_id)
+	if candidates.is_empty():
+		return _fail("本区域没有可用的不重复随机事件")
+	current_event_id = run_rng.shuffle(candidates)[0]
+	phase = Phase.EVENT
+	last_error = ""
+	return OperationResult.new(true)
+
+func _available_event_rare_cards() -> Array[StringName]:
+	var result: Array[StringName] = []
+	for card_id in area_definition.rare_reward_card_ids:
+		if card_id not in deck_ids and card_catalog.find_card(card_id) != null:
+			result.append(card_id)
+	return result
+
+func _active_restore_setup(active_phase: Phase) -> EncounterRunSetup:
+	var challenges := ChallengeRules.new(challenge_ids)
+	var setup := EncounterRunSetup.new()
+	setup.run_rng = run_rng
+	setup.deck_ids = deck_ids.duplicate()
+	setup.resolution_context = ResolutionContext.new(
+		dealer_catalog.find_dealer(area_definition.dealer_id)
+			if active_phase == Phase.DEALER else null,
+		engraving_catalog,
+		area_modifier_id,
+		lucky_faces
+	)
+	setup.die_profiles = _clone_profiles(die_profiles)
+	setup.undo_allowed = challenges.undo_allowed()
+	setup.undo_mode = challenges.undo_mode()
+	var extra_restriction := challenges.full_table_restriction()
+	if extra_restriction != null:
+		setup.additional_restrictions.append(extra_restriction)
+	if active_phase == Phase.DEALER:
+		setup.encounter = area_definition.dealer_encounter
+		setup.round_schedule = area_definition.dealer_round_schedule
+		setup.success_intel_reward = 0
+		setup.prepare_shop_offers = false
+		setup.hand_size = challenges.hand_size(false)
+		return setup
+	if active_phase != Phase.NORMAL_ROOM or selected_room_ids.is_empty():
+		return null
+	var room := area_definition.find_room(selected_room_ids[-1])
+	if room == null:
+		return null
+	setup.encounter = room.encounter
+	setup.round_count = room.round_count
+	setup.fixed_hand_ids.assign(room.fixed_hand_ids)
+	setup.round_plans.assign(room.round_plans)
+	setup.fixed_restriction = room.restriction
+	setup.success_intel_reward = challenges.intel_reward(room.success_intel_reward)
+	setup.prepare_shop_offers = false
+	setup.hand_size = challenges.hand_size(not room.fixed_hand_ids.is_empty())
+	return setup
+
+func _area_refresh_count() -> int:
+	var count := 0
+	for record in shop_service_history:
+		if record.service_type == ShopServiceRecord.ServiceType.REFRESH:
+			count += 1
+	return count
 
 func _clone_purchase_history(
 	history: Array[ShopPurchaseRecord]
@@ -825,10 +1102,14 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	if not snapshot["phase"] is int or snapshot["phase"] not in [
 		Phase.ROUTE_CHOICE,
 		Phase.AFTER_NORMAL_ROOM,
+		Phase.EVENT,
 		Phase.SHOP,
 		Phase.ENGRAVING_REWARD,
 		Phase.ENGRAVING_INSTALL,
 		Phase.COMPLETE,
+		Phase.NORMAL_ROOM,
+		Phase.DEALER,
+		Phase.FAILED,
 	]:
 		return _fail("区域检查点阶段无效")
 	if not snapshot["rng_state"] is int:
@@ -954,10 +1235,39 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	selected_engraving_id = snapshot["selected_engraving_id"]
 	installed_die_id = snapshot["installed_die_id"]
 	installed_face = snapshot["installed_face"]
+	area_retry_used = bool(snapshot.get("area_retry_used", false))
+	current_event_id = snapshot.get("current_event_id", &"")
+	event_history.assign(snapshot.get("event_history", []).duplicate(true))
+	next_encounter_calibration_bonus = int(
+		snapshot.get("next_encounter_calibration_bonus", 0)
+	)
+	balance_telemetry = _normalized_balance_telemetry(
+		snapshot.get("balance_telemetry", {})
+	)
 	encounter_session = null
+	if phase in [Phase.NORMAL_ROOM, Phase.DEALER, Phase.FAILED]:
+		var active_snapshot: Dictionary = snapshot.get("active_encounter", {})
+		if active_snapshot.is_empty():
+			return _fail("轮内检查点缺少活跃遭遇")
+		var active_phase: Phase = phase
+		if active_phase == Phase.FAILED:
+			active_phase = snapshot.get("failure_origin", Phase.NORMAL_ROOM)
+		var restore_setup := _active_restore_setup(active_phase)
+		if restore_setup == null:
+			return _fail("轮内检查点无法重建遭遇配置")
+		var restored_encounter := ThreeRoundEncounterSession.from_snapshot(
+			card_catalog,
+			restore_setup,
+			active_snapshot
+		)
+		if not restored_encounter.accepted:
+			return _fail(restored_encounter.reason)
+		encounter_session = restored_encounter.session
 	shop_session = next_shop
-	failure_origin = Phase.NOT_STARTED
-	_encounter_entry_checkpoint = {}
+	failure_origin = snapshot.get("failure_origin", Phase.NOT_STARTED)
+	_encounter_entry_checkpoint = snapshot.get(
+		"encounter_entry_checkpoint", {}
+	).duplicate(true)
 	return OperationResult.new(true)
 
 func _state_snapshot() -> Dictionary:
@@ -975,6 +1285,10 @@ func _state_snapshot() -> Dictionary:
 			"service_type": record.service_type,
 			"price": record.price,
 			"intel_kind": record.intel_kind,
+			"target_card_id": record.target_card_id,
+			"source_die_id": record.source_die_id,
+			"target_die_id": record.target_die_id,
+			"target_face": record.target_face,
 		})
 	var snapshot := {
 		"area_id": area_definition.id,
@@ -1003,7 +1317,16 @@ func _state_snapshot() -> Dictionary:
 		"selected_engraving_id": selected_engraving_id,
 		"installed_die_id": installed_die_id,
 		"installed_face": installed_face,
+		"area_retry_used": area_retry_used,
+		"current_event_id": current_event_id,
+		"event_history": event_history.duplicate(true),
+		"next_encounter_calibration_bonus": next_encounter_calibration_bonus,
+		"balance_telemetry": balance_telemetry.duplicate(true),
+		"failure_origin": failure_origin,
+		"encounter_entry_checkpoint": _encounter_entry_checkpoint.duplicate(true),
 	}
+	if phase in [Phase.NORMAL_ROOM, Phase.DEALER, Phase.FAILED] and encounter_session != null:
+		snapshot["active_encounter"] = encounter_session.to_snapshot()
 	if phase == Phase.SHOP and shop_session != null:
 		snapshot["shop"] = shop_session.to_snapshot()
 	return snapshot
@@ -1036,6 +1359,11 @@ func _copy_runtime_from(other: AreaRunSession) -> void:
 	selected_engraving_id = other.selected_engraving_id
 	installed_die_id = other.installed_die_id
 	installed_face = other.installed_face
+	area_retry_used = other.area_retry_used
+	current_event_id = other.current_event_id
+	event_history = other.event_history
+	next_encounter_calibration_bonus = other.next_encounter_calibration_bonus
+	balance_telemetry = other.balance_telemetry
 	failure_origin = other.failure_origin
 	_entry_state = other._entry_state
 	_encounter_entry_checkpoint = other._encounter_entry_checkpoint
@@ -1170,9 +1498,88 @@ func _service_history_from_snapshots(entries: Array) -> Array[ShopServiceRecord]
 			entry.get("shop_index", -1),
 			entry.get("service_type", -1),
 			entry.get("price", -1),
-			entry.get("intel_kind", -1)
+			entry.get("intel_kind", -1),
+			entry.get("target_card_id", &""),
+			entry.get("source_die_id", &""),
+			entry.get("target_die_id", &""),
+			entry.get("target_face", 0)
 		))
 	return result
+
+func _record_balance_report(report: ResolutionReport) -> void:
+	_ensure_balance_telemetry()
+	if report == null:
+		return
+	if report.consolation_awarded:
+		balance_telemetry["consolation_rounds"] += 1
+	if report.resonance_awarded:
+		balance_telemetry["resonance_rounds"] += 1
+	if report.storm_awarded:
+		balance_telemetry["storm_rounds"] += 1
+
+func _record_emergency_balance(kind: StringName, price: int) -> void:
+	_ensure_balance_telemetry()
+	match kind:
+		&"reroll":
+			balance_telemetry["emergency_rerolls"] += 1
+		&"calibration":
+			balance_telemetry["emergency_calibrations"] += 1
+		&"retry":
+			balance_telemetry["emergency_retries"] += 1
+		_:
+			return
+	balance_telemetry["emergency_spend_total"] += maxi(0, price)
+	_record_balance_sample()
+
+func _record_balance_sample() -> void:
+	_ensure_balance_telemetry()
+	balance_telemetry["deck_size_total"] += deck_ids.size()
+	balance_telemetry["intel_balance_total"] += maxi(0, intel_tickets)
+	balance_telemetry["sample_count"] += 1
+
+func balance_telemetry_snapshot() -> Dictionary:
+	_ensure_balance_telemetry()
+	var snapshot := balance_telemetry.duplicate(true)
+	var sample_count := int(snapshot["sample_count"])
+	snapshot["average_deck_size"] = (
+		float(snapshot["deck_size_total"]) / float(sample_count)
+		if sample_count > 0
+		else 0.0
+	)
+	snapshot["average_intel_balance"] = (
+		float(snapshot["intel_balance_total"]) / float(sample_count)
+		if sample_count > 0
+		else 0.0
+	)
+	return snapshot
+
+func _ensure_balance_telemetry() -> void:
+	if balance_telemetry.is_empty():
+		balance_telemetry = _empty_balance_telemetry()
+
+func _empty_balance_telemetry() -> Dictionary:
+	return {
+		"consolation_rounds": 0,
+		"resonance_rounds": 0,
+		"storm_rounds": 0,
+		"emergency_rerolls": 0,
+		"emergency_calibrations": 0,
+		"emergency_retries": 0,
+		"emergency_spend_total": 0,
+		"deck_size_total": 0,
+		"intel_balance_total": 0,
+		"sample_count": 0,
+	}
+
+func _normalized_balance_telemetry(value: Variant) -> Dictionary:
+	var normalized := _empty_balance_telemetry()
+	if value is not Dictionary:
+		return normalized
+	for key in normalized:
+		var raw = value.get(key, 0)
+		if raw is int and raw >= 0:
+			normalized[key] = raw
+	return normalized
 
 func _reset_owned_state() -> void:
 	phase = Phase.NOT_STARTED
@@ -1201,6 +1608,11 @@ func _reset_owned_state() -> void:
 	selected_engraving_id = &""
 	installed_die_id = &""
 	installed_face = 0
+	area_retry_used = false
+	current_event_id = &""
+	event_history.clear()
+	next_encounter_calibration_bonus = 0
+	balance_telemetry.clear()
 	failure_origin = Phase.NOT_STARTED
 	last_error = ""
 	_encounter_entry_checkpoint = {}

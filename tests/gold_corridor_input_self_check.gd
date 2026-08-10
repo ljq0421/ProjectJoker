@@ -122,6 +122,17 @@ func _run() -> void:
 	await _complete_encounter()
 	var reward: EngravingRewardPanel = run_screen.get_node("%EngravingRewardPanel")
 	_assert_true(reward.visible, "dealer success should open engraving reward")
+	_assert_true(
+		run_screen.area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD,
+		"dealer should prepare reward choices; error=%s" % run_screen.area_session.last_error
+	)
+	_assert_true(
+		run_screen.area_session.engraving_offer_ids.size() == 2,
+		"dealer should keep two engraving offers even when rare cards are owned"
+	)
+	if run_screen.area_session.engraving_offer_ids.is_empty():
+		await _finish()
+		return
 
 	await _click(reward.get_node("%EngravingRewardModeButton"))
 	var engraving_id: StringName = run_screen.area_session.engraving_offer_ids[0]
@@ -142,7 +153,7 @@ func _run() -> void:
 		"completion should show two route rows"
 	)
 	_assert_true(
-		complete.get_node("%PurchaseHistoryLabel").text.count("→") == 2,
+		complete.get_node("%PurchaseHistoryLabel").text.count("购入") == 2,
 		"completion should show two purchases; got: %s" % (
 			complete.get_node("%PurchaseHistoryLabel").text
 		)
@@ -176,6 +187,12 @@ func _run() -> void:
 
 	await _click(complete.get_node("%RestartAreaButton"))
 	await _settle()
+	run_screen = current_scene as GoldCorridorRunScreen
+	_assert_true(run_screen != null, "restart should keep the Gold Corridor screen")
+	if run_screen == null:
+		await _finish()
+		return
+	route_panel = run_screen.get_node("%RouteChoicePanel")
 	_assert_true(route_panel.visible, "restart should return to first route")
 	_assert_equal(
 		run_screen.area_session.current_route_ids(),
@@ -239,6 +256,7 @@ func _fail_encounter_direct() -> void:
 			await _settle()
 
 func _enter_shop_and_purchase() -> void:
+	await _resolve_visible_event()
 	var summary: RoundSummaryPanel = run_screen.get_node("%RoundSummaryPanel")
 	run_screen.area_session.intel_tickets = maxi(
 		run_screen.area_session.intel_tickets,
@@ -282,10 +300,23 @@ func _enter_shop_and_purchase() -> void:
 	_assert_equal(
 		shop.shop_session.purchase_records.size(),
 		1,
-		"real shop replacement should be recorded; shop error=%s" % (
+		"real shop purchase should be recorded; shop error=%s" % (
 			shop.get_node("%ShopErrorLabel").text
 		)
 	)
+
+func _resolve_visible_event() -> void:
+	if run_screen.area_session.phase != AreaRunSession.Phase.EVENT:
+		return
+	var panel: AreaEventPanel = run_screen.get_node("%AreaEventPanel")
+	_assert_true(panel.visible, "successful room should show its event before the shop")
+	await _settle()
+	for child in panel.get_node("%EventOptions").get_children():
+		if child is Button and not child.disabled:
+			await _click(child)
+			await _settle()
+			return
+	_assert_true(false, "event should expose at least one enabled choice")
 
 func _find_shop_card(role: StringName) -> ShopCardToken:
 	for node in run_screen.find_children("*", "Button", true, false):

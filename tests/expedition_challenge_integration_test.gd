@@ -30,8 +30,13 @@ func run() -> void:
 		"high pressure should modify the domain target"
 	)
 	assert_true(
-		not challenged.encounter_session.current_session.undo_allowed,
-		"no undo should reach the active encounter session"
+		challenged.encounter_session.current_session.undo_allowed,
+		"no-undo challenge should still expose its one global undo"
+	)
+	assert_equal(
+		challenged.encounter_session.current_session.controller.undo_mode,
+		RoundController.UndoMode.GLOBAL_ONE,
+		"no-undo challenge should reach the active encounter as a shared quota"
 	)
 
 	var mirror := AreaRunSession.new(112233, AreaCatalog.new().mirror_hall())

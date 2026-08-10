@@ -14,6 +14,7 @@ enum Operation {
 	REFUND_CALIBRATION,
 	MODIFY_CONDITION,
 	GRANT_INTEL_ON_CONDITION,
+	QUEUE_SEARCH,
 }
 
 enum ConditionModifier {
@@ -36,3 +37,4 @@ enum IntelCondition {
 	ConditionModifier.EXACT_TOLERANCE
 )
 @export var intel_condition: IntelCondition = IntelCondition.TARGET_TABLE_PASSED
+@export var search_identity: StringName = &""

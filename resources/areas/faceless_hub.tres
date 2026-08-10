@@ -24,6 +24,6 @@ initial_engraving_face = 4
 dealer_id = &"dealer_faceless_master"
 dealer_round_schedule = ExtResource("6_schedule")
 dealer_target = 240
-shop_offer_ids = Array[StringName]([&"faceless_copy_value", &"faceless_flip_value", &"faceless_lock_bonus", &"faceless_exact_tolerance", &"faceless_even_tolerance", &"faceless_sequence_tolerance", &"faceless_table_receipt", &"faceless_full_allocation", &"faceless_complete_dossier", &"faceless_strict_mapping", &"faceless_reverse_replay", &"faceless_compressed_repeat", &"faceless_closed_circuit", &"shop_amplified_chain", &"mirror_double_exposure", &"mirror_deep_echo"])
+shop_offer_ids = Array[StringName]([&"faceless_copy_value", &"faceless_flip_value", &"faceless_lock_bonus", &"faceless_exact_tolerance", &"faceless_even_tolerance", &"faceless_sequence_tolerance", &"faceless_table_receipt", &"faceless_full_allocation", &"faceless_complete_dossier", &"faceless_strict_mapping", &"faceless_reverse_replay", &"faceless_compressed_repeat", &"faceless_closed_circuit", &"shop_amplified_chain", &"mirror_double_exposure", &"mirror_deep_echo", &"shop_dice_index", &"shop_chain_index"])
 rare_reward_card_ids = Array[StringName]([&"faceless_flip_value", &"faceless_lock_bonus", &"faceless_even_tolerance", &"faceless_sequence_tolerance", &"faceless_three_seats", &"faceless_complete_dossier", &"faceless_compressed_repeat", &"faceless_closed_circuit"])
 engraving_offer_ids = Array[StringName]([&"engraving_low_murmur", &"engraving_terminal_anchor", &"engraving_two_way_bridge", &"engraving_sequence_prism"])

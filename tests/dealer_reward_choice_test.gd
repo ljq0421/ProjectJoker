@@ -2,6 +2,7 @@ extends "res://tests/test_case.gd"
 
 func run() -> void:
 	_test_rare_card_reward_replaces_one_card()
+	_test_engraving_remains_available_when_rare_pool_is_owned()
 	_test_reward_offers_restore_without_rerolling()
 	_test_engraving_path_still_completes()
 	_test_reward_checkpoint_restores_exact_dealer_summary()
@@ -30,17 +31,37 @@ func _test_rare_card_reward_replaces_one_card() -> void:
 		"rare card replacement should complete"
 	)
 	assert_equal(session.phase, AreaRunSession.Phase.COMPLETE, "card path completes area")
-	assert_equal(session.deck_ids.size(), 12, "card path keeps twelve cards")
-	assert_false(replaced_id in session.deck_ids, "selected deck card is removed")
+	assert_equal(session.deck_ids.size(), 13, "card path appends while below the cap")
+	assert_true(replaced_id in session.deck_ids, "replacement is ignored below the cap")
 	assert_true(reward_id in session.deck_ids, "rare reward enters the deck")
 	var unique: Dictionary = {}
 	for card_id in session.deck_ids:
 		unique[card_id] = true
-	assert_equal(unique.size(), 12, "rewarded deck remains unique")
+	assert_equal(unique.size(), 13, "rewarded deck remains unique")
 	var summary := session.completion_snapshot()
 	assert_equal(summary.reward_kind, &"rare_card", "summary records card reward")
 	assert_equal(summary.reward_card_id, reward_id, "summary records rare card")
-	assert_equal(summary.replaced_card_id, replaced_id, "summary records replacement")
+	assert_equal(summary.replaced_card_id, &"", "summary records no replacement below cap")
+
+func _test_engraving_remains_available_when_rare_pool_is_owned() -> void:
+	var session := AreaRunSession.new(202607311, AreaCatalog.new().gold_corridor())
+	assert_true(session.start().accepted, "owned-rare fixture should start")
+	for card_id in session.area_definition.rare_reward_card_ids:
+		if card_id not in session.deck_ids:
+			session.deck_ids.append(card_id)
+	session.encounter_session = ThreeRoundEncounterSession.new(
+		session.card_catalog,
+		202607311,
+		session.area_definition.dealer_target
+	)
+	session.encounter_session.cumulative_total = session.area_definition.dealer_target
+	session.phase = AreaRunSession.Phase.DEALER
+	assert_true(
+		session._prepare_dealer_rewards().accepted,
+		"owned rare pool must not block the engraving path"
+	)
+	assert_equal(session.rare_card_offer_ids.size(), 0, "owned rare pool offers no card")
+	assert_equal(session.engraving_offer_ids.size(), 2, "engraving choice remains available")
 
 func _test_reward_offers_restore_without_rerolling() -> void:
 	var original := _prepared_reward_session(20260732)

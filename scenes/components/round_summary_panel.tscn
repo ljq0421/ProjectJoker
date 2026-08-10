@@ -73,12 +73,46 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
 theme_override_font_sizes/font_size = 20
 
+[node name="RoundScoreLedger" type="Label" parent="Center/Panel/Content/RoundScoreBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "八段账本"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="RoundEngravingTotal" type="Label" parent="Center/Panel/Content/RoundScoreBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "本轮刻印贡献：+0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 14
+
 [node name="SummaryDetail" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="RetentionBlock" type="VBoxContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RetentionLabel" type="Label" parent="Center/Panel/Content/RetentionBlock"]
+layout_mode = 2
+text = "手牌保留｜可带走 1 张未使用手牌；不占用下轮检索顺序。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
+
+[node name="RetentionChoice" type="OptionButton" parent="Center/Panel/Content/RetentionBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 46)
+layout_mode = 2
 
 [node name="FailureReview" type="VBoxContainer" parent="Center/Panel/Content"]
 unique_name_in_owner = true

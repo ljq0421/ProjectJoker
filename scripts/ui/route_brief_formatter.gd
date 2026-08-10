@@ -44,6 +44,32 @@ static func synergy_text(names: Array[String]) -> String:
 static func goal_text(room: RoomDefinition) -> String:
 	return "%d 轮累计目标：%d" % [room.round_count, room.target_total]
 
+static func pressure_label(
+	room: RoomDefinition,
+	all_rooms: Array[RoomDefinition]
+) -> String:
+	if room == null or all_rooms.is_empty():
+		return "进阶"
+	var values: Array[float] = []
+	for candidate in all_rooms:
+		if candidate != null:
+			values.append(
+				float(candidate.target_total) / float(maxi(candidate.round_count, 1))
+			)
+	if values.is_empty():
+		return "进阶"
+	var low: float = values.min()
+	var high: float = values.max()
+	if is_equal_approx(low, high):
+		return "进阶"
+	var per_round := float(room.target_total) / float(maxi(room.round_count, 1))
+	var relative := (per_round - low) / (high - low)
+	if relative <= 0.34:
+		return "稳健"
+	if relative >= 0.67:
+		return "高压"
+	return "进阶"
+
 static func activity_text(
 	room: RoomDefinition,
 	card_catalog: CardCatalog

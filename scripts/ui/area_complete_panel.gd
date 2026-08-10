@@ -87,7 +87,7 @@ func bind_summary(
 	score_lines.append(_dealer_score_copy(dealer_definition.display_name, dealer))
 	%RouteHistoryLabel.text = "\n".join(room_lines)
 	%ScoreHistoryLabel.text = "\n".join(score_lines)
-	%PurchaseHistoryLabel.text = "手法替换\n%s\n\n商店服务\n%s" % [
+	%PurchaseHistoryLabel.text = "手法交易\n%s\n\n商店服务\n%s" % [
 		_purchase_text(summary["purchases"], card_catalog),
 		_service_text(summary["services"]),
 	]
@@ -174,9 +174,11 @@ func _summary_error(
 		for key in ["offer_id", "replaced_id", "price"]:
 			if not record.has(key):
 				return "替换记录缺少字段：%s" % key
+		if card_catalog.find_card(record["offer_id"]) == null:
+			return "替换记录包含未知手法牌"
 		if (
-			card_catalog.find_card(record["offer_id"]) == null
-			or card_catalog.find_card(record["replaced_id"]) == null
+			record["replaced_id"] != &""
+			and card_catalog.find_card(record["replaced_id"]) == null
 		):
 			return "替换记录包含未知手法牌"
 		if not record["price"] is int or record["price"] < 0:
@@ -220,8 +222,12 @@ func _summary_error(
 			]
 		):
 			return "情报记录类型无效"
-	if not summary["deck_ids"] is Array or summary["deck_ids"].size() != 12:
-		return "最终牌组必须包含十二张牌"
+	if (
+		not summary["deck_ids"] is Array
+		or summary["deck_ids"].size() < CardDeck.MIN_DECK_SIZE
+		or summary["deck_ids"].size() > CardDeck.MAX_DECK_SIZE
+	):
+		return "最终牌组必须包含十二至十五张牌"
 	var seen_cards: Dictionary = {}
 	for card_id in summary["deck_ids"]:
 		if card_catalog.find_card(card_id) == null:
@@ -274,14 +280,18 @@ func _dealer_score_copy(display_name: String, dealer: Dictionary) -> String:
 
 func _purchase_text(purchases: Array, card_catalog: CardCatalog) -> String:
 	if purchases.is_empty():
-		return "本区未进行手法替换"
+		return "本区未购入手法牌"
 	var lines: Array[String] = []
 	for record in purchases:
-		lines.append("%s → %s（%d 情报券）" % [
-			card_catalog.find_card(record["replaced_id"]).display_name,
-			card_catalog.find_card(record["offer_id"]).display_name,
-			record["price"],
-		])
+		var offer_name: String = card_catalog.find_card(record["offer_id"]).display_name
+		if record["replaced_id"] == &"":
+			lines.append("购入 %s（%d 情报券）" % [offer_name, record["price"]])
+		else:
+			lines.append("%s → %s（%d 情报券）" % [
+				card_catalog.find_card(record["replaced_id"]).display_name,
+				offer_name,
+				record["price"],
+			])
 	return "\n".join(lines)
 
 func _service_text(services: Array) -> String:

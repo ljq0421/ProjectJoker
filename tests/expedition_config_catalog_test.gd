@@ -91,5 +91,10 @@ func run() -> void:
 		&"no_undo",
 		&"full_table_rule",
 	])
-	assert_true(not rules.undo_allowed(), "no undo should disable undo")
+	assert_true(rules.undo_allowed(), "no undo now preserves one global undo")
+	assert_equal(
+		rules.undo_mode(),
+		RoundController.UndoMode.GLOBAL_ONE,
+		"no undo should use the shared one-action quota"
+	)
 	assert_true(rules.full_table_required(), "full table should add a public restriction")

@@ -103,7 +103,7 @@ var _challenges: Array[Dictionary] = [
 	{
 		"id": NO_UNDO,
 		"display_name": "落子无悔",
-		"description": "遭遇中禁止撤销，所有落子都必须当场承担。",
+		"description": "每轮仅保留 1 次全局撤销；落子、校准与卡牌共用。",
 	},
 	{
 		"id": FULL_TABLE_RULE,

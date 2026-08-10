@@ -31,6 +31,8 @@ const CARD_FACE_FILES := {
 	&"mirror_silver_bridge": "mirror_silver_bridge.svg",
 	&"shop_amplified_chain": "shop_amplified_chain.svg",
 	&"shop_reverse_backup": "shop_reverse_backup.svg",
+	&"shop_dice_index": "shop_dice_index.svg",
+	&"shop_chain_index": "shop_chain_index.svg",
 	&"faceless_swap_values": "faceless_swap_values.svg",
 	&"faceless_flip_value": "faceless_flip_value.svg",
 	&"faceless_refund_calibration": "faceless_refund_calibration.svg",
@@ -62,6 +64,7 @@ const EFFECT_ICON_FILES := {
 	EffectSpec.Operation.GRANT_INTEL_ON_CONDITION: (
 		"grant_intel_on_condition.svg"
 	),
+	EffectSpec.Operation.QUEUE_SEARCH: "reverse_resolution.svg",
 }
 
 const TARGET_ICON_FILES := {
@@ -323,6 +326,10 @@ func _effect_copy(effect: EffectSpec) -> String:
 			return _condition_modifier_copy(effect)
 		EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
 			return _intel_condition_copy(effect)
+		EffectSpec.Operation.QUEUE_SEARCH:
+			return "下轮优先检索%s" % BuildIdentityCatalog.new().display_name(
+				effect.search_identity
+			)
 	return "查看完整规则"
 
 func _condition_modifier_copy(effect: EffectSpec) -> String:

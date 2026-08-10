@@ -21,6 +21,29 @@ var resolution_direction: EncounterRuleProfile.ResolutionDirection = (
 	EncounterRuleProfile.ResolutionDirection.LEFT_TO_RIGHT
 )
 var ordered_rule_ids: Array[StringName] = []
+var passed_rule_count := 0
+var consolation_awarded := false
+var resonance_awarded := false
+var full_clear_calibration_awarded := false
+var successful_bridge_count := 0
+var storm_awarded := false
+var score_breakdown: Dictionary = {
+	ResolutionEvent.ScoreSource.BASE: 0,
+	ResolutionEvent.ScoreSource.COEFFICIENT: 0,
+	ResolutionEvent.ScoreSource.CARD: 0,
+	ResolutionEvent.ScoreSource.RULE_CHAIN: 0,
+	ResolutionEvent.ScoreSource.ENGRAVING: 0,
+	ResolutionEvent.ScoreSource.AREA_MODIFIER: 0,
+	ResolutionEvent.ScoreSource.LUCK: 0,
+	ResolutionEvent.ScoreSource.DEALER: 0,
+}
+
+func add_score(source: ResolutionEvent.ScoreSource, delta: int) -> void:
+	score_breakdown[source] = int(score_breakdown.get(source, 0)) + delta
+	total += delta
+
+func record_score(source: ResolutionEvent.ScoreSource, delta: int) -> void:
+	score_breakdown[source] = int(score_breakdown.get(source, 0)) + delta
 
 func event_signature() -> Array[String]:
 	var signature: Array[String] = []

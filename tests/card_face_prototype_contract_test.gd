@@ -35,6 +35,8 @@ const CARD_FACE_IDS := [
 	"mirror_silver_bridge",
 	"shop_amplified_chain",
 	"shop_reverse_backup",
+	"shop_dice_index",
+	"shop_chain_index",
 	"faceless_swap_values",
 	"faceless_flip_value",
 	"faceless_refund_calibration",

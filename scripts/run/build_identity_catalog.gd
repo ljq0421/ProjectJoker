@@ -28,6 +28,9 @@ func identity_for_card(card: CardDefinition) -> StringName:
 	if card == null:
 		return &""
 	for effect in card.effects:
+		if effect.operation == EffectSpec.Operation.QUEUE_SEARCH:
+			return effect.search_identity
+	for effect in card.effects:
 		if effect.operation in [
 			EffectSpec.Operation.REFUND_CALIBRATION,
 			EffectSpec.Operation.GRANT_INTEL_ON_CONDITION,
@@ -65,7 +68,11 @@ func route_identity_copy(
 	identity_id: StringName,
 	counts: Dictionary
 ) -> String:
-	return "%s · 当前牌组 %d / 12" % [
+	var deck_size := 0
+	for value in counts.values():
+		deck_size += int(value)
+	return "%s · 当前牌组 %d / %d" % [
 		display_name(identity_id),
 		int(counts.get(identity_id, 0)),
+		deck_size,
 	]

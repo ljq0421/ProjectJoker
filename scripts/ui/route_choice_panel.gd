@@ -45,8 +45,8 @@ func bind_routes(
 	%RouteInstruction.text = "%s\n左右仅为本次随机摆位，请比较房间规则、目标、奖励与牌组呼应。" % (
 		presentation["route_instruction"]
 	)
-	_bind_route("Left", left, deck_ids, card_catalog, challenge_ids)
-	_bind_route("Right", right, deck_ids, card_catalog, challenge_ids)
+	_bind_route("Left", left, room_catalog.rooms, deck_ids, card_catalog, challenge_ids)
+	_bind_route("Right", right, room_catalog.rooms, deck_ids, card_catalog, challenge_ids)
 	%LeftRouteButton.set_meta("room_id", left.id)
 	%RightRouteButton.set_meta("room_id", right.id)
 	%RouteErrorLabel.text = ""
@@ -90,6 +90,7 @@ func close() -> void:
 func _bind_route(
 	prefix: String,
 	room: RoomDefinition,
+	all_rooms: Array[RoomDefinition],
 	deck_ids: Array[StringName],
 	card_catalog: CardCatalog,
 	challenge_ids: Array[StringName]
@@ -112,7 +113,8 @@ func _bind_route(
 		)
 	)
 	get_node("%sRouteTags" % ["%" + prefix]).text = (
-		"%s　房间特征｜%s" % [
+		"策略｜%s　%s　房间特征｜%s" % [
+			RouteBriefFormatter.pressure_label(room, all_rooms),
 			RouteBriefFormatter.identity_text(room, deck_ids, card_catalog),
 			" · ".join(room.tags),
 		]

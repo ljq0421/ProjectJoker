@@ -3,10 +3,12 @@ extends PanelContainer
 
 signal playback_finished(report: ResolutionReport)
 signal source_focus_requested(source_id: StringName)
+signal event_focus_requested(event: ResolutionEvent)
 
 const PLAYBACK_SCRIPT = preload(
 	"res://scripts/resolution/resolution_playback.gd"
 )
+const ScoreLedger = preload("res://scripts/ui/score_ledger_formatter.gd")
 const APPLIED_COLOR := Color(0.68, 1.0, 0.96, 1.0)
 const INACTIVE_COLOR := Color(0.68, 0.66, 0.76, 1.0)
 const IMPACT_DELTA_THRESHOLD := 8
@@ -15,6 +17,8 @@ const IMPACT_GLOW := Color(0.92, 0.72, 1.0, 1.0)
 
 @onready var heading_label: Label = %ResolutionHeading
 @onready var status_label: Label = %PlaybackStatus
+@onready var score_ledger: Label = %ScoreLedger
+@onready var engraving_total: Label = %EngravingTotal
 @onready var event_list: VBoxContainer = %EventList
 @onready var total_label: Label = %Total
 @onready var playback_actions: HBoxContainer = %PlaybackActions
@@ -42,6 +46,8 @@ func bind_report(report: ResolutionReport) -> void:
 	_disable_distortion = false
 	heading_label.text = "预测轨迹"
 	status_label.text = "方案变化会立即刷新"
+	score_ledger.text = ScoreLedger.compact_copy(report)
+	engraving_total.text = _engraving_total_copy(report)
 	playback_actions.visible = false
 	for event in report.events:
 		_append_event_row(event, false)
@@ -60,6 +66,8 @@ func play_committed_report(
 	)
 	heading_label.text = "正式结算"
 	status_label.text = "正在按已提交事件逐项解析"
+	score_ledger.text = ScoreLedger.compact_copy(report)
+	engraving_total.text = _engraving_total_copy(report)
 	total_label.text = "正式结算：0"
 	boost_button.button_pressed = false
 	boost_button.text = "2× 加速"
@@ -117,6 +125,7 @@ func _on_event_revealed(event: ResolutionEvent, index: int) -> void:
 		"生效" if event.effect_applied else "未触发",
 	]
 	source_focus_requested.emit(event.source_id)
+	event_focus_requested.emit(event)
 	_animate_total(emphasis)
 	if _sound_enabled:
 		var cue_id := sfx_cue_for_emphasis(emphasis)
@@ -138,6 +147,8 @@ func event_emphasis_for(
 ) -> StringName:
 	if not event.effect_applied or event.delta == 0:
 		return &"muted"
+	if event.combo_kind == &"storm":
+		return &"climax"
 	if absi(event.delta) >= IMPACT_DELTA_THRESHOLD:
 		return &"impact"
 	return &"standard"
@@ -159,9 +170,12 @@ func _append_event_row(
 ) -> Label:
 	var row := Label.new()
 	var old_total := event.running_total - event.delta
-	row.text = "%s %s\n%d → %d（%+d）" % [
+	var context_copy := _event_context_copy(event)
+	row.text = "%s [%s] %s%s\n%d → %d（%+d）" % [
 		"◆ 生效" if event.effect_applied else "◇ 未触发",
+		ScoreLedger.source_name(event.score_source),
 		event.label,
+		"\n%s" % context_copy if not context_copy.is_empty() else "",
 		old_total,
 		event.running_total,
 		event.delta,
@@ -171,6 +185,10 @@ func _append_event_row(
 	row.set_meta("source_card_id", event.source_card_id)
 	row.set_meta("source_slot_id", event.source_slot_id)
 	row.set_meta("mirror_slot_id", event.mirror_slot_id)
+	row.set_meta("source_die_id", event.source_die_id)
+	row.set_meta("source_table_id", event.source_table_id)
+	row.set_meta("target_table_id", event.target_table_id)
+	row.set_meta("combo_kind", event.combo_kind)
 	row.set_meta("flash_suppressed", _reduce_flashes)
 	row.set_meta("motion_suppressed", _disable_distortion)
 	row.set_meta("emphasis", emphasis)
@@ -183,6 +201,28 @@ func _append_event_row(
 	if animate:
 		_animate_row(row, emphasis)
 	return row
+
+func _event_context_copy(event: ResolutionEvent) -> String:
+	match event.combo_kind:
+		&"storm":
+			return "连击｜风暴高潮"
+		&"bridge":
+			return "桥接轨迹｜%s → %s" % [
+				String(event.source_table_id),
+				String(event.target_table_id),
+			]
+		&"echo":
+			return "回声｜回环强化"
+		&"rewrite":
+			return "复写｜回环强化"
+	return ""
+
+func _engraving_total_copy(report: ResolutionReport) -> String:
+	var contribution := int(report.score_breakdown.get(
+		ResolutionEvent.ScoreSource.ENGRAVING,
+		0
+	))
+	return "本轮刻印贡献：%+d" % contribution
 
 func _animate_row(row: Label, emphasis: StringName) -> void:
 	if _reduce_flashes and _disable_distortion:

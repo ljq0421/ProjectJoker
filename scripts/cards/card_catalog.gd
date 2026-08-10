@@ -23,6 +23,8 @@ const SHOP_PATHS := [
 	"res://resources/cards/stage6/shop_deep_drop.tres",
 	"res://resources/cards/stage6/shop_amplified_chain.tres",
 	"res://resources/cards/stage6/shop_reverse_backup.tres",
+	"res://resources/cards/stage6/shop_dice_index.tres",
+	"res://resources/cards/stage6/shop_chain_index.tres",
 ]
 
 const MIRROR_HALL_PATHS := [
@@ -112,8 +114,8 @@ func validate() -> Array[String]:
 	errors.append_array(ContentValidator.new().validate([], all_cards()))
 	if _starter_cards.size() != 12:
 		errors.append("starter deck must contain exactly twelve cards")
-	if _shop_cards.size() != 6:
-		errors.append("shop pool must contain exactly six cards")
+	if _shop_cards.size() != 8:
+		errors.append("shop pool must contain exactly eight cards")
 	if _mirror_hall_cards.size() != 6:
 		errors.append("mirror hall card group must contain exactly six cards")
 	if _faceless_hub_cards.size() != 16:

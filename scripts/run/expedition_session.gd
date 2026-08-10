@@ -122,7 +122,49 @@ func to_snapshot() -> Dictionary:
 		"area_checkpoint": area_checkpoint.duplicate(true),
 		"completed_areas": completed_areas.duplicate(true),
 		"failure_reason": failure_reason,
+		"balance_telemetry": balance_telemetry_snapshot(),
 	}
+
+func balance_telemetry_snapshot() -> Dictionary:
+	var aggregate := {
+		"consolation_rounds": 0,
+		"resonance_rounds": 0,
+		"storm_rounds": 0,
+		"emergency_rerolls": 0,
+		"emergency_calibrations": 0,
+		"emergency_retries": 0,
+		"emergency_spend_total": 0,
+		"deck_size_total": 0,
+		"intel_balance_total": 0,
+		"sample_count": 0,
+	}
+	var sources: Array[Dictionary] = []
+	for completion in completed_areas:
+		if completion is Dictionary:
+			var completed_telemetry = completion.get("balance_telemetry", {})
+			if completed_telemetry is Dictionary:
+				sources.append(completed_telemetry)
+	if not area_checkpoint.is_empty():
+		var active_telemetry = area_checkpoint.get("balance_telemetry", {})
+		if active_telemetry is Dictionary:
+			sources.append(active_telemetry)
+	for source in sources:
+		for key in aggregate:
+			var value = source.get(key, 0)
+			if value is int and value >= 0:
+				aggregate[key] += value
+	var sample_count := int(aggregate["sample_count"])
+	aggregate["average_deck_size"] = (
+		float(aggregate["deck_size_total"]) / float(sample_count)
+		if sample_count > 0
+		else 0.0
+	)
+	aggregate["average_intel_balance"] = (
+		float(aggregate["intel_balance_total"]) / float(sample_count)
+		if sample_count > 0
+		else 0.0
+	)
+	return aggregate
 
 func restore_snapshot(snapshot: Dictionary) -> OperationResult:
 	var error := snapshot_error(snapshot)
@@ -261,8 +303,12 @@ static func _completion_error(completion: Dictionary, expected_id: StringName) -
 		return "区域完成顺序无效"
 	if not completion["rng_state"] is int:
 		return "区域随机状态无效"
-	if not completion["deck_ids"] is Array or completion["deck_ids"].size() != 12:
-		return "跨区牌组必须包含十二张牌"
+	if (
+		not completion["deck_ids"] is Array
+		or completion["deck_ids"].size() < CardDeck.MIN_DECK_SIZE
+		or completion["deck_ids"].size() > CardDeck.MAX_DECK_SIZE
+	):
+		return "跨区牌组必须包含十二至十五张牌"
 	var seen_cards: Dictionary = {}
 	for card_id in completion["deck_ids"]:
 		if card_id == &"" or seen_cards.has(card_id):

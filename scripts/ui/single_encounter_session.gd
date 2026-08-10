@@ -6,6 +6,7 @@ var hand: Array[CardDefinition]
 var selection := InteractionState.new()
 var last_error: String = ""
 var undo_allowed := true
+var is_final_round := false
 
 func _init(
 	state: RoundState,
@@ -14,17 +15,21 @@ func _init(
 	p_context: ResolutionContext = null,
 	p_restriction: FinalRestrictionDefinition = null,
 	p_additional_restrictions: Array[FinalRestrictionDefinition] = [],
-	p_undo_allowed: bool = true
+	p_undo_allowed: bool = true,
+	p_undo_mode: RoundController.UndoMode = RoundController.UndoMode.GLOBAL_ONE,
+	p_is_final_round: bool = false
 ) -> void:
 	controller = RoundController.new(
 		state,
 		encounter,
 		p_context,
 		p_restriction,
-		p_additional_restrictions
+		p_additional_restrictions,
+		p_undo_mode
 	)
 	hand = p_hand
 	undo_allowed = p_undo_allowed
+	is_final_round = p_is_final_round
 
 func activate_die(die_id: StringName) -> bool:
 	if selection.kind == InteractionState.Kind.CARD:
@@ -66,6 +71,8 @@ func activate_card(card_index: int) -> bool:
 	if is_card_used(card_index):
 		return _fail("这张手法牌已经使用")
 	var card := hand[card_index]
+	if is_final_round and _is_search_card(card):
+		return _fail("最后一轮没有后续抽牌，不能使用检索牌")
 	var start_result := controller.validate_card_start()
 	if not start_result.accepted:
 		return _fail(start_result.reason)
@@ -279,7 +286,7 @@ func calibrate_die(die_id: StringName, delta: int) -> bool:
 
 func undo() -> bool:
 	if not undo_allowed:
-		return _fail("落子无悔：本次远征禁止撤销")
+		return _fail("本次遭遇禁止撤销")
 	var accepted := controller.undo()
 	if not accepted:
 		return _fail(controller.undo_block_reason())
@@ -332,6 +339,12 @@ func _find_rule(table_id: StringName) -> RuleDefinition:
 			return rule
 	return null
 
+func _is_search_card(card: CardDefinition) -> bool:
+	for effect in card.effects:
+		if effect.operation == EffectSpec.Operation.QUEUE_SEARCH:
+			return true
+	return false
+
 func _accept(result: ActionResult, clear_selection: bool) -> bool:
 	if not result.accepted:
 		return _fail(result.reason)
@@ -343,3 +356,37 @@ func _accept(result: ActionResult, clear_selection: bool) -> bool:
 func _fail(reason: String) -> bool:
 	last_error = reason
 	return false
+
+func to_snapshot() -> Dictionary:
+	var hand_ids: Array[StringName] = []
+	for card in hand:
+		hand_ids.append(card.id)
+	return {
+		"hand_ids": hand_ids,
+		"selection_kind": selection.kind,
+		"selection_die_id": selection.die_id,
+		"selection_card_index": selection.card_index,
+		"selection_card_primary_target": selection.card_primary_target,
+		"last_error": last_error,
+		"undo_allowed": undo_allowed,
+		"is_final_round": is_final_round,
+		"controller": controller.to_snapshot(),
+	}
+
+func restore_snapshot(snapshot: Dictionary, catalog: CardCatalog) -> OperationResult:
+	hand.clear()
+	for card_id in snapshot.get("hand_ids", []):
+		var card := catalog.find_card(card_id)
+		if card == null:
+			return OperationResult.new(false, "恢复手牌包含未知卡牌：%s" % card_id)
+		hand.append(card)
+	selection.kind = int(snapshot.get("selection_kind", InteractionState.Kind.NONE))
+	selection.die_id = snapshot.get("selection_die_id", &"")
+	selection.card_index = int(snapshot.get("selection_card_index", -1))
+	selection.card_primary_target = snapshot.get(
+		"selection_card_primary_target", &""
+	)
+	last_error = String(snapshot.get("last_error", ""))
+	undo_allowed = bool(snapshot.get("undo_allowed", true))
+	is_final_round = bool(snapshot.get("is_final_round", false))
+	return controller.restore_snapshot(snapshot.get("controller", {}), catalog)

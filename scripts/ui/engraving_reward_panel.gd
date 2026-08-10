@@ -19,6 +19,7 @@ var selected_reward_card_id: StringName = &""
 var selected_replaced_card_id: StringName = &""
 var _card_catalog: CardCatalog
 var _engraving_catalog: EngravingCatalog
+var _replacement_required := false
 
 func _ready() -> void:
 	visible = false
@@ -49,6 +50,7 @@ func bind_reward(
 	selected_replaced_card_id = restored_replaced_card_id
 	_card_catalog = card_catalog
 	_engraving_catalog = catalog
+	_replacement_required = deck_ids.size() >= CardDeck.MAX_DECK_SIZE
 	%RewardErrorLabel.text = ""
 
 	for engraving_id in offer_ids:
@@ -152,8 +154,11 @@ func _on_replacement_card_selected(card_id: StringName, _role: StringName) -> vo
 	_update_selection()
 
 func _on_card_reward_pressed() -> void:
-	if selected_reward_card_id == &"" or selected_replaced_card_id == &"":
-		show_error("请先选择稀有牌和要替换的当前牌")
+	if selected_reward_card_id == &"":
+		show_error("请先选择一张稀有牌")
+		return
+	if _replacement_required and selected_replaced_card_id == &"":
+		show_error("牌组已满，请再选择一张当前牌进行替换")
 		return
 	card_reward_requested.emit(
 		selected_reward_card_id,
@@ -166,12 +171,16 @@ func _show_card_mode() -> void:
 	for node in [
 		%RareCardTitle,
 		%RareCardOfferRow,
-		%RewardDeckTitle,
-		%RewardDeckHelpLabel,
-		%RewardDeckGrid,
 		%ConfirmCardRewardButton,
 	]:
 		node.visible = true
+	for node in [%RewardDeckTitle, %RewardDeckHelpLabel, %RewardDeckGrid]:
+		node.visible = _replacement_required
+	%RewardDeckTitle.text = "牌组已满：选择一张当前牌进行替换"
+	%RewardDeckHelpLabel.text = "只有十五张满额牌组需要替换；选中的牌会被稀有牌替换。"
+	%ConfirmCardRewardButton.text = (
+		"替换并封存区域" if _replacement_required else "加入牌组并封存区域"
+	)
 	for node in [
 		%OfferRow,
 		%EngravingEffectLabel,
@@ -260,10 +269,14 @@ func _update_selection() -> void:
 			if face != null:
 				face.set_interaction_state(child.button_pressed, false)
 	if %CardRewardModeButton.button_pressed:
-		%RewardSelectionLabel.text = "稀有牌：%s　替换：%s" % [
-			_card_name(selected_reward_card_id),
-			_card_name(selected_replaced_card_id),
-		]
+		%RewardSelectionLabel.text = (
+			"稀有牌：%s　替换：%s" % [
+				_card_name(selected_reward_card_id),
+				_card_name(selected_replaced_card_id),
+			]
+			if _replacement_required
+			else "稀有牌：%s　将直接加入牌组" % _card_name(selected_reward_card_id)
+		)
 	else:
 		%RewardSelectionLabel.text = "刻印：%s　骰子：%s　骰面：%s" % [
 			_engraving_name(selected_engraving_id),
@@ -275,7 +288,7 @@ func _update_selection() -> void:
 		)
 	%ConfirmCardRewardButton.disabled = (
 		selected_reward_card_id == &""
-		or selected_replaced_card_id == &""
+		or (_replacement_required and selected_replaced_card_id == &"")
 	)
 	%InstallEngravingButton.disabled = (
 		selected_engraving_id == &""

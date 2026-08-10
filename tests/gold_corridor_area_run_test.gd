@@ -12,8 +12,8 @@ func run() -> void:
 func _test_area_market_and_future_intel() -> void:
 	var area := AreaRunSession.new(20260729)
 	assert_true(area.start().accepted, "shop-service area should start")
-	assert_equal(area.market_ids.size(), 18, "gold market should contain eighteen cards")
-	assert_equal(_unique_count(area.market_ids), 18, "gold market should be unique")
+	assert_equal(area.market_ids.size(), 20, "gold market should contain twenty cards")
+	assert_equal(_unique_count(area.market_ids), 20, "gold market should be unique")
 	for card_id in area.deck_ids:
 		assert_true(card_id in area.market_ids, "entry deck should belong to market")
 
@@ -107,6 +107,7 @@ func _test_two_room_shop_loop() -> void:
 		assert_false(offer_id in area.deck_ids, "first-shop offers should be unowned")
 	var first_offer: StringName = area.shop_session.offer_ids[0]
 	var first_replaced: StringName = area.shop_session.deck_ids[0]
+	var first_price := area.shop_session.card_price(first_offer)
 	assert_true(
 		area.shop_session.purchase(first_offer, first_replaced).accepted,
 		"first shop replacement should succeed"
@@ -120,7 +121,7 @@ func _test_two_room_shop_loop() -> void:
 	)
 	assert_equal(area.shop_purchase_history.size(), 1, "first purchase should enter history")
 	assert_true(first_offer in area.deck_ids, "settled first purchase should enter area deck")
-	assert_false(first_replaced in area.deck_ids, "settled outgoing card should leave area deck")
+	assert_true(first_replaced in area.deck_ids, "formal purchases append below the cap")
 
 	var second_room_id: StringName = area.current_route_ids()[0]
 	var second_room := area.area_definition.find_room(second_room_id)
@@ -128,8 +129,14 @@ func _test_two_room_shop_loop() -> void:
 	_complete_current_encounter(area)
 	assert_equal(
 		area.intel_tickets,
-		first_room.success_intel_reward - ShopSession.CARD_PRICE
-			+ second_room.success_intel_reward,
+		first_room.success_intel_reward - first_price
+			+ second_room.success_intel_reward
+			+ (
+				1
+				if area.event_history[-1].get("event_id", &"")
+					== AreaRunSession.EVENT_MYSTERY_GAMBLE
+				else 0
+			),
 		"second reward should add to the post-shop balance"
 	)
 	assert_true(area.open_shop().accepted, "second successful room should open shop")
@@ -145,8 +152,8 @@ func _test_two_room_shop_loop() -> void:
 	assert_true(area.leave_shop().accepted, "second shop should create dealer")
 	assert_equal(area.phase, AreaRunSession.Phase.DEALER, "second shop enters Iron Abacus")
 	assert_equal(area.shop_purchase_history.size(), 2, "both purchases should be recorded")
-	assert_equal(area.deck_ids.size(), 12, "dealer deck should keep twelve cards")
-	assert_equal(_unique_count(area.deck_ids), 12, "dealer deck should remain unique")
+	assert_equal(area.deck_ids.size(), 14, "dealer deck should include both purchases")
+	assert_equal(_unique_count(area.deck_ids), 14, "dealer deck should remain unique")
 	assert_true(second_offer in area.deck_ids, "second purchase should reach dealer deck")
 	assert_equal(
 		area.encounter_session.setup.resolution_context.dealer.id,
@@ -238,14 +245,14 @@ func _test_all_route_combinations_complete() -> void:
 		)
 		assert_equal(summary.rooms.size(), 2, "summary should contain two rooms")
 		assert_equal(summary.purchases.size(), 2, "summary should contain two purchases")
-		assert_equal(summary.deck_ids.size(), 12, "summary should contain final deck")
+		assert_equal(summary.deck_ids.size(), 14, "summary should contain final deck")
 		assert_equal(summary.dealer.id, &"dealer_iron_abacus", "summary should contain dealer")
 		assert_equal(summary.engraving_id, engraving_id, "summary should contain engraving")
 		assert_equal(summary.die_id, &"d1", "summary should contain engraved die")
 		assert_equal(summary.face, 2, "summary should contain engraved face")
 		assert_equal(summary.die_profiles.size(), 6, "summary should preserve all die profiles")
 		summary.deck_ids.clear()
-		assert_equal(area.deck_ids.size(), 12, "summary data should be defensive")
+		assert_equal(area.deck_ids.size(), 14, "summary data should be defensive")
 
 func _test_failures_end_the_area() -> void:
 	var first_room_failure := AreaRunSession.new(20261001)
@@ -417,6 +424,19 @@ func _complete_current_encounter(
 		assert_true(area.accept_encounter_report(report).accepted, "formal report should be accepted")
 		if round_index < round_total - 1:
 			assert_true(area.advance_encounter_round().accepted, "next round should begin")
+	if area.phase == AreaRunSession.Phase.EVENT:
+		_resolve_event(area)
+
+func _resolve_event(area: AreaRunSession) -> void:
+	var result: OperationResult
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			result = area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			result = area.resolve_event(&"rest")
+		_:
+			result = area.resolve_event(&"intel")
+	assert_true(result.accepted, "fixture event resolves")
 
 func _snapshot(area: AreaRunSession) -> Dictionary:
 	return {

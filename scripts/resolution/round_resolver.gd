@@ -299,7 +299,9 @@ func resolve(
 					"%s：目标规则台 %s 未通过" % [pending.label, rule.id],
 					0,
 					&"",
-					false
+					false,
+					pending.source_table_id,
+					pending.source_die_id
 				))
 			pending_bridges.erase(rule.id)
 			_append_lock_rewards(
@@ -324,6 +326,21 @@ func resolve(
 		var resolution_count: int = 1 + repeat_counts.get(rule.id, 0)
 		for repeat_index in range(resolution_count):
 			report.total += result.total
+			if repeat_index == 0:
+				report.record_score(
+					ResolutionEvent.ScoreSource.BASE,
+					result.base_sum + rule.flat_bonus
+				)
+				report.record_score(
+					ResolutionEvent.ScoreSource.COEFFICIENT,
+					result.base_sum * maxi(rule.coefficient - 1, 0)
+				)
+				report.record_score(
+					ResolutionEvent.ScoreSource.CARD,
+					result.base_sum * effective_modifier
+				)
+			else:
+				report.record_score(ResolutionEvent.ScoreSource.CARD, result.total)
 			var label: String = rule.display_name
 			if label.is_empty():
 				label = String(rule.id)
@@ -333,7 +350,17 @@ func resolve(
 				rule.id,
 				label,
 				result.total,
-				report.total
+				report.total,
+				true,
+				false,
+				&"",
+				&"",
+				&"",
+				(
+					ResolutionEvent.ScoreSource.BASE
+					if repeat_index == 0
+					else ResolutionEvent.ScoreSource.CARD
+				)
 			))
 		if (
 			rule.template != null
@@ -341,6 +368,7 @@ func resolve(
 				== RuleTableTemplate.PostPassEffect.ECHO_SELF
 		):
 			report.total += result.total
+			report.record_score(ResolutionEvent.ScoreSource.RULE_CHAIN, result.total)
 			report.events.append(ResolutionEvent.new(
 				rule.template.id,
 				"%s：回声重复本台基础得分" % rule.display_name,
@@ -392,7 +420,9 @@ func resolve(
 					],
 					0,
 					&"",
-					false
+					false,
+					outcome.source_table_id,
+					outcome.source_die_id
 				))
 			else:
 				if not pending_bridges.has(outcome.target_table_id):
@@ -406,6 +436,7 @@ func resolve(
 					0
 				)
 				report.total += linked_value
+				report.record_score(ResolutionEvent.ScoreSource.CARD, linked_value)
 				report.events.append(ResolutionEvent.new(
 					link.card_id,
 					"%s%s：%s → %s" % [
@@ -420,8 +451,14 @@ func resolve(
 					link.is_mirror_copy,
 					link.source_card_id,
 					link.source_slot_id,
-					link.mirror_slot_id
+					link.mirror_slot_id,
+					ResolutionEvent.ScoreSource.CARD,
+					link.source_table,
+					rule.id,
+					&"bridge"
 				))
+				if resolved_table_totals.has(link.source_table):
+					report.successful_bridge_count += 1
 
 	for bridge_rule in bridge_rules:
 		var bridge_result: RuleResult = precomputed_results[bridge_rule.id]
@@ -438,6 +475,7 @@ func resolve(
 		)
 		var delta := bridge_result.total if applied else 0
 		report.total += delta
+		report.record_score(ResolutionEvent.ScoreSource.RULE_CHAIN, delta)
 		var reason := ""
 		if not bridge_result.valid:
 			reason = "本台未通过"
@@ -456,13 +494,41 @@ func resolve(
 			),
 			delta,
 			report.total,
-			applied
+			applied,
+			false,
+			&"",
+			&"",
+			&"",
+			ResolutionEvent.ScoreSource.RULE_CHAIN,
+			bridge_rule.id,
+			target_id,
+			&"bridge"
 		))
+		if applied:
+			report.successful_bridge_count += 1
 		if not applied:
 			_record_missed_effect(
 				report,
 				"%s：桥接未触发，%s" % [bridge_rule.display_name, reason]
 			)
+	if report.successful_bridge_count >= 3:
+		report.storm_awarded = true
+		report.add_score(ResolutionEvent.ScoreSource.RULE_CHAIN, 20)
+		report.events.append(ResolutionEvent.new(
+			&"bridge_storm",
+			"风暴结算：本轮第三次成功桥接，固定 +20",
+			20,
+			report.total,
+			true,
+			false,
+			&"",
+			&"",
+			&"",
+			ResolutionEvent.ScoreSource.RULE_CHAIN,
+			&"",
+			&"",
+			&"storm"
+		))
 
 	_append_area_modifier_outcome(
 		report,
@@ -479,6 +545,58 @@ func resolve(
 		encounter,
 		passed_rule_ids
 	)
+	report.passed_rule_count = passed_rule_ids.size()
+	var all_six_assigned := state.dice.size() == 6
+	for die in state.dice:
+		if not state.is_assigned(die.id):
+			all_six_assigned = false
+			break
+	var full_clear := (
+		all_six_assigned
+		and encounter.rules.size() == 3
+		and report.passed_rule_count == 3
+	)
+	report.full_clear_calibration_awarded = full_clear
+	if full_clear and _all_values_share_parity(state.dice, die_values):
+		var base_score := int(
+			report.score_breakdown.get(ResolutionEvent.ScoreSource.BASE, 0)
+		)
+		var resonance_bonus := ceili(float(base_score) * 0.5)
+		report.resonance_awarded = true
+		report.add_score(ResolutionEvent.ScoreSource.RULE_CHAIN, resonance_bonus)
+		report.events.append(ResolutionEvent.new(
+			&"parity_resonance",
+			"同调共鸣：六骰全分配、三台全过且最终值同奇偶，基础分追加 50%",
+			resonance_bonus,
+			report.total,
+			true,
+			false,
+			&"",
+			&"",
+			&"",
+			ResolutionEvent.ScoreSource.RULE_CHAIN,
+			&"",
+			&"",
+			&"resonance"
+		))
+	if encounter.rules.size() == 3 and report.passed_rule_count == 0:
+		report.consolation_awarded = true
+		report.add_score(ResolutionEvent.ScoreSource.BASE, 5)
+		report.events.append(ResolutionEvent.new(
+			&"all_failed_consolation",
+			"全败保底：三张规则台均未通过，安慰分 +5",
+			5,
+			report.total,
+			true,
+			false,
+			&"",
+			&"",
+			&"",
+			ResolutionEvent.ScoreSource.BASE,
+			&"",
+			&"",
+			&"consolation"
+		))
 
 	var assigned: Dictionary = {}
 	for table_id in state.assignments:
@@ -488,7 +606,7 @@ func resolve(
 	report.unassigned_dice = maxi(state.dice.size() - assigned.size(), 0)
 	if normalized_context.dealer != null:
 		var fixed_reward := normalized_context.dealer.fixed_reward
-		if _all_six_dice_are_lucky(state, normalized_context):
+		if _all_six_dice_are_lucky(state, die_values, normalized_context):
 			fixed_reward *= 2
 			report.events.append(ResolutionEvent.new(
 				&"expedition_fortune",
@@ -506,6 +624,10 @@ func resolve(
 			0
 		)
 		report.total += report.dealer_reward
+		report.record_score(
+			ResolutionEvent.ScoreSource.DEALER,
+			report.dealer_reward
+		)
 		report.events.append(ResolutionEvent.new(
 			normalized_context.dealer.id,
 			"%s：已分配 %d，未分配 %d，奖励 %d" % [
@@ -537,7 +659,9 @@ func _append_lucky_face_outcomes(
 		var die := state.find_die(die_id)
 		if (
 			die == null
-			or context.lucky_faces.get(die_id, 0) != die.rolled_value
+			or context.lucky_faces.get(die_id, 0) != int(
+				die_values.get(die_id, die.value)
+			)
 		):
 			continue
 		critical_ids.append(die_id)
@@ -548,6 +672,7 @@ func _append_lucky_face_outcomes(
 	if critical_ids.is_empty():
 		return
 	report.total += bonus
+	report.record_score(ResolutionEvent.ScoreSource.LUCK, bonus)
 	report.events.append(ResolutionEvent.new(
 		&"lucky_critical",
 		"幸运暴击：%s 命中幸运面，单骰贡献追加 50%%" % "、".join(critical_ids),
@@ -558,6 +683,7 @@ func _append_lucky_face_outcomes(
 	if critical_ids.size() >= 3:
 		var table_subtotal := report.total - table_total_before
 		report.total += table_subtotal
+		report.record_score(ResolutionEvent.ScoreSource.LUCK, table_subtotal)
 		report.events.append(ResolutionEvent.new(
 			&"full_table_critical",
 			"满台爆击：同一规则台至少三颗暴击骰，本台结算翻倍",
@@ -631,6 +757,7 @@ func _append_area_modifier_outcome(
 			return
 	if applied:
 		report.total += delta
+		report.record_score(ResolutionEvent.ScoreSource.AREA_MODIFIER, delta)
 	report.events.append(ResolutionEvent.new(
 		modifier_id,
 		label,
@@ -656,11 +783,24 @@ func _longest_consecutive_run(values: Array[int]) -> int:
 		previous = int(value)
 	return longest
 
-func _all_six_dice_are_lucky(state: RoundState, context: ResolutionContext) -> bool:
+func _all_six_dice_are_lucky(
+	state: RoundState,
+	die_values: Dictionary,
+	context: ResolutionContext
+) -> bool:
 	if state.dice.size() != 6 or context.lucky_faces.size() != 6:
 		return false
 	for die in state.dice:
-		if context.lucky_faces.get(die.id, 0) != die.rolled_value:
+		if context.lucky_faces.get(die.id, 0) != int(die_values.get(die.id, die.value)):
+			return false
+	return true
+
+func _all_values_share_parity(dice: Array[DieState], die_values: Dictionary) -> bool:
+	if dice.is_empty():
+		return false
+	var parity := int(die_values.get(dice[0].id, dice[0].value)) % 2
+	for die in dice:
+		if int(die_values.get(die.id, die.value)) % 2 != parity:
 			return false
 	return true
 
@@ -757,17 +897,33 @@ func _append_lock_rewards(
 				effect.amount if table_passed else 0,
 				&"",
 				table_passed
-			))
+			), ResolutionEvent.ScoreSource.CARD)
 
-func _append_outcome(report: ResolutionReport, outcome: EngravingOutcome) -> void:
+func _append_outcome(
+	report: ResolutionReport,
+	outcome: EngravingOutcome,
+	score_source: ResolutionEvent.ScoreSource = ResolutionEvent.ScoreSource.ENGRAVING
+) -> void:
 	if outcome.effect_applied:
 		report.total += outcome.delta
+		report.record_score(score_source, outcome.delta)
+		if outcome.target_table_id != &"":
+			report.successful_bridge_count += 1
 	report.events.append(ResolutionEvent.new(
 		outcome.source_id,
 		outcome.label,
 		outcome.delta if outcome.effect_applied else 0,
 		report.total,
-		outcome.effect_applied
+		outcome.effect_applied,
+		false,
+		&"",
+		&"",
+		&"",
+		score_source,
+		outcome.source_table_id,
+		outcome.target_table_id,
+		&"bridge" if outcome.target_table_id != &"" else &"",
+		outcome.source_die_id
 	))
 	if not outcome.effect_applied:
 		_record_missed_effect(report, outcome.label)

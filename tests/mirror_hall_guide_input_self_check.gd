@@ -20,6 +20,11 @@ func _run() -> void:
 	if screen == null:
 		_finish()
 		return
+	var opening_narrative := screen.get_node("%NarrativeCard")
+	if opening_narrative.is_open():
+		opening_narrative.get_node("%NarrativeContinueButton").emit_signal("pressed")
+		await process_frame
+		await process_frame
 
 	var route_button := screen.get_node("%RouteChoicePanel").get_node(
 		"%LeftRouteButton"
@@ -100,6 +105,7 @@ func _run() -> void:
 
 func _drive_domain_to_dealer(area: AreaRunSession) -> void:
 	_complete_encounter(area)
+	_resolve_domain_event(area)
 	_assert(area.open_shop().accepted, "first shop should open")
 	_assert(area.leave_shop().accepted, "first shop should close")
 	_assert(
@@ -107,16 +113,38 @@ func _drive_domain_to_dealer(area: AreaRunSession) -> void:
 		"second route should select"
 	)
 	_complete_encounter(area)
+	_resolve_domain_event(area)
 	_assert(area.open_shop().accepted, "second shop should open")
 	_assert(area.leave_shop().accepted, "second shop should open dealer")
 
 func _complete_encounter(area: AreaRunSession) -> void:
 	area.encounter_session.target_total = 0
-	for round_index in range(ThreeRoundEncounterSession.ROUND_COUNT):
+	var round_count := area.encounter_session.round_count
+	for round_index in range(round_count):
 		var report := area.encounter_session.current_session.commit()
-		_assert(area.accept_encounter_report(report).accepted, "report should be accepted")
-		if round_index < ThreeRoundEncounterSession.ROUND_COUNT - 1:
-			_assert(area.advance_encounter_round().accepted, "round should advance")
+		var accepted := area.accept_encounter_report(report)
+		_assert(
+			accepted.accepted,
+			"report should be accepted; error=%s" % accepted.reason
+		)
+		if round_index < round_count - 1:
+			var advanced := area.advance_encounter_round()
+			_assert(
+				advanced.accepted,
+				"round should advance; error=%s" % advanced.reason
+			)
+
+func _resolve_domain_event(area: AreaRunSession) -> void:
+	_assert(area.phase == AreaRunSession.Phase.EVENT, "normal room should enter event")
+	var result: OperationResult
+	match area.current_event_id:
+		AreaRunSession.EVENT_DICE_ARTISAN:
+			result = area.resolve_event(&"reroll", &"d1")
+		AreaRunSession.EVENT_REST_STOP:
+			result = area.resolve_event(&"rest")
+		_:
+			result = area.resolve_event(&"intel")
+	_assert(result != null and result.accepted, "event should resolve before shop")
 
 func _press_card(screen: MirrorHallRunScreen, card_index: int) -> void:
 	for child in screen.get_node("%EncounterScreen").get_node("%Hand").get_children():

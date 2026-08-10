@@ -5,6 +5,9 @@ signal view_refreshed
 signal ui_action_accepted(action: StringName, payload: Dictionary)
 signal round_committed(report: ResolutionReport)
 signal card_selected(card_index: int, card: CardDefinition, token: Control)
+signal paid_reroll_requested(die_id: StringName)
+signal paid_calibration_requested
+signal paid_retry_requested
 
 const DIE_SCENE = preload("res://scenes/components/die_token.tscn")
 const CARD_SCENE = preload("res://scenes/components/card_token.tscn")
@@ -31,6 +34,12 @@ const AreaPresentation = preload(
 @onready var error_label: Label = %ErrorLabel
 @onready var calibration_label: Label = %CalibrationLabel
 @onready var confirm_button: Button = %ConfirmButton
+@onready var emergency_bar: HBoxContainer = %EmergencyBar
+@onready var emergency_ticket_label: Label = %EmergencyTicketLabel
+@onready var paid_reroll_button: Button = %PaidRerollButton
+@onready var paid_calibration_button: Button = %PaidCalibrationButton
+@onready var paid_retry_button: Button = %PaidRetryButton
+@onready var paid_retry_dialog: ConfirmationDialog = %PaidRetryConfirmationDialog
 @onready var selection_hint_label: Label = %SelectionHintLabel
 @onready var active_restriction_badge: Label = %ActiveRestrictionBadge
 @onready var tutorial: SingleEncounterTutorial = %SingleEncounterTutorial
@@ -58,6 +67,11 @@ var owns_session := true
 var _area_id: StringName = &""
 var _directive_tween: Tween
 var _last_action_feedback := ""
+var _formal_emergency_enabled := false
+var _emergency_tickets := 0
+var _paid_reroll_used := false
+var _paid_calibration_used := false
+var _paid_retry_used := false
 
 func _ready() -> void:
 	_apply_tutorial_launch_path()
@@ -83,11 +97,24 @@ func _ready() -> void:
 	%PlusButton.pressed.connect(func() -> void: _on_calibrate_pressed(1))
 	%UndoButton.pressed.connect(_on_undo_pressed)
 	confirm_button.pressed.connect(_on_confirm_pressed)
+	paid_reroll_button.pressed.connect(_on_paid_reroll_pressed)
+	paid_calibration_button.pressed.connect(
+		func() -> void: paid_calibration_requested.emit()
+	)
+	paid_retry_button.pressed.connect(
+		func() -> void: paid_retry_dialog.popup_centered(Vector2i(580, 230))
+	)
+	paid_retry_dialog.confirmed.connect(
+		func() -> void: paid_retry_requested.emit()
+	)
 	resolution_panel.playback_finished.connect(
 		_on_resolution_playback_finished
 	)
 	resolution_panel.source_focus_requested.connect(
 		_on_resolution_source_focus_requested
+	)
+	resolution_panel.event_focus_requested.connect(
+		_on_resolution_event_focus_requested
 	)
 	refresh_from_session()
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
@@ -144,6 +171,21 @@ func bind_external_session(
 func set_run_status(area_copy: String, goal_copy: String) -> void:
 	area_label.text = area_copy
 	goal_label.text = goal_copy
+
+func set_formal_emergency_context(
+	enabled: bool,
+	intel_tickets: int = 0,
+	reroll_used: bool = false,
+	calibration_used: bool = false,
+	retry_used: bool = false
+) -> void:
+	_formal_emergency_enabled = enabled
+	_emergency_tickets = maxi(0, intel_tickets)
+	_paid_reroll_used = reroll_used
+	_paid_calibration_used = calibration_used
+	_paid_retry_used = retry_used
+	if is_node_ready():
+		_refresh_formal_emergency()
 
 func rule_reference_rules() -> Array[RuleDefinition]:
 	var rules: Array[RuleDefinition] = []
@@ -375,17 +417,105 @@ func refresh_from_session() -> void:
 		or not session.controller.can_undo()
 	)
 	%UndoButton.tooltip_text = (
-		"落子无悔：本次远征禁止撤销"
+		"本次遭遇禁止撤销"
 		if not session.undo_allowed
 		else (
-			"撤销上一步操作（本回合剩余 1 次）"
+			"撤销上一步｜%s" % session.controller.undo_status_copy()
 			if session.controller.can_undo()
 			else session.controller.undo_block_reason()
 		)
 	)
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
+	_refresh_formal_emergency()
 	view_refreshed.emit()
+
+func _refresh_formal_emergency() -> void:
+	emergency_bar.visible = _formal_emergency_enabled
+	if not _formal_emergency_enabled or session == null or session.controller == null:
+		return
+	emergency_ticket_label.text = "应急情报：%d · 消费不可撤销" % _emergency_tickets
+	var reroll_reason := _paid_reroll_block_reason()
+	paid_reroll_button.disabled = not reroll_reason.is_empty()
+	paid_reroll_button.text = (
+		"本轮重投已用"
+		if _paid_reroll_used
+		else "重投所选骰（1）"
+	)
+	paid_reroll_button.tooltip_text = (
+		reroll_reason
+		if not reroll_reason.is_empty()
+		else "保留既有校准差值和卡牌目标；消费立即保存且不可撤销"
+	)
+	var calibration_reason := _paid_calibration_block_reason()
+	paid_calibration_button.disabled = not calibration_reason.is_empty()
+	paid_calibration_button.text = (
+		"本轮校准已购"
+		if _paid_calibration_used
+		else "增加 1 校准（2）"
+	)
+	paid_calibration_button.tooltip_text = (
+		calibration_reason
+		if not calibration_reason.is_empty()
+		else "本轮增加 1 校准；消费立即保存且不可撤销"
+	)
+	var retry_reason := _paid_retry_block_reason()
+	paid_retry_button.disabled = not retry_reason.is_empty()
+	paid_retry_button.text = (
+		"本区域重试已用"
+		if _paid_retry_used
+		else "同种子重试（3）"
+	)
+	paid_retry_button.tooltip_text = (
+		retry_reason
+		if not retry_reason.is_empty()
+		else "从当前房间入口按相同种子重试；消费立即保存且不可撤销"
+	)
+
+func _paid_reroll_block_reason() -> String:
+	if session.controller.committed:
+		return "本轮已经结算"
+	if _paid_reroll_used:
+		return "本轮已经使用过应急重投"
+	if _emergency_tickets < AreaRunSession.EMERGENCY_REROLL_PRICE:
+		return "情报不足：应急重投需要 1 情报"
+	var die_id := _selected_emergency_die_id()
+	if die_id == &"":
+		return "请先选择一颗未锁定骰子"
+	if die_id in session.controller.state.locked_die_ids():
+		return "已锁定骰子不能重投"
+	return ""
+
+func _paid_calibration_block_reason() -> String:
+	if session.controller.committed:
+		return "本轮已经结算"
+	if _paid_calibration_used:
+		return "本轮已经购买过额外校准"
+	if _emergency_tickets < AreaRunSession.EMERGENCY_CALIBRATION_PRICE:
+		return "情报不足：额外校准需要 2 情报"
+	return ""
+
+func _paid_retry_block_reason() -> String:
+	if session.controller.committed:
+		return "本轮已经结算"
+	if _paid_retry_used:
+		return "本区域已经使用过同种子重试"
+	if _emergency_tickets < AreaRunSession.EMERGENCY_RETRY_PRICE:
+		return "情报不足：同种子重试需要 3 情报"
+	return ""
+
+func _selected_emergency_die_id() -> StringName:
+	if session == null or session.selection.kind != InteractionState.Kind.DIE:
+		return &""
+	return session.selection.die_id
+
+func _on_paid_reroll_pressed() -> void:
+	var die_id := _selected_emergency_die_id()
+	var reason := _paid_reroll_block_reason()
+	if not reason.is_empty():
+		show_external_error(reason)
+		return
+	paid_reroll_requested.emit(die_id)
 
 func _refresh_card_detail() -> void:
 	if (
@@ -1149,11 +1279,7 @@ func _on_resolution_playback_finished(report: ResolutionReport) -> void:
 
 func _on_resolution_source_focus_requested(source_id: StringName) -> void:
 	_clear_resolution_source_focus()
-	var lane_by_id := {
-		&"left": %LeftLane,
-		&"middle": %MiddleLane,
-		&"right": %RightLane,
-	}
+	var lane_by_id := _lane_nodes_by_id()
 	if lane_by_id.has(source_id):
 		lane_by_id[source_id].set_resolution_focus(true)
 	elif source_id == &"left_gap":
@@ -1161,11 +1287,61 @@ func _on_resolution_source_focus_requested(source_id: StringName) -> void:
 	elif source_id == &"right_gap":
 		%RightGap.self_modulate = TARGET_TINT
 
+func _on_resolution_event_focus_requested(event: ResolutionEvent) -> void:
+	_clear_resolution_source_focus()
+	var lane_by_id := _lane_nodes_by_id()
+	for table_id in [event.source_table_id, event.target_table_id]:
+		if lane_by_id.has(table_id):
+			lane_by_id[table_id].set_resolution_focus(true)
+	var stages: Array = []
+	if event.source_die_id != &"":
+		var die_token := _find_die_token(event.source_die_id)
+		if die_token != null:
+			die_token.set_engraving_playback_active(true)
+			stages.append({
+				"target": die_token,
+				"role": &"source",
+				"tone": &"success",
+			})
+	if event.source_table_id != &"" and lane_by_id.has(event.source_table_id):
+		stages.append({
+			"target": lane_by_id[event.source_table_id],
+			"role": &"rule",
+			"tone": &"success",
+		})
+	if event.target_table_id != &"" and lane_by_id.has(event.target_table_id):
+		stages.append({
+			"target": lane_by_id[event.target_table_id],
+			"role": &"affected",
+			"tone": &"success",
+		})
+	if event.combo_kind in [&"echo", &"rewrite"] and stages.size() > 1:
+		stages.append(stages[0].duplicate())
+	if event.combo_kind == &"storm":
+		interaction_motion_layer.play_resolution_climax(event.running_total)
+	elif not stages.is_empty():
+		interaction_motion_layer.play_response_sequence(stages)
+
 func _clear_resolution_source_focus() -> void:
 	for lane in lanes:
 		lane.set_resolution_focus(false)
 	%LeftGap.self_modulate = Color.WHITE
 	%RightGap.self_modulate = Color.WHITE
+	_set_engraving_playback_active_under(self, false)
+
+func _set_engraving_playback_active_under(root: Node, value: bool) -> void:
+	for child in root.get_children():
+		if child is DieToken:
+			child.set_engraving_playback_active(value)
+		else:
+			_set_engraving_playback_active_under(child, value)
+
+func _lane_nodes_by_id() -> Dictionary:
+	return {
+		&"left": %LeftLane,
+		&"middle": %MiddleLane,
+		&"right": %RightLane,
+	}
 
 func _lane_evaluation_state(
 	report: ResolutionReport,

@@ -1,7 +1,14 @@
 class_name RoundController
 extends RefCounted
 
-const MAX_UNDOS_PER_ROUND := 1
+const SnapshotCodec = preload("res://scripts/run/run_snapshot_codec.gd")
+
+enum UndoMode {
+	SPLIT,
+	GLOBAL_ONE,
+}
+
+const MAX_CATEGORY_UNDOS := 1
 
 var state: RoundState
 var encounter: EncounterDefinition
@@ -9,19 +16,23 @@ var resolution_context: ResolutionContext
 var active_restriction: FinalRestrictionDefinition
 var active_restrictions: Array[FinalRestrictionDefinition] = []
 var committed: bool = false
+var undo_mode: UndoMode = UndoMode.GLOBAL_ONE
 
 var _history: ActionHistory
 var _resolver := RoundResolver.new()
 var _restriction_evaluator := RoundRestrictionEvaluator.new()
 var _committed_report: ResolutionReport
-var _undo_count := 0
+var _calibration_undo_count := 0
+var _card_undo_count := 0
+var _global_undo_count := 0
 
 func _init(
 	p_state: RoundState,
 	p_encounter: EncounterDefinition,
 	p_context: ResolutionContext = null,
 	p_restriction: FinalRestrictionDefinition = null,
-	p_additional_restrictions: Array[FinalRestrictionDefinition] = []
+	p_additional_restrictions: Array[FinalRestrictionDefinition] = [],
+	p_undo_mode: UndoMode = UndoMode.GLOBAL_ONE
 ) -> void:
 	state = p_state.clone()
 	encounter = p_encounter
@@ -35,16 +46,23 @@ func _init(
 	if active_restriction == null and not active_restrictions.is_empty():
 		active_restriction = active_restrictions[0]
 	_history = ActionHistory.new(state)
+	undo_mode = p_undo_mode
 
 func adjust_die(die_id: StringName, delta: int) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "本轮已经结算", state)
-	return _accept(RoundActions.adjust_die(state, die_id, delta, resolution_context))
+	return _accept(
+		RoundActions.adjust_die(state, die_id, delta, resolution_context),
+		ActionHistory.Kind.CALIBRATION
+	)
 
 func assign_die(die_id: StringName, table_id: StringName, slot_limit: int) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "本轮已经结算", state)
-	return _accept(RoundActions.assign_die(state, die_id, table_id, slot_limit))
+	return _accept(
+		RoundActions.assign_die(state, die_id, table_id, slot_limit),
+		ActionHistory.Kind.PLACEMENT
+	)
 
 func assign_die_to_slot(
 	die_id: StringName,
@@ -60,18 +78,54 @@ func assign_die_to_slot(
 		table_id,
 		slot_index,
 		slot_limit
-	))
+	), ActionHistory.Kind.PLACEMENT)
 
 func unassign_die(die_id: StringName) -> ActionResult:
 	if committed:
 		return ActionResult.new(false, "本轮已经结算", state)
-	return _accept(RoundActions.unassign_die(state, die_id))
+	return _accept(
+		RoundActions.unassign_die(state, die_id),
+		ActionHistory.Kind.PLACEMENT
+	)
 
 func play_card(played_card: PlayedCard) -> ActionResult:
 	var validation := validate_card_play(played_card)
 	if not validation.accepted:
 		return validation
-	return _accept(validation)
+	return _accept(validation, ActionHistory.Kind.CARD)
+
+func apply_paid_reroll(die_id: StringName, rolled_value: int) -> OperationResult:
+	if committed:
+		return OperationResult.new(false, "本轮已经结算")
+	if rolled_value < 1 or rolled_value > 6:
+		return OperationResult.new(false, "重投点数必须在一到六之间")
+	var die := state.find_die(die_id)
+	if die == null:
+		return OperationResult.new(false, "重投目标骰子不存在")
+	if die_id in state.locked_die_ids():
+		return OperationResult.new(false, "已锁定骰子不能重投")
+	_history.transform_all_states(
+		func(snapshot: RoundState) -> RoundState:
+			var target := snapshot.find_die(die_id)
+			if target != null:
+				var calibration_delta := target.value - target.rolled_value
+				target.rolled_value = rolled_value
+				target.value = clampi(rolled_value + calibration_delta, 1, 6)
+			return snapshot
+	)
+	state = _history.current_state()
+	return OperationResult.new(true)
+
+func apply_paid_calibration() -> OperationResult:
+	if committed:
+		return OperationResult.new(false, "本轮已经结算")
+	_history.transform_all_states(
+		func(snapshot: RoundState) -> RoundState:
+			snapshot.calibration_points += 1
+			return snapshot
+	)
+	state = _history.current_state()
+	return OperationResult.new(true)
 
 func validate_card_start() -> OperationResult:
 	if committed:
@@ -117,26 +171,67 @@ func condition_summary(table_id: StringName) -> String:
 func undo() -> bool:
 	if not can_undo():
 		return false
+	_last_undone_kind = _history.last_kind()
 	var previous := _history.undo()
 	if previous == null:
 		return false
 	state = previous
-	_undo_count += 1
+	var kind := _last_undone_kind
+	if undo_mode == UndoMode.GLOBAL_ONE:
+		_global_undo_count += 1
+	elif kind == ActionHistory.Kind.CALIBRATION:
+		_calibration_undo_count += 1
+	elif kind == ActionHistory.Kind.CARD:
+		_card_undo_count += 1
 	return true
 
 func can_undo() -> bool:
 	return undo_block_reason().is_empty()
 
+var _last_undone_kind: ActionHistory.Kind = ActionHistory.Kind.SYSTEM
+
 func undo_remaining() -> int:
-	return maxi(MAX_UNDOS_PER_ROUND - _undo_count, 0)
+	if undo_mode == UndoMode.GLOBAL_ONE:
+		return maxi(1 - _global_undo_count, 0)
+	match _history.last_kind():
+		ActionHistory.Kind.CALIBRATION:
+			return calibration_undos_remaining()
+		ActionHistory.Kind.CARD:
+			return card_undos_remaining()
+		ActionHistory.Kind.PLACEMENT:
+			return 1
+	return 0
+
+func calibration_undos_remaining() -> int:
+	return maxi(MAX_CATEGORY_UNDOS - _calibration_undo_count, 0)
+
+func card_undos_remaining() -> int:
+	return maxi(MAX_CATEGORY_UNDOS - _card_undo_count, 0)
+
+func placement_undo_copy() -> String:
+	return "落子不限" if undo_mode == UndoMode.SPLIT else "全局 %d" % undo_remaining()
+
+func undo_status_copy() -> String:
+	if undo_mode == UndoMode.GLOBAL_ONE:
+		return "落子无悔：全局撤销 %d/1" % undo_remaining()
+	return "落子不限 · 校准撤销 %d/1 · 卡牌撤销 %d/1" % [
+		calibration_undos_remaining(),
+		card_undos_remaining(),
+	]
 
 func undo_block_reason() -> String:
 	if committed:
 		return "本轮已经结算"
-	if undo_remaining() <= 0:
-		return "本回合最多撤销 1 次"
 	if not _history.can_undo():
 		return "当前没有可撤销的操作"
+	if undo_remaining() <= 0:
+		if undo_mode == UndoMode.GLOBAL_ONE:
+			return "落子无悔：本回合的全局撤销已经用完"
+		match _history.last_kind():
+			ActionHistory.Kind.CALIBRATION:
+				return "本回合的校准撤销已经用完"
+			ActionHistory.Kind.CARD:
+				return "本回合的卡牌撤销已经用完"
 	return ""
 
 func preview() -> ResolutionReport:
@@ -175,8 +270,47 @@ func _attach_restriction(report: ResolutionReport) -> void:
 			report.restriction_reason = restriction_result.reason
 			return
 
-func _accept(result: ActionResult) -> ActionResult:
+func _accept(
+	result: ActionResult,
+	kind: ActionHistory.Kind = ActionHistory.Kind.SYSTEM
+) -> ActionResult:
 	if result.accepted:
 		state = result.next_state
-		_history.push(state)
+		_history.push(state, kind)
 	return result
+
+func to_snapshot() -> Dictionary:
+	return {
+		"history": _history.to_snapshot(),
+		"committed": committed,
+		"committed_report": (
+			SnapshotCodec.report_to_snapshot(_committed_report)
+			if _committed_report != null
+			else {}
+		),
+		"calibration_undo_count": _calibration_undo_count,
+		"card_undo_count": _card_undo_count,
+		"global_undo_count": _global_undo_count,
+		"undo_mode": undo_mode,
+	}
+
+func restore_snapshot(snapshot: Dictionary, catalog: CardCatalog) -> OperationResult:
+	var history_result := _history.restore_snapshot(
+		snapshot.get("history", []),
+		catalog
+	)
+	if not history_result.accepted:
+		return history_result
+	state = _history.current_state()
+	committed = bool(snapshot.get("committed", false))
+	undo_mode = snapshot.get("undo_mode", undo_mode)
+	_calibration_undo_count = int(snapshot.get("calibration_undo_count", 0))
+	_card_undo_count = int(snapshot.get("card_undo_count", 0))
+	_global_undo_count = int(snapshot.get("global_undo_count", 0))
+	var report_snapshot: Dictionary = snapshot.get("committed_report", {})
+	_committed_report = (
+		SnapshotCodec.report_from_snapshot(report_snapshot)
+		if not report_snapshot.is_empty()
+		else null
+	)
+	return OperationResult.new(true)
