@@ -22,12 +22,21 @@ func run() -> void:
 		"chosen placement should preserve explicit empty slots"
 	)
 
-	var occupied_rejection := RoundActionsScript.assign_die_to_slot(
+	var occupied_exchange := RoundActionsScript.assign_die_to_slot(
 		first.next_state, &"d2", &"left", 1, 3
 	)
+	assert_true(
+		occupied_exchange.accepted,
+		"an unassigned die should replace the die in an explicitly chosen slot"
+	)
+	assert_equal(
+		occupied_exchange.next_state.assignments[&"left"],
+		[&"", &"d2", &""],
+		"explicit replacement should preserve other empty slots"
+	)
 	assert_false(
-		occupied_rejection.accepted,
-		"an unassigned die must not overwrite an occupied slot"
+		occupied_exchange.next_state.is_assigned(&"d1"),
+		"the replaced die should return to the unassigned tray state"
 	)
 	var empty_hand: Array[CardDefinition] = []
 	var drag_session := SingleEncounterSessionScript.new(
@@ -37,12 +46,44 @@ func run() -> void:
 	)
 	assert_true(
 		drag_session.assign_dropped_die_to_slot(&"d2", &"left", 1),
-		"a free dragged die should fall back from an occupied slot"
+		"a free dragged die should replace the explicitly targeted occupant"
 	)
 	assert_equal(
 		drag_session.controller.state.assignments[&"left"],
-		[&"d2", &"d1", &""],
-		"drag fallback should use the nearest open slot without replacing the occupant"
+		[&"", &"d2", &""],
+		"drag placement should not redirect to a nearby empty slot"
+	)
+	assert_false(
+		drag_session.controller.state.is_assigned(&"d1"),
+		"the drag target occupant should become unassigned"
+	)
+	assert_equal(
+		drag_session.last_error,
+		"",
+		"a successful free-to-occupied exchange should not leave an error"
+	)
+
+	var free_swap_controller := RoundControllerScript.new(_state(), _encounter())
+	assert_true(
+		free_swap_controller.assign_die_to_slot(&"d1", &"left", 1, 3).accepted,
+		"free-swap undo fixture should place the original die"
+	)
+	assert_true(
+		free_swap_controller.assign_die_to_slot(&"d2", &"left", 1, 3).accepted,
+		"controller should accept a free-to-occupied exchange as one action"
+	)
+	assert_true(
+		free_swap_controller.undo(),
+		"one undo should reverse the complete free-to-occupied exchange"
+	)
+	assert_equal(
+		free_swap_controller.state.assignments[&"left"],
+		[&"", &"d1", &""],
+		"undo should restore the replaced die to its original slot"
+	)
+	assert_false(
+		free_swap_controller.state.is_assigned(&"d2"),
+		"undo should return the incoming die to the tray"
 	)
 
 	var second := RoundActionsScript.assign_die_to_slot(

@@ -31,6 +31,7 @@ var room_index := 0
 var route_ids: Array[StringName] = []
 var selected_room_ids: Array[StringName] = []
 var completed_rooms: Array[Dictionary] = []
+var dealer_summary: Dictionary = {}
 var deck_ids: Array[StringName] = []
 var market_ids: Array[StringName] = []
 var pending_route_ids: Array[StringName] = []
@@ -402,6 +403,8 @@ func claim_rare_card_reward(
 ) -> OperationResult:
 	if phase != Phase.ENGRAVING_REWARD:
 		return _fail("当前不能领取稀有手法牌")
+	if dealer_summary.is_empty():
+		return _fail("庄家完成摘要不存在")
 	if card_id not in rare_card_offer_ids:
 		return _fail("所选稀有手法牌不在本次候选中")
 	if replaced_id not in deck_ids:
@@ -437,6 +440,8 @@ func install_selected_engraving(
 ) -> OperationResult:
 	if phase != Phase.ENGRAVING_INSTALL:
 		return _fail("请先从候选中选择一个刻印")
+	if dealer_summary.is_empty():
+		return _fail("庄家完成摘要不存在")
 	var result := EngravingInstallationService.new().install(
 		die_profiles,
 		engraving_offer_ids,
@@ -460,6 +465,8 @@ func install_selected_engraving(
 func completion_snapshot() -> Dictionary:
 	if phase != Phase.COMPLETE:
 		return {}
+	if dealer_summary.is_empty():
+		return {}
 	var purchases: Array[Dictionary] = []
 	for record in shop_purchase_history:
 		purchases.append({
@@ -479,11 +486,7 @@ func completion_snapshot() -> Dictionary:
 		"area_id": area_definition.id,
 		"rng_state": run_rng.snapshot_state(),
 		"rooms": completed_rooms.duplicate(true),
-		"dealer": {
-			"id": area_definition.dealer_id,
-			"target_total": encounter_session.target_total,
-			"cumulative_total": encounter_session.cumulative_total,
-		},
+		"dealer": dealer_summary.duplicate(true),
 		"purchases": purchases,
 		"services": services,
 		"deck_ids": deck_ids.duplicate(),
@@ -573,6 +576,8 @@ func _create_normal_room(room: RoomDefinition) -> OperationResult:
 func _prepare_dealer_rewards() -> OperationResult:
 	if phase != Phase.DEALER:
 		return _fail("只有庄家成功后才能准备奖励")
+	if encounter_session == null:
+		return _fail("当前庄家遭遇不存在")
 	var rare_candidates: Array[StringName] = []
 	for card_id in area_definition.rare_reward_card_ids:
 		if card_id not in deck_ids:
@@ -583,6 +588,11 @@ func _prepare_dealer_rewards() -> OperationResult:
 	var shuffled_engravings := run_rng.shuffle(area_definition.engraving_offer_ids)
 	if shuffled_engravings.size() < 2:
 		return _fail("区域刻印奖励候选不足两枚")
+	dealer_summary = {
+		"id": area_definition.dealer_id,
+		"target_total": encounter_session.target_total,
+		"cumulative_total": encounter_session.cumulative_total,
+	}
 	rare_card_offer_ids.assign(shuffled_cards.slice(0, 1))
 	engraving_offer_ids.assign(shuffled_engravings.slice(0, 2))
 	selected_reward_kind = &""
@@ -857,6 +867,47 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 		)
 	):
 		return _fail("区域检查点随机异变无效")
+	if not snapshot["challenge_ids"] is Array:
+		return _fail("区域检查点挑战格式无效")
+	var next_challenge_ids: Array[StringName] = []
+	next_challenge_ids.assign(snapshot["challenge_ids"])
+	var challenge_error := ExpeditionConfigs.new().selection_error(
+		ExpeditionConfigs.DICE_CONTROL,
+		next_challenge_ids,
+		true
+	)
+	if not challenge_error.is_empty():
+		return _fail(challenge_error)
+
+	var snapshot_phase: Phase = snapshot["phase"]
+	var next_dealer_summary: Dictionary = {}
+	if snapshot.has("dealer_summary"):
+		if not snapshot["dealer_summary"] is Dictionary:
+			return _fail("区域检查点庄家摘要格式无效")
+		next_dealer_summary = snapshot["dealer_summary"].duplicate(true)
+	if next_dealer_summary.is_empty() and snapshot_phase == Phase.COMPLETE:
+		var completion = snapshot.get("completion", {})
+		if completion is Dictionary and completion.get("dealer", {}) is Dictionary:
+			next_dealer_summary = completion.get("dealer", {}).duplicate(true)
+	var dealer_completed := snapshot_phase in [
+		Phase.ENGRAVING_REWARD,
+		Phase.ENGRAVING_INSTALL,
+		Phase.COMPLETE,
+	]
+	if next_dealer_summary.is_empty() and dealer_completed:
+		next_dealer_summary = {
+			"id": area_definition.dealer_id,
+			"target_total": ChallengeRules.new(next_challenge_ids).target_total(
+				area_definition.dealer_target
+			),
+			"cumulative_total": null,
+		}
+	var dealer_error := _dealer_summary_error(
+		next_dealer_summary,
+		dealer_completed
+	)
+	if not dealer_error.is_empty():
+		return _fail(dealer_error)
 
 	var next_shop: ShopSession
 	if snapshot["phase"] == Phase.SHOP:
@@ -888,10 +939,11 @@ func _restore_base_snapshot(snapshot: Dictionary) -> OperationResult:
 	market_ids.assign(snapshot["market_ids"])
 	pending_route_ids.assign(snapshot["pending_route_ids"])
 	intel_tickets = snapshot["intel_tickets"]
-	challenge_ids.assign(snapshot["challenge_ids"])
+	challenge_ids = next_challenge_ids
 	die_profiles = next_profiles
 	lucky_faces = next_lucky_faces
 	area_modifier_id = next_modifier_id
+	dealer_summary = next_dealer_summary
 	shop_purchase_history = _purchase_history_from_snapshots(snapshot["purchases"])
 	shop_service_history = _service_history_from_snapshots(snapshot["services"])
 	engraving_offer_ids.assign(snapshot["engraving_offer_ids"])
@@ -932,6 +984,7 @@ func _state_snapshot() -> Dictionary:
 		"route_ids": route_ids.duplicate(),
 		"selected_room_ids": selected_room_ids.duplicate(),
 		"completed_rooms": completed_rooms.duplicate(true),
+		"dealer_summary": dealer_summary.duplicate(true),
 		"deck_ids": deck_ids.duplicate(),
 		"market_ids": market_ids.duplicate(),
 		"pending_route_ids": pending_route_ids.duplicate(),
@@ -962,6 +1015,7 @@ func _copy_runtime_from(other: AreaRunSession) -> void:
 	route_ids = other.route_ids
 	selected_room_ids = other.selected_room_ids
 	completed_rooms = other.completed_rooms
+	dealer_summary = other.dealer_summary
 	deck_ids = other.deck_ids
 	market_ids = other.market_ids
 	pending_route_ids = other.pending_route_ids
@@ -1018,6 +1072,23 @@ func _entry_state_error(state: Dictionary) -> String:
 		if not lucky_error.is_empty():
 			return lucky_error
 	return _profiles_error(_profiles_from_snapshots(state["die_profiles"]))
+
+func _dealer_summary_error(summary: Dictionary, required: bool) -> String:
+	if summary.is_empty():
+		return "区域检查点缺少庄家完成摘要" if required else ""
+	for key in ["id", "target_total", "cumulative_total"]:
+		if not summary.has(key):
+			return "庄家完成摘要缺少字段：%s" % key
+	if summary["id"] != area_definition.dealer_id:
+		return "庄家完成摘要与地区定义不匹配"
+	if not summary["target_total"] is int or summary["target_total"] <= 0:
+		return "庄家完成摘要目标分无效"
+	var cumulative_total = summary["cumulative_total"]
+	if cumulative_total != null and not cumulative_total is int:
+		return "庄家完成摘要累计分无效"
+	if cumulative_total is int and cumulative_total < summary["target_total"]:
+		return "庄家完成摘要与已成功状态矛盾"
+	return ""
 
 func _roll_lucky_faces(rng: RunRng) -> Dictionary:
 	var result: Dictionary = {}
@@ -1110,6 +1181,7 @@ func _reset_owned_state() -> void:
 	route_ids.clear()
 	selected_room_ids.clear()
 	completed_rooms.clear()
+	dealer_summary.clear()
 	deck_ids.clear()
 	market_ids.clear()
 	pending_route_ids.clear()

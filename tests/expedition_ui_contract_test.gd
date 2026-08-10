@@ -4,6 +4,7 @@ func run() -> void:
 	_test_main_menu_expedition_controls()
 	_test_expedition_host_and_summary_structure()
 	_test_area_complete_panel_supports_continuation()
+	_test_unknown_dealer_score_copy()
 
 func _test_main_menu_expedition_controls() -> void:
 	var menu: Control = load(
@@ -55,3 +56,35 @@ func _test_area_complete_panel_supports_continuation() -> void:
 		"area complete panel should expose continuation signal"
 	)
 	panel.free()
+
+func _test_unknown_dealer_score_copy() -> void:
+	var dealer := {
+		"id": &"dealer_iron_abacus",
+		"target_total": 150,
+		"cumulative_total": null,
+	}
+	var complete_panel: Control = load(
+		"res://scenes/components/area_complete_panel.tscn"
+	).instantiate()
+	assert_equal(
+		complete_panel._dealer_score_copy("铁算盘", dealer),
+		"铁算盘　已达成 / 150（历史分数未记录）",
+		"area completion should distinguish an unknown legacy dealer score"
+	)
+	complete_panel.free()
+
+	var expedition_screen: Control = load(
+		"res://scenes/run/expedition_run_screen.tscn"
+	).instantiate()
+	assert_equal(
+		expedition_screen._dealer_score_copy(dealer),
+		"庄家解析 已达成 / 150（历史分数未记录）",
+		"final expedition summary should distinguish an unknown legacy dealer score"
+	)
+	dealer["cumulative_total"] = 173
+	assert_equal(
+		expedition_screen._dealer_score_copy(dealer),
+		"庄家解析 173 / 150",
+		"new expedition summaries should retain exact dealer score copy"
+	)
+	expedition_screen.free()

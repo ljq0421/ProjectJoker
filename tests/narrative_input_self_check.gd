@@ -24,6 +24,7 @@ func _run() -> void:
 
 	_assert(host.narrative_card.is_open(), "new run should show Gold transition")
 	var gold_completion := _completion(&"gold_corridor", 7, &"engraving_anchor")
+	gold_completion["dealer"]["cumulative_total"] = null
 	host._pending_completion = gold_completion
 	host._on_continue_requested()
 	await _settle()
@@ -80,6 +81,11 @@ func _run() -> void:
 			in host.get_node("%ExpeditionEpilogueLabel").text,
 		"final summary should include the confirmed epilogue"
 	)
+	_assert(
+		"庄家解析 已达成 / 150（历史分数未记录）"
+			in host.get_node("%ExpeditionAreaHistoryLabel").text,
+		"final summary should disclose an unknown legacy dealer score"
+	)
 	await _finish()
 
 func _completion(
@@ -88,6 +94,15 @@ func _completion(
 	engraving_id: StringName
 ) -> Dictionary:
 	var deck := AreaCatalog.new().gold_corridor().starting_deck_ids
+	var area_catalog := AreaCatalog.new()
+	var definition: AreaDefinition
+	match area_id:
+		&"gold_corridor":
+			definition = area_catalog.gold_corridor()
+		&"mirror_hall":
+			definition = area_catalog.mirror_hall()
+		&"faceless_hub":
+			definition = area_catalog.faceless_hub()
 	var profiles: Array[Dictionary] = []
 	for index in range(1, 7):
 		profiles.append({
@@ -103,6 +118,11 @@ func _completion(
 		"deck_ids": deck,
 		"intel_tickets": tickets,
 		"die_profiles": profiles,
+		"dealer": {
+			"id": definition.dealer_id,
+			"target_total": definition.dealer_target,
+			"cumulative_total": definition.dealer_target + 9,
+		},
 	}
 
 func _settle(frames := 3) -> void:

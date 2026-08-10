@@ -84,11 +84,7 @@ func bind_summary(
 	%SealMark.text = "%s  /  CLOSED" % String(area_definition.id).to_upper()
 	if not _expedition_mode:
 		%RestartAreaButton.text = "重新开始%s" % area_definition.display_name
-	score_lines.append("%s　%d / %d" % [
-		dealer_definition.display_name,
-		dealer["cumulative_total"],
-		dealer["target_total"],
-	])
+	score_lines.append(_dealer_score_copy(dealer_definition.display_name, dealer))
 	%RouteHistoryLabel.text = "\n".join(room_lines)
 	%ScoreHistoryLabel.text = "\n".join(score_lines)
 	%PurchaseHistoryLabel.text = "手法替换\n%s\n\n商店服务\n%s" % [
@@ -165,7 +161,10 @@ func _summary_error(
 		or dealer_catalog.find_dealer(dealer["id"]) == null
 	):
 		return "区域摘要包含未知庄家"
-	if not dealer["target_total"] is int or not dealer["cumulative_total"] is int:
+	if not dealer["target_total"] is int:
+		return "庄家摘要分数无效"
+	var dealer_total = dealer["cumulative_total"]
+	if dealer_total != null and not dealer_total is int:
 		return "庄家摘要分数无效"
 	if not summary["purchases"] is Array:
 		return "替换记录格式无效"
@@ -259,6 +258,19 @@ func _summary_error(
 	if not summary["die_profiles"] is Array or summary["die_profiles"].size() != 6:
 		return "区域摘要骰子档案无效"
 	return ""
+
+func _dealer_score_copy(display_name: String, dealer: Dictionary) -> String:
+	var cumulative_total = dealer.get("cumulative_total")
+	if cumulative_total is int:
+		return "%s　%d / %d" % [
+			display_name,
+			cumulative_total,
+			dealer["target_total"],
+		]
+	return "%s　已达成 / %d（历史分数未记录）" % [
+		display_name,
+		dealer["target_total"],
+	]
 
 func _purchase_text(purchases: Array, card_catalog: CardCatalog) -> String:
 	if purchases.is_empty():

@@ -76,8 +76,6 @@ static func assign_die_to_slot(
 	var target_die_id: StringName = target_slots[slot_index]
 	var source := next_state.find_assignment(die_id)
 	if source.is_empty():
-		if target_die_id != RoundState.EMPTY_SLOT:
-			return ActionResult.new(false, "空闲骰子不能覆盖已占用骰位", state)
 		target_slots[slot_index] = die_id
 		return ActionResult.new(true, "", next_state)
 

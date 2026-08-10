@@ -197,11 +197,10 @@ func _show_summary() -> void:
 	for index in range(expedition.completed_areas.size()):
 		var completion: Dictionary = expedition.completed_areas[index]
 		var dealer: Dictionary = completion.get("dealer", {})
-		area_lines.append("%d. %s　庄家解析 %d / %d" % [
+		area_lines.append("%d. %s　%s" % [
 			index + 1,
 			_area_name(completion.get("area_id", &"")),
-			dealer.get("cumulative_total", 0),
-			dealer.get("target_total", 0),
+			_dealer_score_copy(dealer),
 		])
 	area_history_label.text = "\n".join(area_lines)
 	var final_state := expedition.inherited_state
@@ -232,6 +231,13 @@ func _on_return_from_summary() -> void:
 		_show_error(result.reason)
 		return
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+func _dealer_score_copy(dealer: Dictionary) -> String:
+	var target_total = dealer.get("target_total", 0)
+	var cumulative_total = dealer.get("cumulative_total")
+	if cumulative_total is int:
+		return "庄家解析 %d / %d" % [cumulative_total, target_total]
+	return "庄家解析 已达成 / %d（历史分数未记录）" % target_total
 
 func _show_error(message: String) -> void:
 	narrative_card.close()

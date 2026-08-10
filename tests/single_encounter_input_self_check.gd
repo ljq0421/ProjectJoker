@@ -49,23 +49,36 @@ func _run() -> void:
 	await _drag(_find_die(&"d2"), _find_die(&"d1"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"d2", &"d1"],
-		"a free die dropped near occupied slot 2 should use the nearest open slot 1"
+		== [&"", &"d2"],
+		"a free die dropped on occupied slot 2 should replace its occupant"
+	)
+	var swap_tray: Control = screen.get_node("%DiceTray")
+	var displaced_d1 := _find_die(&"d1")
+	_assert_true(
+		displaced_d1 != null and swap_tray.is_ancestor_of(displaced_d1),
+		"the displaced die should reappear in the tray"
 	)
 	_assert_true(
-		screen.get_node("%InteractionMotionLayer").get_meta(
-			"last_response_sequence", []
-		) == [&"source", &"affected", &"rule", &"prediction"],
-		"filling the final slot should add one clear rule-lane response pulse"
+		screen.get_node("%ErrorLabel").text.is_empty(),
+		"a successful free-to-occupied drag should not show an error"
 	)
-	await _drag(_find_die(&"d2"), _find_die(&"d1"))
 	_assert_true(
 		screen.get_node("%InteractionMotionLayer").get_meta(
 			"last_response_sequence", []
 		) == [&"source", &"affected", &"prediction"],
-		"rearranging an already-full lane should not replay the full-lane pulse"
+		"replacing one die should update the source, target, and prediction"
 	)
 	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"", &"d1"],
+		"one undo should restore the displaced die to its original slot"
+	)
+	var reverted_d2 := _find_die(&"d2")
+	_assert_true(
+		reverted_d2 != null and swap_tray.is_ancestor_of(reverted_d2),
+		"undo should return the incoming die to the tray"
+	)
 	_assert_true(
 		screen.session.controller.undo_remaining() == 0
 		and screen.get_node("%UndoButton").disabled,
@@ -104,6 +117,35 @@ func _run() -> void:
 	_assert_true(
 		screen.session.controller.state.assigned_die_ids(&"left") == [&"d1"],
 		"undo should restore a die returned to the tray"
+	)
+
+	await _reset_round()
+	left = screen.get_node("%LeftLane")
+	screen.session.controller.assign_die_to_slot(&"d1", &"left", 1, 2)
+	screen.refresh_from_session()
+	await process_frame
+	await _click(_find_die(&"d2"))
+	await _click(_find_slot(left, 1))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"", &"d2"],
+		"clicking an occupied slot with a free die selected should replace its occupant"
+	)
+	var clicked_out_d1 := _find_die(&"d1")
+	_assert_true(
+		clicked_out_d1 != null and tray.is_ancestor_of(clicked_out_d1),
+		"the die displaced by a click exchange should reappear in the tray"
+	)
+	_assert_true(
+		screen.get_node("%ErrorLabel").text.is_empty(),
+		"a successful free-to-occupied click should not show an error"
+	)
+	await _click(screen.get_node("%UndoButton"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"", &"d1"]
+		and not screen.session.controller.state.is_assigned(&"d2"),
+		"one undo should reverse the complete click exchange"
 	)
 
 	await _reset_round()
