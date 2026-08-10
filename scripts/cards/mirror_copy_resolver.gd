@@ -64,8 +64,7 @@ func resolve(
 	var copy_effects := original.definition.mirror_effects
 	if (
 		context != null
-		and context.area_modifier_id
-			== Modifiers.MIRROR_TWIN_ECHO
+		and context.has_area_modifier(Modifiers.MIRROR_TWIN_ECHO)
 	):
 		copy_effects = original.definition.effects
 	for effect in copy_effects:

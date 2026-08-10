@@ -12,9 +12,13 @@ func has(challenge_id: StringName) -> bool:
 	return challenge_id in challenge_ids
 
 func target_total(base_target: int) -> int:
+	return target_total_with_multiplier(base_target, 1.0)
+
+func target_total_with_multiplier(base_target: int, multiplier: float) -> int:
+	var combined := multiplier
 	if has(ExpeditionConfigs.HIGH_PRESSURE):
-		return int(ceili(float(base_target) * 1.15))
-	return base_target
+		combined *= 1.15
+	return int(ceili(float(base_target) * combined))
 
 func hand_size(fixed_hand: bool) -> int:
 	if has(ExpeditionConfigs.SHORT_HAND) and not fixed_hand:

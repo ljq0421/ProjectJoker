@@ -210,6 +210,7 @@ func _launch(
 	root_window.set_meta("expedition_starting_deck_id", deck_id)
 	root_window.set_meta("expedition_challenge_ids", challenge_ids.duplicate())
 	root_window.set_meta("expedition_save_path", save_path)
+	root_window.set_meta("standard_expedition_save_path", save_path)
 	root_window.set_meta("expedition_meta_path", meta_path)
 	SfxAccess.play(self, &"page_transition")
 	get_tree().change_scene_to_file(EXPEDITION_SCENE)

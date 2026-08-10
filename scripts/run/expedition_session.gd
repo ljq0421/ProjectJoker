@@ -3,6 +3,7 @@ extends RefCounted
 
 const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
 const ModifierCatalog = preload("res://scripts/run/area_run_modifier_catalog.gd")
+const StartConfig = preload("res://scripts/run/expedition_start_config.gd")
 
 enum Status {
 	NOT_STARTED,
@@ -20,8 +21,10 @@ const AREA_ORDER: Array[StringName] = [
 var status: Status = Status.NOT_STARTED
 var seed_value := 0
 var run_id: StringName = &""
+var started_at_unix := 0
 var starting_deck_id: StringName = ExpeditionConfigs.DICE_CONTROL
 var challenge_ids: Array[StringName] = []
+var start_config
 var current_area_index := 0
 var inherited_state: Dictionary = {}
 var area_checkpoint: Dictionary = {}
@@ -33,22 +36,30 @@ func start_new(
 	p_starting_deck_id: StringName = ExpeditionConfigs.DICE_CONTROL,
 	p_challenge_ids: Array[StringName] = []
 ) -> OperationResult:
+	var config := StartConfig.new()
+	var configured := config.configure_standard(
+		seed, p_starting_deck_id, p_challenge_ids
+	)
+	if not configured.accepted:
+		return configured
+	return start_with_config(config)
+
+func start_with_config(config) -> OperationResult:
 	if status != Status.NOT_STARTED:
 		return OperationResult.new(false, "远征已经开始")
-	if seed <= 0:
-		return OperationResult.new(false, "远征种子必须为正整数")
-	var selection_error := ExpeditionConfigs.new().selection_error(
-		p_starting_deck_id,
-		p_challenge_ids,
-		true
-	)
-	if not selection_error.is_empty():
-		return OperationResult.new(false, selection_error)
+	if config == null or not config.has_method("to_snapshot"):
+		return OperationResult.new(false, "远征启动配置不存在")
+	var config_error: String = config.validation_error()
+	if not config_error.is_empty():
+		return OperationResult.new(false, config_error)
 	status = Status.ACTIVE
-	seed_value = seed
-	run_id = StringName("%d-%d" % [seed, Time.get_ticks_usec()])
-	starting_deck_id = p_starting_deck_id
-	challenge_ids.assign(p_challenge_ids)
+	start_config = StartConfig.new()
+	start_config.restore_snapshot(config.to_snapshot())
+	seed_value = start_config.seed_value
+	run_id = StringName("%d-%d" % [seed_value, Time.get_ticks_usec()])
+	started_at_unix = int(Time.get_unix_time_from_system())
+	starting_deck_id = start_config.starting_deck_id
+	challenge_ids.assign(start_config.challenge_ids)
 	current_area_index = 0
 	inherited_state = _initial_entry_state()
 	area_checkpoint = {}
@@ -57,12 +68,22 @@ func start_new(
 	return OperationResult.new(true)
 
 func current_area_id() -> StringName:
-	if status != Status.ACTIVE or current_area_index >= AREA_ORDER.size():
+	var order := _area_order()
+	if status != Status.ACTIVE or current_area_index >= order.size():
 		return &""
-	return AREA_ORDER[current_area_index]
+	return order[current_area_index]
 
 func current_entry_state() -> Dictionary:
-	return inherited_state.duplicate(true)
+	var result := inherited_state.duplicate(true)
+	if start_config != null:
+		result["expedition_mode"] = start_config.mode
+		result["target_multiplier"] = start_config.target_multiplier
+		result["max_challenges"] = 6 if start_config.mode == StartConfig.CUSTOM else 2
+		if start_config.mode == StartConfig.CUSTOM:
+			result["configured_area_modifier_ids"] = start_config.modifiers_for(
+				current_area_id()
+			)
+	return result
 
 func can_continue() -> bool:
 	return status == Status.ACTIVE
@@ -98,7 +119,7 @@ func complete_current_area(completion: Dictionary) -> OperationResult:
 	inherited_state = next_inherited
 	area_checkpoint = {}
 	current_area_index += 1
-	if current_area_index >= AREA_ORDER.size():
+	if current_area_index >= _area_order().size():
 		status = Status.COMPLETE
 	return OperationResult.new(true)
 
@@ -115,8 +136,14 @@ func to_snapshot() -> Dictionary:
 		"status": status,
 		"seed_value": seed_value,
 		"run_id": run_id,
+		"started_at_unix": started_at_unix,
 		"starting_deck_id": starting_deck_id,
 		"challenge_ids": challenge_ids.duplicate(),
+		"start_config": (
+			start_config.to_snapshot()
+			if start_config != null
+			else _legacy_config_snapshot(seed_value, starting_deck_id, challenge_ids)
+		),
 		"current_area_index": current_area_index,
 		"inherited_state": inherited_state.duplicate(true),
 		"area_checkpoint": area_checkpoint.duplicate(true),
@@ -137,6 +164,23 @@ func balance_telemetry_snapshot() -> Dictionary:
 		"deck_size_total": 0,
 		"intel_balance_total": 0,
 		"sample_count": 0,
+		"rounds_total": 0,
+		"calibration_actions": 0,
+		"full_allocation_rounds": 0,
+		"engraving_set_activations": 0,
+		"rank_conversions": 0,
+		"discarded_cards": 0,
+		"faulted_dice_peak": 0,
+		"all_in_attempts": 0,
+		"all_in_successes": 0,
+		"passive_gold_layers_peak": 0,
+		"free_refresh_peak": 0,
+		"target_relief_peak": 0,
+		"elite_wins": 0,
+		"elite_losses": 0,
+		"choice_raise_target": 0,
+		"choice_buy_calibration": 0,
+		"choice_remove_card": 0,
 	}
 	var sources: Array[Dictionary] = []
 	for completion in completed_areas:
@@ -173,8 +217,14 @@ func restore_snapshot(snapshot: Dictionary) -> OperationResult:
 	status = snapshot["status"]
 	seed_value = snapshot["seed_value"]
 	run_id = snapshot["run_id"]
+	started_at_unix = int(snapshot.get("started_at_unix", 0))
 	starting_deck_id = snapshot["starting_deck_id"]
 	challenge_ids.assign(snapshot["challenge_ids"])
+	start_config = StartConfig.new()
+	start_config.restore_snapshot(snapshot.get(
+		"start_config",
+		_legacy_config_snapshot(seed_value, starting_deck_id, challenge_ids)
+	))
 	current_area_index = snapshot["current_area_index"]
 	inherited_state = snapshot["inherited_state"].duplicate(true)
 	area_checkpoint = snapshot["area_checkpoint"].duplicate(true)
@@ -187,6 +237,7 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		"status",
 		"seed_value",
 		"run_id",
+		"started_at_unix",
 		"starting_deck_id",
 		"challenge_ids",
 		"current_area_index",
@@ -209,6 +260,8 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		return "远征局次 ID 格式无效"
 	if String(snapshot["run_id"]).strip_edges().is_empty():
 		return "远征局次 ID 无效"
+	if not snapshot["started_at_unix"] is int or snapshot["started_at_unix"] < 0:
+		return "远征开始时间无效"
 	if (
 		not snapshot["starting_deck_id"] is String
 		and not snapshot["starting_deck_id"] is StringName
@@ -216,10 +269,27 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		return "起始构筑标识格式无效"
 	if not snapshot["challenge_ids"] is Array:
 		return "挑战列表格式无效"
+	var config_snapshot: Dictionary = snapshot.get(
+		"start_config",
+		_legacy_config_snapshot(
+			snapshot["seed_value"],
+			snapshot["starting_deck_id"],
+			snapshot["challenge_ids"]
+		)
+	)
+	var config := StartConfig.new()
+	var restored_config := config.restore_snapshot(config_snapshot)
+	if not restored_config.accepted:
+		return restored_config.reason
+	if (
+		config.seed_value != snapshot["seed_value"]
+		or config.starting_deck_id != snapshot["starting_deck_id"]
+		or config.challenge_ids != snapshot["challenge_ids"]
+	):
+		return "远征启动配置与顶层配置不一致"
 	var config_error := ExpeditionConfigs.new().selection_error(
-		snapshot["starting_deck_id"],
-		snapshot["challenge_ids"],
-		true
+		snapshot["starting_deck_id"], snapshot["challenge_ids"], true,
+		6 if config.mode == StartConfig.CUSTOM else 2
 	)
 	if not config_error.is_empty():
 		return config_error
@@ -227,9 +297,10 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		return "当前区域序号无效"
 	var status_value: int = snapshot["status"]
 	var index: int = snapshot["current_area_index"]
-	if status_value == Status.ACTIVE and (index < 0 or index >= AREA_ORDER.size()):
+	var area_order: Array[StringName] = config.area_sequence
+	if status_value == Status.ACTIVE and (index < 0 or index >= area_order.size()):
 		return "进行中远征的区域序号越界"
-	if status_value == Status.COMPLETE and index != AREA_ORDER.size():
+	if status_value == Status.COMPLETE and index != area_order.size():
 		return "已完成远征的区域序号无效"
 	if not snapshot["inherited_state"] is Dictionary:
 		return "跨区状态格式无效"
@@ -237,13 +308,13 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 		return "区域检查点格式无效"
 	if not snapshot["completed_areas"] is Array:
 		return "区域完成记录格式无效"
-	if snapshot["completed_areas"].size() != mini(index, AREA_ORDER.size()):
+	if snapshot["completed_areas"].size() != mini(index, area_order.size()):
 		return "区域完成记录数量与进度不一致"
 	for completion_index in range(snapshot["completed_areas"].size()):
 		var completion = snapshot["completed_areas"][completion_index]
 		if not completion is Dictionary:
 			return "区域完成记录条目无效"
-		var error := _completion_error(completion, AREA_ORDER[completion_index])
+		var error := _completion_error(completion, area_order[completion_index])
 		if not error.is_empty():
 			return error
 	if not snapshot["failure_reason"] is String:
@@ -251,12 +322,12 @@ static func snapshot_error(snapshot: Dictionary) -> String:
 	if status_value == Status.ACTIVE and not snapshot["area_checkpoint"].is_empty():
 		if (
 			snapshot["area_checkpoint"].get("area_id", &"")
-			!= AREA_ORDER[index]
+			!= area_order[index]
 		):
 			return "区域检查点与当前远征区域不一致"
 		var area_catalog := AreaCatalog.new()
 		var area_definition: AreaDefinition
-		match AREA_ORDER[index]:
+		match area_order[index]:
 			&"gold_corridor":
 				area_definition = area_catalog.gold_corridor()
 			&"mirror_hall":
@@ -293,6 +364,27 @@ func _initial_entry_state() -> Dictionary:
 		"rng_state": RunRng.new(seed_value).snapshot_state(),
 		"lucky_faces": {},
 		"challenge_ids": challenge_ids.duplicate(),
+	}
+
+func _area_order() -> Array[StringName]:
+	if start_config == null:
+		return AREA_ORDER.duplicate()
+	return start_config.area_sequence.duplicate()
+
+static func _legacy_config_snapshot(
+	seed: int,
+	deck_id: StringName,
+	challenges: Array
+) -> Dictionary:
+	return {
+		"mode": StartConfig.STANDARD,
+		"seed_value": seed,
+		"starting_deck_id": deck_id,
+		"challenge_ids": challenges.duplicate(),
+		"area_sequence": AREA_ORDER.duplicate(),
+		"area_modifier_ids": {},
+		"target_multiplier": 1.0,
+		"daily_date_key": "",
 	}
 
 static func _completion_error(completion: Dictionary, expected_id: StringName) -> String:

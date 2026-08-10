@@ -2,6 +2,7 @@ class_name ContentValidator
 extends RefCounted
 
 const BuildIdentities = preload("res://scripts/run/build_identity_catalog.gd")
+const SuitRules = preload("res://scripts/cards/card_suit_rules.gd")
 
 func validate(rules: Array, cards: Array) -> Array[String]:
 	var errors: Array[String] = []
@@ -64,6 +65,9 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 			errors.append("card %s has an unknown rarity" % card.id)
 		if card.effects.is_empty():
 			errors.append("card %s has no effects" % card.id)
+		var suit_error := SuitRules.validation_error(card)
+		if not suit_error.is_empty():
+			errors.append(suit_error)
 		for effect in card.effects:
 			match effect.operation:
 				EffectSpec.Operation.ADJUST_DIE:
@@ -202,6 +206,24 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append(
 							"card %s has an unknown search identity" % card.id
 						)
+				EffectSpec.Operation.FAULT_DIE:
+					if card.target_type != CardDefinition.TargetType.DIE:
+						errors.append("card %s fault effect requires a die target" % card.id)
+					if effect.amount != 3:
+						errors.append("card %s fault coefficient must equal three" % card.id)
+				EffectSpec.Operation.ALL_IN:
+					if card.target_type != CardDefinition.TargetType.GLOBAL:
+						errors.append("card %s all-in effect requires a global target" % card.id)
+				EffectSpec.Operation.GRANT_UNDOS:
+					if card.target_type != CardDefinition.TargetType.GLOBAL:
+						errors.append("card %s undo grant requires a global target" % card.id)
+					if effect.amount != 1:
+						errors.append("card %s undo grant must equal one" % card.id)
+				EffectSpec.Operation.BURNED_REWRITE:
+					if card.target_type != CardDefinition.TargetType.TABLE:
+						errors.append("card %s burned rewrite requires a table target" % card.id)
+					if effect.amount != 1:
+						errors.append("card %s burned rewrite amount must equal one" % card.id)
 		if not card.mirror_effects.is_empty():
 			if card.target_type != CardDefinition.TargetType.GAP:
 				errors.append(

@@ -1,0 +1,152 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/custom_expedition_setup_screen.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+
+[node name="CustomExpeditionSetupScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.025, 0.11, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 96.0
+offset_top = 44.0
+offset_right = -96.0
+offset_bottom = -44.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+text = "自定义远征 / BOUNDED CONTRACT"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="Subtitle" type="Label" parent="SafeArea/Content"]
+layout_mode = 2
+text = "自定义记录独立保存，不进入标准历史、成就或每日榜。"
+horizontal_alignment = 1
+
+[node name="PrimaryOptions" type="GridContainer" parent="SafeArea/Content"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 10
+
+[node name="DeckLabel" type="Label" parent="SafeArea/Content/PrimaryOptions"]
+layout_mode = 2
+text = "起始牌组"
+[node name="DeckOption" type="OptionButton" parent="SafeArea/Content/PrimaryOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AreaCountLabel" type="Label" parent="SafeArea/Content/PrimaryOptions"]
+layout_mode = 2
+text = "连续区域"
+[node name="AreaCountOption" type="OptionButton" parent="SafeArea/Content/PrimaryOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TargetLabel" type="Label" parent="SafeArea/Content/PrimaryOptions"]
+layout_mode = 2
+text = "目标倍率"
+[node name="TargetMultiplierOption" type="OptionButton" parent="SafeArea/Content/PrimaryOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="DecorationLabel" type="Label" parent="SafeArea/Content/PrimaryOptions"]
+layout_mode = 2
+text = "档案装饰"
+[node name="DecorationOption" type="OptionButton" parent="SafeArea/Content/PrimaryOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/Content"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ChoiceColumns" type="HBoxContainer" parent="SafeArea/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 24
+
+[node name="ChallengeColumn" type="VBoxContainer" parent="SafeArea/Content/Scroll/ChoiceColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="ChallengeTitle" type="Label" parent="SafeArea/Content/Scroll/ChoiceColumns/ChallengeColumn"]
+layout_mode = 2
+text = "挑战条款 · 0–6 项"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+[node name="CustomChallengeList" type="VBoxContainer" parent="SafeArea/Content/Scroll/ChoiceColumns/ChallengeColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ModifierColumn" type="VBoxContainer" parent="SafeArea/Content/Scroll/ChoiceColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="ModifierTitle" type="Label" parent="SafeArea/Content/Scroll/ChoiceColumns/ModifierColumn"]
+layout_mode = 2
+text = "区域异变 · 每区 0–2 项"
+theme_override_colors/font_color = Color(0.95, 0.82, 0.52, 1)
+[node name="CustomModifierList" type="VBoxContainer" parent="SafeArea/Content/Scroll/ChoiceColumns/ModifierColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CustomSetupSummary" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CustomSetupError" type="Label" parent="SafeArea/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.62, 0.7, 1)
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+[node name="ReturnButton" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "返回主页面"
+[node name="ContinueCustomButton" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "继续自定义存档"
+[node name="StartCustomButton" type="Button" parent="SafeArea/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "签署并开始"

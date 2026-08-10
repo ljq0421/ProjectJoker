@@ -7,6 +7,11 @@ var dice: Array[DieState] = []
 var assignments: Dictionary = {}
 var played_cards: Array = []
 var calibration_points: int = 2
+var calibration_locked := false
+var discarded_card_ids: Array[StringName] = []
+var rank_conversion_used := false
+var extra_calibration_undos := 0
+var extra_card_undos := 0
 
 func locked_die_ids() -> Array[StringName]:
 	var die_ids: Array[StringName] = []
@@ -73,4 +78,9 @@ func clone() -> RoundState:
 	for played_card in played_cards:
 		copy.played_cards.append(played_card.clone())
 	copy.calibration_points = calibration_points
+	copy.calibration_locked = calibration_locked
+	copy.discarded_card_ids.assign(discarded_card_ids)
+	copy.rank_conversion_used = rank_conversion_used
+	copy.extra_calibration_undos = extra_calibration_undos
+	copy.extra_card_undos = extra_card_undos
 	return copy

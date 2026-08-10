@@ -584,12 +584,13 @@ func _refresh_area_directive(
 		return
 	var rule_count := session.controller.encounter.rules.size()
 	var satisfied_count := maxi(0, rule_count - report.rule_failures.size())
+	var damaged_count := maxi(0, rule_count - satisfied_count)
 	var next_status := ""
 	match _area_id:
 		&"gold_corridor":
 			next_status = (
-				"单轮定案 · 条件满足 %d/%d · 校准 %d"
-				% [satisfied_count, rule_count, state.calibration_points]
+				"单轮定案 · 功能稳定 %d/%d · 功能受损 %d · 校准 %d"
+				% [satisfied_count, rule_count, damaged_count, state.calibration_points]
 			)
 		&"mirror_hall":
 			var mirror_count := 0
@@ -602,8 +603,11 @@ func _refresh_area_directive(
 					== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
 				else "左 → 右"
 			)
-			next_status = "镜像额度 %d/1 · 结算 %s" % [
+			next_status = "镜像额度 %d/1 · 功能稳定 %d/%d · 功能受损 %d · 结算 %s" % [
 				mirror_count,
+				satisfied_count,
+				rule_count,
+				damaged_count,
 				direction,
 			]
 		&"faceless_hub":
@@ -615,10 +619,11 @@ func _refresh_area_directive(
 				if restriction_names.is_empty()
 				else " / ".join(restriction_names)
 			)
-			next_status = "%s · 条件满足 %d/%d" % [
+			next_status = "%s · 功能稳定 %d/%d · 功能受损 %d" % [
 				protocol,
 				satisfied_count,
 				rule_count,
+				damaged_count,
 			]
 	if next_status != %AreaDirectiveStatus.text:
 		%AreaDirectiveStatus.text = next_status

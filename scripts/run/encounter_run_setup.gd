@@ -19,3 +19,5 @@ var hand_size := CardDeck.HAND_SIZE
 var undo_allowed := true
 var undo_mode: RoundController.UndoMode = RoundController.UndoMode.GLOBAL_ONE
 var initial_calibration_bonus := 0
+var area_passive_state
+var allow_mirror_refresh_reward := false

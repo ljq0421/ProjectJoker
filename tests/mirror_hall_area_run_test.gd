@@ -158,6 +158,8 @@ func _complete_current_encounter(area: AreaRunSession) -> void:
 			assert_true(area.advance_encounter_round().accepted, "next round should begin")
 	if area.phase == AreaRunSession.Phase.EVENT:
 		_resolve_event(area)
+	elif area.phase == AreaRunSession.Phase.ELITE_ROOM:
+		_complete_current_encounter(area)
 
 func _resolve_event(area: AreaRunSession) -> void:
 	var result: OperationResult

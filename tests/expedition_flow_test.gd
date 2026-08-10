@@ -96,6 +96,18 @@ func _complete_encounter(area: AreaRunSession, choose_restriction: bool) -> void
 			)
 	if area.phase == AreaRunSession.Phase.EVENT:
 		_resolve_event(area)
+	elif area.phase == AreaRunSession.Phase.CHOICE_ROOM:
+		assert_true(
+			area.resolve_choice_room(&"raise_target").accepted,
+			"fixture choice room should resolve"
+		)
+	elif area.phase == AreaRunSession.Phase.ENGRAVING_ROOM:
+		assert_true(
+			area.resolve_engraving_room().accepted,
+			"fixture engraving room should allow skip"
+		)
+	elif area.phase == AreaRunSession.Phase.ELITE_ROOM:
+		_complete_encounter(area, false)
 
 func _resolve_event(area: AreaRunSession) -> void:
 	var result: OperationResult

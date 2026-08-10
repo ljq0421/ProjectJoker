@@ -11,7 +11,7 @@ static func validate_card_start(
 	var effective_limit := MAX_CARDS_PER_ROUND
 	if (
 		context != null
-		and context.area_modifier_id == Modifiers.FACELESS_OPEN_HAND
+		and context.has_area_modifier(Modifiers.FACELESS_OPEN_HAND)
 	):
 		effective_limit += 1
 	if _real_card_count(state) >= effective_limit:
@@ -60,11 +60,28 @@ static func play_card(
 
 	var next_state := state.clone()
 	for effect in original.effective_effects():
-		if effect.operation == EffectSpec.Operation.REFUND_CALIBRATION:
-			next_state.calibration_points = mini(
-				next_state.calibration_points + effect.amount,
-				2
-			)
+		match effect.operation:
+			EffectSpec.Operation.REFUND_CALIBRATION:
+				next_state.calibration_points = mini(
+					next_state.calibration_points + effect.amount,
+					2
+				)
+			EffectSpec.Operation.FAULT_DIE:
+				var faulted_die := next_state.find_die(original.primary_target)
+				if faulted_die != null:
+					faulted_die.faulted = true
+					faulted_die.value = 1
+			EffectSpec.Operation.ALL_IN:
+				next_state.calibration_points = 0
+				next_state.calibration_locked = true
+			EffectSpec.Operation.GRANT_UNDOS:
+				next_state.extra_calibration_undos += maxi(effect.amount, 1)
+				next_state.extra_card_undos += maxi(effect.amount, 1)
+			_:
+				pass
+	for discarded_id in original.discarded_card_ids:
+		if discarded_id not in next_state.discarded_card_ids:
+			next_state.discarded_card_ids.append(discarded_id)
 	next_state.played_cards.append(original)
 	if mirror_result.generated:
 		next_state.played_cards.append(mirror_result.copy)
@@ -140,6 +157,23 @@ static func _validate_effect_guards(
 		if not reason.is_empty():
 			return reason
 	for effect in played_card.effective_effects():
+		if effect.operation == EffectSpec.Operation.FAULT_DIE:
+			var target_die := state.find_die(played_card.primary_target)
+			if target_die == null:
+				return "故障骰子指向了未知骰子"
+			if target_die.faulted:
+				return "这颗骰子已经处于永久故障状态"
+		if effect.operation == EffectSpec.Operation.ALL_IN:
+			if state.calibration_locked:
+				return "本轮已经签下孤注一掷"
+			if state.calibration_points <= 0:
+				return "没有可押上的校准，不能使用孤注一掷"
+		if effect.operation == EffectSpec.Operation.GRANT_UNDOS:
+			if played_card.discarded_card_ids.size() != 1:
+				return "保险废稿需要弃置 1 张其他未使用手牌"
+		if effect.operation == EffectSpec.Operation.BURNED_REWRITE:
+			if played_card.discarded_card_ids.size() != 2:
+				return "焚稿复写需要弃置 2 张其他未使用手牌"
 		if (
 			effect.operation == EffectSpec.Operation.REFUND_CALIBRATION
 			and state.calibration_points >= 2

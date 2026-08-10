@@ -83,7 +83,17 @@ Final expansion review batch:
 | `faceless_compressed_repeat` | descending coefficient / two echoes | loses one coefficient and repeats twice |
 | `faceless_closed_circuit` | closed table loop / echo | links both ends and repeats the target table |
 
-The approved runtime set now covers all 40 cards in `CardCatalog`.
+Phase-three extreme-technique batch:
+
+| Card ID | Composition grammar | Meaning |
+|---|---|---|
+| `stage7_fault_die` | fractured die / coefficient rail | fixes one die at 1 and raises its table coefficient |
+| `stage7_all_in` | emptied calibration ledger / intel seal | spends all calibration and conditionally copies card intel |
+| `stage7_insurance_draft` | discarded page / split undo stamps | discards one card for separate calibration and card undos |
+| `stage7_burned_rewrite` | two burned pages / weakened replay | discards two cards to replay a passed table at reduced coefficient |
+
+The approved runtime set now covers all 46 cards in `CardCatalog`, including
+the two directed-search index cards introduced before phase three.
 
 ## Visual contract
 

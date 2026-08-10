@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_all_in"]
+script = ExtResource("1_effect")
+operation = 14
+
+[resource]
+script = ExtResource("2_card")
+id = &"stage7_all_in"
+display_name = "孤注一掷"
+rule_text = "消耗全部剩余校准并封锁本轮校准；三台全过时，仅复制本轮由卡牌效果产生的情报。"
+tags = PackedStringArray("极端构筑", "情报", "全过")
+suit = 2
+rank_label = "K"
+rarity = 2
+target_type = 3
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_all_in")])

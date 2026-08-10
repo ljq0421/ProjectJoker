@@ -316,6 +316,13 @@ text = "满足条件后，按本轮最终方向产生一次基础计分事件。
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 16
 
+[node name="SuitLegend" type="Label" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
+layout_mode = 2
+text = "花色语义｜♣ 改造骰值　♥ 保护/宽限/恢复　♦ 情报/资源效率　♠ 额外结算/顺序/桌间传递"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.83, 0.54, 1)
+theme_override_font_sizes/font_size = 14
+
 [node name="DetailSpacer" type="Control" parent="SafeArea/GlassPanel/MainMargin/MainColumn/Content/DetailPanel/DetailMargin/Detail"]
 layout_mode = 2
 size_flags_vertical = 3

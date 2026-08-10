@@ -1,10 +1,15 @@
 class_name RoundResolver
 extends RefCounted
 
+const Phase3EngravingSetResolver = preload(
+	"res://scripts/engravings/engraving_set_resolver.gd"
+)
+
 const Modifiers = preload("res://scripts/run/area_run_modifier_catalog.gd")
 
 var _evaluator := RuleEvaluator.new()
 var _engraving_resolver := EngravingResolver.new()
+var _engraving_set_resolver = Phase3EngravingSetResolver.new()
 
 func resolve(
 	state: RoundState,
@@ -15,7 +20,7 @@ func resolve(
 	var report := ResolutionReport.new()
 	var die_values: Dictionary = {}
 	for die in state.dice:
-		die_values[die.id] = die.value
+		die_values[die.id] = 1 if die.faulted else die.value
 
 	var table_ids: Dictionary = {}
 	for rule in encounter.rules:
@@ -24,6 +29,8 @@ func resolve(
 	var coefficient_modifiers: Dictionary = {}
 	var repeat_counts: Dictionary = {}
 	var neighbor_links: Dictionary = {}
+	var burned_rewrite_targets: Dictionary = {}
+	var all_in_active := false
 	var passed_rule_ids: Dictionary = {}
 	var reverse_order := (
 		encounter.rule_profile != null
@@ -31,8 +38,7 @@ func resolve(
 			== EncounterRuleProfile.ResolutionDirection.RIGHT_TO_LEFT
 	)
 	if (
-		normalized_context.area_modifier_id
-		== Modifiers.MIRROR_REVERSED_FLOW
+		normalized_context.has_area_modifier(Modifiers.MIRROR_REVERSED_FLOW)
 	):
 		reverse_order = not reverse_order
 		report.events.append(ResolutionEvent.new(
@@ -126,6 +132,14 @@ func resolve(
 						"source_slot_id": played_card.source_slot_id,
 						"mirror_slot_id": _gap_id(played_card),
 					})
+				EffectSpec.Operation.BURNED_REWRITE:
+					if not table_ids.has(single_table_target):
+						return _invalid("焚稿复写指向了未知规则轨")
+					burned_rewrite_targets[single_table_target] = played_card.definition.id
+				EffectSpec.Operation.ALL_IN:
+					all_in_active = true
+				EffectSpec.Operation.FAULT_DIE, EffectSpec.Operation.GRANT_UNDOS:
+					pass
 		var card_label: String = played_card.definition.display_name
 		if played_card.is_mirror_copy:
 			card_label = "镜像副本：%s｜%s｜%s" % [
@@ -155,7 +169,21 @@ func resolve(
 			if not die_values.has(die_id):
 				return _invalid("规则轨包含未知骰子")
 			precomputed_values.append(die_values[die_id])
-		var requested_modifier: int = coefficient_modifiers.get(rule.id, 0)
+		var category_bonus := 0
+		if rule.template != null:
+			category_bonus = int(
+				normalized_context.category_coefficient_bonuses.get(
+					int(rule.template.category), 0
+				)
+			)
+		var fault_bonus := 0
+		for die_id in precomputed_assigned_ids:
+			var assigned_die := state.find_die(die_id)
+			if assigned_die != null and assigned_die.faulted:
+				fault_bonus += 3
+		var requested_modifier: int = (
+			coefficient_modifiers.get(rule.id, 0) + category_bonus + fault_bonus
+		)
 		var minimum_modifier: int = 1 - rule.coefficient
 		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
 		report.effective_table_coefficients[rule.id] = (
@@ -247,6 +275,19 @@ func resolve(
 			values.append(die_values[die_id])
 
 		var requested_modifier: int = coefficient_modifiers.get(rule.id, 0)
+		var category_bonus := 0
+		if rule.template != null:
+			category_bonus = int(
+				normalized_context.category_coefficient_bonuses.get(
+					int(rule.template.category), 0
+				)
+			)
+		var fault_bonus := 0
+		for die_id in assigned_ids:
+			var assigned_die := state.find_die(die_id)
+			if assigned_die != null and assigned_die.faulted:
+				fault_bonus += 3
+		requested_modifier += category_bonus + fault_bonus
 		var minimum_modifier: int = 1 - rule.coefficient
 		var effective_modifier: int = maxi(requested_modifier, minimum_modifier)
 		var parity_overrides := _engraving_resolver.parity_overrides(
@@ -337,7 +378,13 @@ func resolve(
 				)
 				report.record_score(
 					ResolutionEvent.ScoreSource.CARD,
-					result.base_sum * effective_modifier
+					result.base_sum * (
+						coefficient_modifiers.get(rule.id, 0) + fault_bonus
+					)
+				)
+				report.record_score(
+					ResolutionEvent.ScoreSource.AREA_MODIFIER,
+					result.base_sum * category_bonus
 				)
 			else:
 				report.record_score(ResolutionEvent.ScoreSource.CARD, result.total)
@@ -374,6 +421,30 @@ func resolve(
 				"%s：回声重复本台基础得分" % rule.display_name,
 				result.total,
 				report.total
+			))
+		if burned_rewrite_targets.has(rule.id):
+			var rewrite_coefficient := maxi(
+				int(report.effective_table_coefficients.get(rule.id, 1)) - 1,
+				1
+			)
+			var rewrite_delta := result.base_sum * rewrite_coefficient + rule.flat_bonus
+			report.add_score(ResolutionEvent.ScoreSource.CARD, rewrite_delta)
+			report.events.append(ResolutionEvent.new(
+				burned_rewrite_targets[rule.id],
+				"焚稿复写：%s 以系数 %d 复写一次" % [
+					rule.display_name, rewrite_coefficient,
+				],
+				rewrite_delta,
+				report.total,
+				true,
+				false,
+				&"",
+				&"",
+				&"",
+				ResolutionEvent.ScoreSource.CARD,
+				rule.id,
+				rule.id,
+				&"rewrite"
 			))
 		_append_lucky_face_outcomes(
 			report,
@@ -538,6 +609,11 @@ func resolve(
 		passed_rule_ids,
 		normalized_context
 	)
+	for set_outcome in _engraving_set_resolver.bonus_outcomes(
+		state, report, passed_rule_ids, normalized_context
+	):
+		_append_outcome(report, set_outcome)
+		report.engraving_set_activations.append(set_outcome.source_id)
 
 	_append_intel_outcomes(
 		report,
@@ -545,6 +621,18 @@ func resolve(
 		encounter,
 		passed_rule_ids
 	)
+	if all_in_active and passed_rule_ids.size() == encounter.rules.size():
+		var copied_intel := report.intel_delta
+		report.intel_delta += copied_intel
+		report.all_in_bonus_intel = copied_intel
+		report.all_in_awarded = true
+		report.events.append(ResolutionEvent.new(
+			&"stage7_all_in",
+			"孤注一掷：三台全过，本轮卡牌情报复制 +%d" % copied_intel,
+			0,
+			report.total,
+			true
+		))
 	report.passed_rule_count = passed_rule_ids.size()
 	var all_six_assigned := state.dice.size() == 6
 	for die in state.dice:
@@ -700,9 +788,23 @@ func _append_area_modifier_outcome(
 	passed_rule_ids: Dictionary,
 	context: ResolutionContext
 ) -> void:
-	var modifier_id := context.area_modifier_id
-	if modifier_id == &"":
+	if context.area_modifier_ids.is_empty():
 		return
+	for modifier_id in context.area_modifier_ids:
+		_append_single_area_modifier_outcome(
+			report, state, die_values, resolved_table_totals,
+			passed_rule_ids, context, modifier_id
+		)
+
+func _append_single_area_modifier_outcome(
+	report: ResolutionReport,
+	state: RoundState,
+	die_values: Dictionary,
+	resolved_table_totals: Dictionary,
+	passed_rule_ids: Dictionary,
+	context: ResolutionContext,
+	modifier_id: StringName
+) -> void:
 	var passed_values: Array[int] = []
 	for table_id in passed_rule_ids:
 		for die_id in state.assigned_die_ids(table_id):

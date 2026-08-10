@@ -612,6 +612,14 @@ def artwork(card_id: str) -> str:
         body = f'<path d="M57 83C90 51 210 51 243 83" {mutation}/><path d="M232 70l11 13-17-1" {mutation}/>'
         body += f'<path d="M243 107c-33 31-153 31-186 0" {stroke}/><path d="M68 120l-11-13 17 1" {stroke}/>'
         body += f'<path d="M150 77l18 18-18 18-18-18z" fill="#151038" stroke="{CYAN}" stroke-width="3"/><circle cx="150" cy="95" r="5" fill="{VIOLET}"/>'
+    elif card_id in ("shop_dice_index", "shop_chain_index"):
+        accent = CYAN if card_id == "shop_dice_index" else VIOLET
+        body = f'<path d="M75 61h150v66H75zM89 75h122M89 112h122" fill="#151038" stroke="{accent}" stroke-width="3"/>'
+        if card_id == "shop_dice_index":
+            body += value_die(123, 73, 4)
+        else:
+            body += f'<path d="M103 101V83h36v18M161 101V83h36v18M139 92h22" {mutation}/>'
+        body += f'<path d="M221 76l11 11-11 11-11-11z" fill="{IVORY}" stroke="{accent}" stroke-width="2"/>'
     elif card_id == "faceless_copy_value":
         dots = [(16, 16), (38, 16), (16, 38), (38, 38)]
         body = die(57, 66, dots) + die(189, 66, dots)
@@ -711,6 +719,22 @@ def artwork(card_id: str) -> str:
         body += f'<path d="M71 78C103 43 197 43 229 78M229 108c-32 32-126 32-158 0" {mutation}/>'
         body += f'<path d="M219 65l10 13-16-1M81 121l-10-13 16 1" {mutation}/>'
         body += f'<rect x="211" y="83" width="29" height="23" rx="5" fill="#151038" stroke="{VIOLET}" stroke-width="3"/>'
+    elif card_id == "stage7_fault_die":
+        body = value_die(123, 66, 1)
+        body += f'<path d="M113 75V57h18M187 75V57h-18M113 111v18h18M187 111v18h-18" {mutation}/>'
+        body += f'<path d="M121 61l58 64M179 61l-58 64" stroke="#FF5C8A" stroke-width="3.5" stroke-linecap="round"/>'
+    elif card_id == "stage7_all_in":
+        body = f'<path d="M150 52l52 35-52 35-52-35z" fill="#151038" stroke="#FFB547" stroke-width="3"/>'
+        body += f'<circle cx="150" cy="87" r="11" fill="#FF5C8A"/>'
+        body += f'<path d="M52 119h196M64 111l22-13M236 111l-22-13" stroke="#FFB547" stroke-width="4" stroke-linecap="round"/>'
+    elif card_id == "stage7_insurance_draft":
+        body = f'<path d="M108 52h68l16 16v61h-84z" fill="#151038" stroke="#FF5C8A" stroke-width="3"/>'
+        body += f'<path d="M176 52v16h16M122 81h56M122 96h48M122 111h37" stroke="{IVORY}" stroke-width="3" stroke-linecap="round"/>'
+        body += f'<path d="M90 120l35-35" stroke="{CYAN}" stroke-width="5" stroke-linecap="round"/>'
+    elif card_id == "stage7_burned_rewrite":
+        body = f'<path d="M87 67h79v57H87zM132 52h81v58h-81z" fill="#151038" stroke="#8EA7FF" stroke-width="3"/>'
+        body += f'<path d="M147 69h51M147 84h41M147 99h31" stroke="{IVORY}" stroke-width="3" stroke-linecap="round"/>'
+        body += f'<path d="M103 129c18-28 31-13 40-40 7 29 29 25 18 48" fill="#FF5C8A" opacity=".9"/>'
     else:
         raise ValueError(f"missing artwork grammar for {card_id}")
     return f'<g id="effect-artwork">{body}</g>'

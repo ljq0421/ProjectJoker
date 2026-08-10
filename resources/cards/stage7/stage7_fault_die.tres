@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_fault"]
+script = ExtResource("1_effect")
+operation = 13
+amount = 3
+
+[resource]
+script = ExtResource("2_card")
+id = &"stage7_fault_die"
+display_name = "故障骰子"
+rule_text = "目标骰在本次远征中最终值固定为 1；其所在规则台系数 +3。故障骰不能再被重投、交换或改值。"
+tags = PackedStringArray("极端构筑", "骰值", "持久")
+suit = 0
+rank_label = "K"
+rarity = 2
+target_type = 0
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_fault")])

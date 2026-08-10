@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_undos"]
+script = ExtResource("1_effect")
+operation = 15
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"stage7_insurance_draft"
+display_name = "保险废稿"
+rule_text = "弃置 1 张其他未使用手牌；本轮校准撤销与卡牌撤销各增加 1 次。"
+tags = PackedStringArray("保护", "弃牌", "撤销")
+suit = 1
+rank_label = "Q"
+rarity = 1
+target_type = 3
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_undos")])

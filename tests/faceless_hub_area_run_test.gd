@@ -9,7 +9,7 @@ func run() -> void:
 func _test_fixed_build_starts() -> void:
 	var area := _new_run()
 	assert_true(area.start().accepted, "faceless area should start")
-	assert_equal(area.market_ids.size(), 30, "faceless market should contain thirty cards")
+	assert_equal(area.market_ids.size(), 34, "faceless market should contain thirty-four cards")
 	assert_equal(area.intel_tickets, 8, "fixed build starts with eight intel")
 	assert_equal(area.deck_ids, area.area_definition.starting_deck_ids, "deck is fixed")
 	var d3 := area.die_profiles.filter(
@@ -94,6 +94,16 @@ func _complete_normal_encounter(area: AreaRunSession) -> void:
 			assert_true(area.advance_encounter_round().accepted, "advance normal round")
 	if area.phase == AreaRunSession.Phase.EVENT:
 		_resolve_event(area)
+	elif area.phase == AreaRunSession.Phase.CHOICE_ROOM:
+		assert_true(
+			area.resolve_choice_room(&"raise_target").accepted,
+			"fixture choice room resolves"
+		)
+	elif area.phase == AreaRunSession.Phase.ENGRAVING_ROOM:
+		assert_true(
+			area.resolve_engraving_room().accepted,
+			"fixture engraving room allows skip"
+		)
 
 func _resolve_event(area: AreaRunSession) -> void:
 	var result: OperationResult

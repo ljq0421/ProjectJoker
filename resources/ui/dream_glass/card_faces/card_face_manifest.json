@@ -150,7 +150,7 @@
     },
     {
       "id": "starter_stable_repeat",
-      "identity": "♥1",
+      "identity": "♠1",
       "name": "稳态复写",
       "effect": "系数 -1 · 结算 +1 次",
       "detail": "最低 1 · 本轮生效",
@@ -161,7 +161,7 @@
     },
     {
       "id": "starter_amplified_repeat",
-      "identity": "♥2",
+      "identity": "♠2",
       "name": "增幅复写",
       "effect": "系数 +1 · 结算 +1 次",
       "detail": "本轮生效",
@@ -216,7 +216,7 @@
     },
     {
       "id": "mirror_soft_echo",
-      "identity": "♥3",
+      "identity": "♠3",
       "name": "轻声复写",
       "effect": "额外结算 2 次",
       "detail": "镜像：额外结算 1 次",
@@ -227,7 +227,7 @@
     },
     {
       "id": "mirror_hinged_bridge",
-      "identity": "♥4",
+      "identity": "♠4",
       "name": "合页桥",
       "effect": "连接 · 系数 +1",
       "detail": "镜像：连接相邻规则台",
@@ -238,7 +238,7 @@
     },
     {
       "id": "mirror_double_exposure",
-      "identity": "♦6",
+      "identity": "♠6",
       "name": "双重曝光",
       "effect": "系数 +2 · 结算 +1 次",
       "detail": "镜像：系数 +1",
@@ -249,7 +249,7 @@
     },
     {
       "id": "mirror_deep_echo",
-      "identity": "♥5",
+      "identity": "♠5",
       "name": "深层回声",
       "effect": "系数 +1 · 结算 +2 次",
       "detail": "镜像：额外结算 1 次",
@@ -260,7 +260,7 @@
     },
     {
       "id": "mirror_silver_bridge",
-      "identity": "♥6",
+      "identity": "♠6",
       "name": "银面长桥",
       "effect": "连接 · 结算 +1 次",
       "detail": "镜像：连接相邻规则台",
@@ -271,7 +271,7 @@
     },
     {
       "id": "shop_amplified_chain",
-      "identity": "♦4",
+      "identity": "♠4",
       "name": "增幅连写",
       "effect": "系数 +2 · 结算 +1 次",
       "detail": "本轮生效",
@@ -290,6 +290,28 @@
       "target_type": 3,
       "rarity": 2,
       "rarity_name": "稀有"
+    },
+    {
+      "id": "shop_dice_index",
+      "identity": "♣J",
+      "name": "点数索引",
+      "effect": "下轮定向检索",
+      "detail": "",
+      "target": "全局",
+      "target_type": 3,
+      "rarity": 1,
+      "rarity_name": "进阶"
+    },
+    {
+      "id": "shop_chain_index",
+      "identity": "♠J",
+      "name": "连锁索引",
+      "effect": "下轮定向检索",
+      "detail": "",
+      "target": "全局",
+      "target_type": 3,
+      "rarity": 1,
+      "rarity_name": "进阶"
     },
     {
       "id": "faceless_swap_values",
@@ -403,7 +425,7 @@
     },
     {
       "id": "faceless_strict_mapping",
-      "identity": "♠7",
+      "identity": "♦7",
       "name": "加严映射",
       "effect": "所需骰位 +1 · 系数 +2",
       "detail": "骰位上限 6",
@@ -442,6 +464,50 @@
       "detail": "传递结果 · 本轮生效",
       "target": "桌间槽",
       "target_type": 2,
+      "rarity": 2,
+      "rarity_name": "稀有"
+    },
+    {
+      "id": "stage7_fault_die",
+      "identity": "♣K",
+      "name": "故障骰子",
+      "effect": "固定为 1 · 所在台 +3",
+      "detail": "整次远征持久生效",
+      "target": "1 颗骰子",
+      "target_type": 0,
+      "rarity": 2,
+      "rarity_name": "稀有"
+    },
+    {
+      "id": "stage7_all_in",
+      "identity": "♦K",
+      "name": "孤注一掷",
+      "effect": "全过复制卡牌情报",
+      "detail": "普通房与庄家基础奖励不翻倍",
+      "target": "全局",
+      "target_type": 3,
+      "rarity": 2,
+      "rarity_name": "稀有"
+    },
+    {
+      "id": "stage7_insurance_draft",
+      "identity": "♥Q",
+      "name": "保险废稿",
+      "effect": "两类撤销各 +1",
+      "detail": "需弃置 1 张其他手牌",
+      "target": "全局",
+      "target_type": 3,
+      "rarity": 1,
+      "rarity_name": "进阶"
+    },
+    {
+      "id": "stage7_burned_rewrite",
+      "identity": "♠K",
+      "name": "焚稿复写",
+      "effect": "降 1 系数复写",
+      "detail": "需弃置 2 张；不计桥接次数",
+      "target": "1 张规则台",
+      "target_type": 1,
       "rarity": 2,
       "rarity_name": "稀有"
     }

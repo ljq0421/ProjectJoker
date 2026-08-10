@@ -15,6 +15,10 @@ enum Operation {
 	MODIFY_CONDITION,
 	GRANT_INTEL_ON_CONDITION,
 	QUEUE_SEARCH,
+	FAULT_DIE,
+	ALL_IN,
+	GRANT_UNDOS,
+	BURNED_REWRITE,
 }
 
 enum ConditionModifier {

@@ -15,8 +15,8 @@ class LoadResult extends RefCounted:
 		reason = p_reason
 		snapshot = p_snapshot
 
-const FORMAT_VERSION := 3
-const CONTENT_VERSION := 2
+const FORMAT_VERSION := 4
+const CONTENT_VERSION := 3
 
 var config_path := "user://expedition_save.cfg"
 
@@ -104,10 +104,11 @@ func _load_path(path: String) -> LoadResult:
 		return LoadResult.new(false, "无法读取远征存档：%s" % error)
 	var format_version: int = config.get_value("meta", "format_version", -1)
 	var content_version: int = config.get_value("meta", "content_version", -1)
-	if format_version not in [1, 2, FORMAT_VERSION]:
+	if format_version not in [1, 2, 3, FORMAT_VERSION]:
 		return LoadResult.new(false, "远征存档版本不受支持")
 	if (
-		(format_version < FORMAT_VERSION and content_version != 1)
+		(format_version <= 2 and content_version != 1)
+		or (format_version == 3 and content_version != 2)
 		or (format_version == FORMAT_VERSION and content_version != CONTENT_VERSION)
 	):
 		return LoadResult.new(false, "远征存档内容版本不受支持")
@@ -116,8 +117,10 @@ func _load_path(path: String) -> LoadResult:
 		return LoadResult.new(false, "远征存档主体格式无效")
 	if format_version == 1:
 		snapshot = _migrate_v1_snapshot(snapshot)
-	if format_version < FORMAT_VERSION:
+	if format_version <= 2:
 		snapshot = _migrate_v2_snapshot(snapshot)
+	if format_version <= 3:
+		snapshot = _migrate_v3_snapshot(snapshot)
 	var snapshot_error := ExpeditionSession.snapshot_error(snapshot)
 	if not snapshot_error.is_empty():
 		return LoadResult.new(false, snapshot_error)
@@ -186,6 +189,39 @@ func _migrate_v2_snapshot(legacy: Dictionary) -> Dictionary:
 				shop.get("rare_guarantee_unavailable_reason", "")
 			)
 			checkpoint["shop"] = shop
+	snapshot["area_checkpoint"] = checkpoint
+	return snapshot
+
+func _migrate_v3_snapshot(legacy: Dictionary) -> Dictionary:
+	var snapshot := legacy.duplicate(true)
+	snapshot["start_config"] = {
+		"mode": &"standard",
+		"seed_value": int(snapshot.get("seed_value", 1)),
+		"starting_deck_id": snapshot.get("starting_deck_id", &"dice_control"),
+		"challenge_ids": snapshot.get("challenge_ids", []).duplicate(),
+		"area_sequence": ExpeditionSession.AREA_ORDER.duplicate(),
+		"area_modifier_ids": {},
+		"target_multiplier": 1.0,
+		"daily_date_key": "",
+	}
+	snapshot["started_at_unix"] = int(snapshot.get(
+		"started_at_unix", Time.get_unix_time_from_system()
+	))
+	var checkpoint: Dictionary = snapshot.get("area_checkpoint", {}).duplicate(true)
+	if not checkpoint.is_empty():
+		var modifier_id: StringName = checkpoint.get("area_modifier_id", &"")
+		checkpoint["area_modifier_ids"] = (
+			[modifier_id] if modifier_id != &"" else []
+		)
+		checkpoint["expedition_target_multiplier"] = 1.0
+		checkpoint["max_challenges"] = 2
+		checkpoint["special_room_history"] = checkpoint.get("special_room_history", [])
+		checkpoint["special_engraving_offer_ids"] = checkpoint.get(
+			"special_engraving_offer_ids", []
+		)
+		checkpoint["next_encounter_target_multiplier"] = float(
+			checkpoint.get("next_encounter_target_multiplier", 1.0)
+		)
 	snapshot["area_checkpoint"] = checkpoint
 	return snapshot
 

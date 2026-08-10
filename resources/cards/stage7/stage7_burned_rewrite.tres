@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_spec.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_card"]
+
+[sub_resource type="Resource" id="Effect_rewrite"]
+script = ExtResource("1_effect")
+operation = 16
+amount = 1
+
+[resource]
+script = ExtResource("2_card")
+id = &"stage7_burned_rewrite"
+display_name = "焚稿复写"
+rule_text = "弃置 2 张其他未使用手牌；目标台通过时按原系数 -1（最低 1）复写一次，不增加桥接或风暴次数。"
+tags = PackedStringArray("额外结算", "弃牌", "复写")
+suit = 3
+rank_label = "K"
+rarity = 2
+target_type = 1
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_rewrite")])

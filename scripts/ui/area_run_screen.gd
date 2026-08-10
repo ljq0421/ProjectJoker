@@ -27,6 +27,7 @@ signal expedition_exit_requested
 @onready var navigation_bar: Control = $NavigationBar
 @onready var home_button: Button = %HomeButton
 @onready var area_chrome_label: Label = %AreaChromeLabel
+@onready var area_protocol_label: Label = %AreaProtocolLabel
 @onready var random_contract_label: Label = %RandomContractLabel
 
 var area_session: AreaRunSession
@@ -142,6 +143,7 @@ func start_run() -> void:
 		return
 	_apply_area_presentation()
 	_apply_random_contract_presentation()
+	_refresh_area_protocol()
 	complete_panel.configure_expedition(
 		_expedition_mode,
 		_expedition_has_next_area
@@ -179,10 +181,12 @@ func _apply_area_presentation() -> void:
 	shop_screen.apply_area_presentation(area.id, area.display_name)
 
 func _apply_random_contract_presentation() -> void:
-	var definition: Dictionary = ModifierCatalog.new().find(
-		area_session.area_modifier_id
-	)
-	if definition.is_empty():
+	var definitions: Array[Dictionary] = []
+	for modifier_id in area_session.area_modifier_ids:
+		var definition: Dictionary = ModifierCatalog.new().find(modifier_id)
+		if not definition.is_empty():
+			definitions.append(definition)
+	if definitions.is_empty():
 		random_contract_label.visible = false
 		return
 	random_contract_label.visible = true
@@ -196,22 +200,37 @@ func _apply_random_contract_presentation() -> void:
 			lucky_face,
 		])
 		lucky_values.append(str(lucky_face))
+	var modifier_names: Array[String] = []
+	var modifier_descriptions: Array[String] = []
+	for definition in definitions:
+		modifier_names.append(definition["display_name"])
+		modifier_descriptions.append(definition["description"])
 	random_contract_label.text = "★ %s｜幸运 %s" % [
-		definition["display_name"],
+		" + ".join(modifier_names),
 		"·".join(lucky_values),
 	]
 	random_contract_label.tooltip_text = "%s\n%s\n幸运面：%s" % [
-		definition["display_name"],
-		definition["description"],
+		" + ".join(modifier_names),
+		"\n".join(modifier_descriptions),
 		"　".join(lucky_parts),
 	]
 	random_contract_label.add_theme_color_override("font_color", LOCKED_GOLD)
+
+func _refresh_area_protocol() -> void:
+	if area_session == null or area_session.area_definition == null:
+		area_protocol_label.visible = false
+		return
+	area_protocol_label.visible = true
+	area_protocol_label.text = area_session.area_passive_state.status_copy(
+		area_session.area_definition.id
+	)
+	area_protocol_label.tooltip_text = "自动启用并持续至离开本区；当前层数与资源会写入检查点。"
 
 func _show_current_phase() -> void:
 	match area_session.phase:
 		AreaRunSession.Phase.ROUTE_CHOICE:
 			_show_route_choice()
-		AreaRunSession.Phase.NORMAL_ROOM, AreaRunSession.Phase.DEALER:
+		AreaRunSession.Phase.NORMAL_ROOM, AreaRunSession.Phase.ELITE_ROOM, AreaRunSession.Phase.DEALER:
 			bind_current_encounter()
 		AreaRunSession.Phase.AFTER_NORMAL_ROOM:
 			encounter_screen.visible = false
@@ -225,6 +244,14 @@ func _show_current_phase() -> void:
 			encounter_screen.visible = false
 			summary_panel.close()
 			event_panel.bind_session(area_session)
+		AreaRunSession.Phase.CHOICE_ROOM:
+			encounter_screen.visible = false
+			summary_panel.close()
+			event_panel.bind_choice_room(area_session)
+		AreaRunSession.Phase.ENGRAVING_ROOM:
+			encounter_screen.visible = false
+			summary_panel.close()
+			event_panel.bind_engraving_room(area_session)
 		AreaRunSession.Phase.SHOP:
 			encounter_screen.visible = false
 			_request_music_for_phase(&"shop")
@@ -294,6 +321,7 @@ func bind_current_encounter() -> void:
 		area_session.encounter_session == null
 		or (
 			area_session.phase != AreaRunSession.Phase.NORMAL_ROOM
+			and area_session.phase != AreaRunSession.Phase.ELITE_ROOM
 			and area_session.phase != AreaRunSession.Phase.DEALER
 		)
 	):
@@ -347,7 +375,9 @@ func _area_copy() -> String:
 		var dealer := area_session.dealer_catalog.find_dealer(
 			area_session.area_definition.dealer_id
 		)
-		return "%s · %s" % [area_name, dealer.display_name]
+		return "%s · 庄家对局 / Boss · %s" % [area_name, dealer.display_name]
+	if area_session.phase == AreaRunSession.Phase.ELITE_ROOM:
+		return "%s · 精英房 · 双生牌面" % area_name
 	var room := area_session.area_definition.find_room(
 		area_session.selected_room_ids[-1]
 	)
@@ -377,6 +407,7 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		encounter_screen.show_external_error(result.reason)
 		return
 	_after_round_report_accepted()
+	_refresh_area_protocol()
 	if area_session.phase == AreaRunSession.Phase.FAILED:
 		var dealer := area_session.dealer_catalog.find_dealer(
 			area_session.area_definition.dealer_id
@@ -386,6 +417,11 @@ func _on_round_committed(report: ResolutionReport) -> void:
 			area_session.failure_origin == AreaRunSession.Phase.DEALER,
 			area_session.area_definition.display_name,
 			dealer.display_name
+		)
+		summary_panel.get_node("%SummaryTitle").text = (
+			"契据崩解 · 庄家对局 / Boss"
+			if area_session.failure_origin == AreaRunSession.Phase.DEALER
+			else "契据崩解 · %s" % area_session.area_definition.display_name
 		)
 		if _expedition_mode:
 			summary_panel.get_node("%RetryRunButton").visible = false
@@ -414,6 +450,23 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		event_panel.bind_session(area_session)
 		_emit_expedition_checkpoint()
 		return
+	if area_session.phase == AreaRunSession.Phase.ELITE_ROOM:
+		summary_panel.close()
+		bind_current_encounter()
+		_emit_expedition_checkpoint()
+		return
+	if area_session.phase == AreaRunSession.Phase.CHOICE_ROOM:
+		summary_panel.close()
+		encounter_screen.visible = false
+		event_panel.bind_choice_room(area_session)
+		_emit_expedition_checkpoint()
+		return
+	if area_session.phase == AreaRunSession.Phase.ENGRAVING_ROOM:
+		summary_panel.close()
+		encounter_screen.visible = false
+		event_panel.bind_engraving_room(area_session)
+		_emit_expedition_checkpoint()
+		return
 	if _show_restriction_choice_if_needed():
 		return
 	encounter_screen.set_run_status(_area_copy(), _encounter_goal_copy())
@@ -425,13 +478,23 @@ func _on_event_choice_requested(
 	choice_id: StringName,
 	target_die_id: StringName
 ) -> void:
-	var result := area_session.resolve_event(choice_id, target_die_id)
+	var result: OperationResult
+	match area_session.phase:
+		AreaRunSession.Phase.EVENT:
+			result = area_session.resolve_event(choice_id, target_die_id)
+		AreaRunSession.Phase.CHOICE_ROOM:
+			result = area_session.resolve_choice_room(choice_id, target_die_id)
+		AreaRunSession.Phase.ENGRAVING_ROOM:
+			result = area_session.resolve_engraving_room(choice_id, target_die_id)
+		_:
+			result = OperationResult.new(false, "当前阶段不接受该选择")
 	if not result.accepted:
 		event_panel.show_error(result.reason)
 		return
 	SfxAccess.play(self, &"ui_confirm")
 	event_panel.close()
 	_apply_random_contract_presentation()
+	_refresh_area_protocol()
 	_show_current_phase()
 	_emit_expedition_checkpoint()
 
@@ -497,6 +560,7 @@ func _on_shop_leave_requested() -> void:
 	_emit_expedition_checkpoint()
 
 func _on_shop_state_changed() -> void:
+	_refresh_area_protocol()
 	_emit_expedition_checkpoint()
 
 func _bind_shop_screen() -> void:
@@ -549,6 +613,7 @@ func _sync_emergency_context() -> void:
 	encounter_screen.set_formal_emergency_context(
 		area_session.phase in [
 			AreaRunSession.Phase.NORMAL_ROOM,
+			AreaRunSession.Phase.ELITE_ROOM,
 			AreaRunSession.Phase.DEALER,
 		],
 		area_session.intel_tickets,

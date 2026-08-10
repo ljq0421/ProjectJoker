@@ -12,8 +12,8 @@ func run() -> void:
 func _test_area_market_and_future_intel() -> void:
 	var area := AreaRunSession.new(20260729)
 	assert_true(area.start().accepted, "shop-service area should start")
-	assert_equal(area.market_ids.size(), 20, "gold market should contain twenty cards")
-	assert_equal(_unique_count(area.market_ids), 20, "gold market should be unique")
+	assert_equal(area.market_ids.size(), 22, "gold market should contain twenty-two cards")
+	assert_equal(_unique_count(area.market_ids), 22, "gold market should be unique")
 	for card_id in area.deck_ids:
 		assert_true(card_id in area.market_ids, "entry deck should belong to market")
 

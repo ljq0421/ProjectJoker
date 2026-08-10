@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="none" data-card-id="stage7_all_in" data-card-face="complete-v1">
+  <metadata>{&quot;detail&quot;: &quot;普通房与庄家基础奖励不翻倍&quot;, &quot;effect&quot;: &quot;全过复制卡牌情报&quot;, &quot;id&quot;: &quot;stage7_all_in&quot;, &quot;identity&quot;: &quot;♦K&quot;, &quot;name&quot;: &quot;孤注一掷&quot;, &quot;rarity&quot;: 2, &quot;rarity_name&quot;: &quot;稀有&quot;, &quot;target&quot;: &quot;全局&quot;, &quot;target_type&quot;: 3}</metadata>
+  <rect x="5" y="5" width="290" height="190" rx="18" fill="#0E0B26" fill-opacity=".96" stroke="#D27BE5" stroke-width="4"/>
+  <path d="M5 38V5h33M262 195h33v-33" stroke="#F4F0FF" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M16 44h268" stroke="#59E6DB" stroke-opacity=".26" stroke-width="1.5"/>
+  <rect x="14" y="137" width="272" height="48" rx="10" fill="#080619" fill-opacity=".92" stroke="#59E6DB" stroke-opacity=".28"/>
+  <text id="card-identity" data-copy="♦K" data-width="25.71" x="18" y="32" font-family="Noto Sans SC" font-size="16" text-anchor="start" fill="#FFB547" stroke="#FFB547" stroke-width="0.65" stroke-linejoin="round">♦K</text>
+  <text id="card-name" data-copy="孤注一掷" data-width="88" x="58" y="34" font-family="Noto Sans SC" font-size="22" text-anchor="start" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="0.8" stroke-linejoin="round">孤注一掷</text>
+  <g id="rarity-track"><path d="M251 20l5 5-5 5-5-5z" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="1.5"/><path d="M265 20l5 5-5 5-5-5z" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="1.5"/><path d="M279 20l5 5-5 5-5-5z" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="1.5"/></g>
+  <g id="effect-artwork"><path d="M150 52l52 35-52 35-52-35z" fill="#151038" stroke="#FFB547" stroke-width="3"/><circle cx="150" cy="87" r="11" fill="#FF5C8A"/><path d="M52 119h196M64 111l22-13M236 111l-22-13" stroke="#FFB547" stroke-width="4" stroke-linecap="round"/></g>
+  <text id="effect-summary" data-copy="全过复制卡牌情报" data-width="152" x="22" y="158" font-family="Noto Sans SC" font-size="19" text-anchor="start" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="0.72" stroke-linejoin="round">全过复制卡牌情报</text>
+  <text id="effect-detail" data-copy="普通房与庄家基础奖励不翻倍" data-width="160" x="22" y="179" font-family="Noto Sans SC" font-size="12.31" text-anchor="start" fill="#AAA4C1" stroke="#AAA4C1" stroke-width="0.45" stroke-linejoin="round">普通房与庄家基础奖励不翻倍</text>
+  <g id="target-icon"><circle cx="205" cy="172" r="6" fill="none" stroke="#59E6DB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M205 166v12M199 172h12" fill="none" stroke="#59E6DB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text id="target-copy" data-copy="全局" data-width="28" x="280" y="178" font-family="Noto Sans SC" font-size="14" text-anchor="end" fill="#59E6DB" stroke="#59E6DB" stroke-width="0.45" stroke-linejoin="round">全局</text>
+  </svg>

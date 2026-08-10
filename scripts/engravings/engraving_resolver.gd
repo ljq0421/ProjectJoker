@@ -22,6 +22,9 @@ func modification_block_reason(
 	die_id: StringName,
 	context: ResolutionContext
 ) -> String:
+	var die := state.find_die(die_id)
+	if die != null and die.faulted:
+		return "故障骰子的最终值固定为 1，不能重投、交换或改值"
 	if die_id in state.locked_die_ids():
 		return "定格手法已生效，这颗骰子本轮不能再修改点数"
 	var definition := active_definition(state.find_die(die_id), context)

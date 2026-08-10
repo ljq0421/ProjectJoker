@@ -23,8 +23,7 @@ func validate_card_play(
 	var effective_limit := restriction.amount
 	if (
 		context != null
-		and context.area_modifier_id
-			== Modifiers.FACELESS_OPEN_HAND
+		and context.has_area_modifier(Modifiers.FACELESS_OPEN_HAND)
 	):
 		effective_limit += 1
 	if real_card_count >= effective_limit:
@@ -54,8 +53,7 @@ func evaluate_commit(
 			var effective_limit := restriction.amount
 			if (
 				context != null
-				and context.area_modifier_id
-					== Modifiers.FACELESS_OPEN_HAND
+				and context.has_area_modifier(Modifiers.FACELESS_OPEN_HAND)
 			):
 				effective_limit += 1
 			if real_card_count > effective_limit:
@@ -76,8 +74,7 @@ func evaluate_commit(
 				1
 				if (
 					context != null
-					and context.area_modifier_id
-						== Modifiers.FACELESS_RULE_VEIL
+					and context.has_area_modifier(Modifiers.FACELESS_RULE_VEIL)
 				)
 				else 0
 			)

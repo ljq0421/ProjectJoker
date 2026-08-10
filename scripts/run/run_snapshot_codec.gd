@@ -10,6 +10,7 @@ static func round_state_to_snapshot(state: RoundState) -> Dictionary:
 			"value": die.value,
 			"engraving_id": die.engraving_id,
 			"engraved_face": die.engraved_face,
+			"faulted": die.faulted,
 		})
 	var cards: Array[Dictionary] = []
 	for card in state.played_cards:
@@ -19,6 +20,11 @@ static func round_state_to_snapshot(state: RoundState) -> Dictionary:
 		"assignments": state.assignments.duplicate(true),
 		"played_cards": cards,
 		"calibration_points": state.calibration_points,
+		"calibration_locked": state.calibration_locked,
+		"discarded_card_ids": state.discarded_card_ids.duplicate(),
+		"rank_conversion_used": state.rank_conversion_used,
+		"extra_calibration_undos": state.extra_calibration_undos,
+		"extra_card_undos": state.extra_card_undos,
 	}
 
 static func round_state_from_snapshot(
@@ -27,13 +33,19 @@ static func round_state_from_snapshot(
 ) -> RoundState:
 	var state := RoundState.new()
 	state.calibration_points = int(snapshot.get("calibration_points", 2))
+	state.calibration_locked = bool(snapshot.get("calibration_locked", false))
+	state.discarded_card_ids.assign(snapshot.get("discarded_card_ids", []))
+	state.rank_conversion_used = bool(snapshot.get("rank_conversion_used", false))
+	state.extra_calibration_undos = int(snapshot.get("extra_calibration_undos", 0))
+	state.extra_card_undos = int(snapshot.get("extra_card_undos", 0))
 	for entry in snapshot.get("dice", []):
 		state.dice.append(DieState.new(
 			entry.get("id", &""),
 			int(entry.get("value", 1)),
 			entry.get("engraving_id", &""),
 			int(entry.get("engraved_face", 0)),
-			int(entry.get("rolled_value", entry.get("value", 1)))
+			int(entry.get("rolled_value", entry.get("value", 1))),
+			bool(entry.get("faulted", false))
 		))
 	state.assignments = snapshot.get("assignments", {}).duplicate(true)
 	for entry in snapshot.get("played_cards", []):
@@ -56,6 +68,7 @@ static func played_card_to_snapshot(card: PlayedCard) -> Dictionary:
 		"source_play_id": card.source_play_id,
 		"source_slot_id": card.source_slot_id,
 		"runtime_effects": effects,
+		"discarded_card_ids": card.discarded_card_ids.duplicate(),
 	}
 
 static func played_card_from_snapshot(
@@ -77,6 +90,7 @@ static func played_card_from_snapshot(
 	card.source_slot_id = snapshot.get("source_slot_id", &"")
 	for entry in snapshot.get("runtime_effects", []):
 		card.runtime_effects.append(effect_from_snapshot(entry))
+	card.discarded_card_ids.assign(snapshot.get("discarded_card_ids", []))
 	return card
 
 static func effect_to_snapshot(effect: EffectSpec) -> Dictionary:
@@ -130,6 +144,7 @@ static func report_to_snapshot(report: ResolutionReport) -> Dictionary:
 		"events": events,
 		"assigned_dice": report.assigned_dice,
 		"unassigned_dice": report.unassigned_dice,
+		"calibration_actions": report.calibration_actions,
 		"dealer_reward": report.dealer_reward,
 		"dealer_reward_lost": report.dealer_reward_lost,
 		"rule_failures": report.rule_failures.duplicate(true),
@@ -145,6 +160,9 @@ static func report_to_snapshot(report: ResolutionReport) -> Dictionary:
 		"full_clear_calibration_awarded": report.full_clear_calibration_awarded,
 		"successful_bridge_count": report.successful_bridge_count,
 		"storm_awarded": report.storm_awarded,
+		"all_in_awarded": report.all_in_awarded,
+		"all_in_bonus_intel": report.all_in_bonus_intel,
+		"engraving_set_activations": report.engraving_set_activations.duplicate(),
 		"score_breakdown": report.score_breakdown.duplicate(true),
 	}
 
@@ -152,11 +170,13 @@ static func report_from_snapshot(snapshot: Dictionary) -> ResolutionReport:
 	var report := ResolutionReport.new()
 	for property in [
 		"valid", "reason", "restriction_satisfied", "restriction_reason",
-		"total", "intel_delta", "assigned_dice", "unassigned_dice",
+		"total", "intel_delta", "assigned_dice", "unassigned_dice", "calibration_actions",
 		"dealer_reward", "dealer_reward_lost", "resolution_direction",
 		"passed_rule_count", "consolation_awarded", "resonance_awarded",
 		"full_clear_calibration_awarded", "successful_bridge_count",
 		"storm_awarded",
+		"all_in_awarded",
+		"all_in_bonus_intel",
 	]:
 		report.set(property, snapshot.get(property, report.get(property)))
 	report.rule_failures.assign(snapshot.get("rule_failures", []).duplicate(true))
@@ -167,6 +187,9 @@ static func report_from_snapshot(snapshot: Dictionary) -> ResolutionReport:
 	).duplicate(true)
 	report.table_resolution_counts = snapshot.get("table_resolution_counts", {}).duplicate(true)
 	report.ordered_rule_ids.assign(snapshot.get("ordered_rule_ids", []))
+	report.engraving_set_activations.assign(
+		snapshot.get("engraving_set_activations", [])
+	)
 	report.score_breakdown = snapshot.get("score_breakdown", {}).duplicate(true)
 	for entry in snapshot.get("events", []):
 		report.events.append(ResolutionEvent.new(

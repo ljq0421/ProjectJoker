@@ -148,12 +148,17 @@ func find_challenge(challenge_id: StringName) -> Dictionary:
 func selection_error(
 	deck_id: StringName,
 	selected_challenge_ids: Array,
-	challenges_unlocked: bool
+	challenges_unlocked: bool,
+	max_challenges: int = MAX_CHALLENGES
 ) -> String:
 	if find_deck(deck_id).is_empty():
 		return "未知起始牌组：%s" % deck_id
-	if selected_challenge_ids.size() > MAX_CHALLENGES:
-		return "单局最多启用两项挑战"
+	if selected_challenge_ids.size() > max_challenges:
+		return (
+			"单局最多启用两项挑战"
+			if max_challenges == MAX_CHALLENGES
+			else "单局最多启用%d项挑战" % max_challenges
+		)
 	if not selected_challenge_ids.is_empty() and not challenges_unlocked:
 		return "完成一次完整三区远征后才会开放挑战"
 	var seen: Dictionary = {}

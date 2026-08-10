@@ -12,10 +12,7 @@ func _ready() -> void:
 	visible = false
 
 func bind_session(area: AreaRunSession) -> void:
-	visible = true
-	error_label.text = ""
-	for child in options.get_children():
-		child.queue_free()
+	_reset_options()
 	match area.current_event_id:
 		AreaRunSession.EVENT_DICE_ARTISAN:
 			title_label.text = "普通房事件 · 骰子工匠"
@@ -44,11 +41,89 @@ func bind_session(area: AreaRunSession) -> void:
 			title_label.text = "普通房事件"
 			detail_label.text = "事件数据不存在。"
 
+func bind_choice_room(area: AreaRunSession) -> void:
+	_reset_options()
+	title_label.text = "无面中枢 · 抉择房"
+	detail_label.text = "三项公开契据只能选择一项；代价与收益立即写入检查点。"
+	_add_option(
+		"加压契据｜下一场目标 +10% · 立即获得 3 情报",
+		&"raise_target",
+		&"",
+		area.choice_room_block_reason(&"raise_target")
+	)
+	_add_option(
+		"预付校准｜支付 2 情报 · 下一场首轮校准 +2",
+		&"buy_calibration",
+		&"",
+		area.choice_room_block_reason(&"buy_calibration")
+	)
+	if area.deck_ids.size() <= CardDeck.MIN_DECK_SIZE:
+		_add_option(
+			"注销牌页｜免费移除 1 张牌",
+			&"remove_card",
+			&"",
+			"牌组必须大于十二张才能移除"
+		)
+	else:
+		for card_id in area.deck_ids:
+			var card := area.card_catalog.find_card(card_id)
+			_add_option(
+				"注销牌页｜免费移除「%s」" % card.display_name,
+				&"remove_card",
+				card_id,
+				area.choice_room_block_reason(&"remove_card", card_id)
+			)
+
+func bind_engraving_room(area: AreaRunSession) -> void:
+	_reset_options()
+	title_label.text = "无面中枢 · 刻印房"
+	detail_label.text = "从种子固定候选中免费安装一枚刻印；已有刻印不会被覆盖。"
+	var empty_dice: Array[DieState] = []
+	for profile in area.die_profiles:
+		if profile.engraving_id == &"":
+			empty_dice.append(profile)
+	if area.special_engraving_offer_ids.is_empty():
+		_add_option(
+			"刻印池已耗尽",
+			&"none",
+			&"",
+			"没有尚未拥有的区域刻印，可直接跳过"
+		)
+	elif empty_dice.is_empty():
+		_add_option(
+			"没有未刻印骰子",
+			&"none",
+			&"",
+			"六颗骰子均已刻印，不能覆盖已有刻印"
+		)
+	else:
+		for engraving_id in area.special_engraving_offer_ids:
+			var engraving := area.engraving_catalog.find_engraving(engraving_id)
+			for profile in empty_dice:
+				var lucky_face := int(area.lucky_faces.get(profile.id, 0))
+				_add_option(
+					"%s → %s 的 %d 点面" % [
+						engraving.display_name,
+						String(profile.id).to_upper(),
+						lucky_face,
+					],
+					engraving_id,
+					profile.id,
+					area.engraving_room_block_reason(engraving_id, profile.id)
+				)
+	_add_option("跳过刻印房", &"", &"")
+
 func show_error(reason: String) -> void:
 	error_label.text = reason
 
 func close() -> void:
 	visible = false
+
+func _reset_options() -> void:
+	visible = true
+	error_label.text = ""
+	for child in options.get_children():
+		child.queue_free()
 
 func _add_option(
 	copy: String,

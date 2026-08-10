@@ -45,6 +45,7 @@ var committed_reports: Array[ResolutionReport] = []
 var cumulative_total: int = 0
 var intel_tickets: int = 0
 var earned_intel_tickets: int = 0
+var all_in_bonus_intel_tickets := 0
 var shop_offer_ids: Array[StringName] = []
 var last_error: String = ""
 var selected_final_restriction: FinalRestrictionDefinition
@@ -53,6 +54,8 @@ var retained_card_id: StringName = &""
 var queued_search_identity_ids: Array[StringName] = []
 var paid_reroll_rounds: Dictionary = {}
 var paid_calibration_rounds: Dictionary = {}
+var persistent_faulted_die_ids: Array[StringName] = []
+var mirror_copy_triggered := false
 
 var _run_rng: RunRng
 var _deck := CardDeck.new()
@@ -105,9 +108,31 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 		return _fail("提交的结算报告不是当前轮正式结果")
 
 	committed_reports.append(report)
+	_capture_persistent_faults()
+	if setup.area_passive_state != null:
+		match setup.resolution_context.area_id:
+			&"gold_corridor":
+				setup.area_passive_state.record_gold_report(
+					_encounter_for_round(current_round), report
+				)
+				setup.resolution_context.category_coefficient_bonuses = (
+					setup.area_passive_state.gold_category_bonuses.duplicate(true)
+				)
+			&"faceless_hub":
+				if current_round < round_count:
+					var relief: int = setup.area_passive_state.apply_faceless_failures(
+						report.rule_failures.size(), true
+					)
+					target_total = maxi(0, target_total - relief)
+			_:
+				pass
+	for event in report.events:
+		if event.is_mirror_copy and event.effect_applied:
+			mirror_copy_triggered = true
 	_queue_played_searches()
 	cumulative_total += report.total
 	earned_intel_tickets += report.intel_delta
+	all_in_bonus_intel_tickets += report.all_in_bonus_intel
 	if report.consolation_awarded and current_round < round_count:
 		next_round_calibration_bonus += 1
 	elif current_round >= round_count:
@@ -122,6 +147,12 @@ func accept_committed_report(report: ResolutionReport) -> OperationResult:
 	else:
 		if cumulative_total >= target_total:
 			status = Status.SUCCEEDED
+			if (
+				setup.allow_mirror_refresh_reward
+				and mirror_copy_triggered
+				and setup.area_passive_state != null
+			):
+				setup.area_passive_state.award_mirror_refresh()
 			intel_tickets = (
 				setup.success_intel_reward
 				+ earned_intel_tickets
@@ -316,7 +347,12 @@ func _begin_round() -> OperationResult:
 			die_id,
 			rolled_value,
 			profile.engraving_id if profile != null else &"",
-			profile.engraved_face if profile != null else 0
+			profile.engraved_face if profile != null else 0,
+			0,
+			(
+				(profile != null and profile.faulted)
+				or die_id in persistent_faulted_die_ids
+			)
 		))
 	var round_plan := current_round_plan()
 	var encounter: EncounterDefinition
@@ -342,7 +378,8 @@ func _begin_round() -> OperationResult:
 		setup.additional_restrictions,
 		setup.undo_allowed,
 		setup.undo_mode,
-		current_round >= round_count
+		current_round >= round_count,
+		setup.fixed_hand_ids.is_empty()
 	)
 	current_hand_ids.assign(next_hand_ids)
 	current_session = next_session
@@ -371,6 +408,18 @@ func _profile_for(die_id: StringName) -> DieState:
 		if profile.id == die_id:
 			return profile
 	return null
+
+func _capture_persistent_faults() -> void:
+	if current_session == null:
+		return
+	for die in current_session.controller.state.dice:
+		if die.faulted and die.id not in persistent_faulted_die_ids:
+			persistent_faulted_die_ids.append(die.id)
+	for profile in setup.die_profiles:
+		if profile.id in persistent_faulted_die_ids:
+			profile.faulted = true
+			profile.value = 1
+			profile.rolled_value = 1
 
 func _validate_setup() -> String:
 	if setup.success_intel_reward < 0:
@@ -495,6 +544,7 @@ func to_snapshot() -> Dictionary:
 		"cumulative_total": cumulative_total,
 		"intel_tickets": intel_tickets,
 		"earned_intel_tickets": earned_intel_tickets,
+		"all_in_bonus_intel_tickets": all_in_bonus_intel_tickets,
 		"shop_offer_ids": shop_offer_ids.duplicate(),
 		"last_error": last_error,
 		"selected_restriction_id": (
@@ -507,6 +557,8 @@ func to_snapshot() -> Dictionary:
 		"queued_search_identity_ids": queued_search_identity_ids.duplicate(),
 		"paid_reroll_rounds": paid_reroll_rounds.duplicate(true),
 		"paid_calibration_rounds": paid_calibration_rounds.duplicate(true),
+		"persistent_faulted_die_ids": persistent_faulted_die_ids.duplicate(),
+		"mirror_copy_triggered": mirror_copy_triggered,
 		"rng_state": _run_rng.snapshot_state(),
 		"draw_pile": _deck.snapshot_draw_pile(),
 		"current_session": (
@@ -535,6 +587,9 @@ static func from_snapshot(
 	restored.cumulative_total = int(snapshot.get("cumulative_total", 0))
 	restored.intel_tickets = int(snapshot.get("intel_tickets", 0))
 	restored.earned_intel_tickets = int(snapshot.get("earned_intel_tickets", 0))
+	restored.all_in_bonus_intel_tickets = int(
+		snapshot.get("all_in_bonus_intel_tickets", 0)
+	)
 	restored.shop_offer_ids.assign(snapshot.get("shop_offer_ids", []))
 	restored.last_error = String(snapshot.get("last_error", ""))
 	restored.next_round_calibration_bonus = int(
@@ -548,6 +603,10 @@ static func from_snapshot(
 	restored.paid_calibration_rounds = snapshot.get(
 		"paid_calibration_rounds", {}
 	).duplicate(true)
+	restored.persistent_faulted_die_ids.assign(
+		snapshot.get("persistent_faulted_die_ids", [])
+	)
+	restored.mirror_copy_triggered = bool(snapshot.get("mirror_copy_triggered", false))
 	restored._run_rng = p_setup.run_rng if p_setup.run_rng != null else RunRng.new(restored.seed_value)
 	restored._run_rng.restore_state(int(snapshot.get("rng_state", restored.seed_value)))
 	var draw_pile: Array[StringName] = []
@@ -590,7 +649,10 @@ static func from_snapshot(
 		p_setup.additional_restrictions,
 		bool(single_snapshot.get("undo_allowed", true)),
 		controller_snapshot.get("undo_mode", p_setup.undo_mode),
-		bool(single_snapshot.get("is_final_round", false))
+		bool(single_snapshot.get("is_final_round", false)),
+		bool(single_snapshot.get(
+			"rank_conversion_allowed", p_setup.fixed_hand_ids.is_empty()
+		))
 	)
 	var single_result := restored.current_session.restore_snapshot(
 		single_snapshot,

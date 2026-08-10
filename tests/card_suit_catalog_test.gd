@@ -1,10 +1,10 @@
 extends "res://tests/test_case.gd"
 
 const EXPECTED_SUIT_COUNTS := {
-	CardDefinition.Suit.CLUBS: 11,
-	CardDefinition.Suit.HEARTS: 10,
+	CardDefinition.Suit.CLUBS: 12,
+	CardDefinition.Suit.HEARTS: 5,
 	CardDefinition.Suit.DIAMONDS: 10,
-	CardDefinition.Suit.SPADES: 11,
+	CardDefinition.Suit.SPADES: 19,
 }
 
 func run() -> void:

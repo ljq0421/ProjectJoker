@@ -1,6 +1,8 @@
 class_name CardDisplayFormatter
 extends RefCounted
 
+const Phase3SuitRules = preload("res://scripts/cards/card_suit_rules.gd")
+
 const ICON_ROOT := "res://resources/ui/dream_glass/icons/"
 const CARD_FACE_ROOT := "res://resources/ui/dream_glass/card_faces/prototypes/"
 
@@ -47,6 +49,10 @@ const CARD_FACE_FILES := {
 	&"faceless_reverse_replay": "faceless_reverse_replay.svg",
 	&"faceless_compressed_repeat": "faceless_compressed_repeat.svg",
 	&"faceless_closed_circuit": "faceless_closed_circuit.svg",
+	&"stage7_fault_die": "stage7_fault_die.svg",
+	&"stage7_all_in": "stage7_all_in.svg",
+	&"stage7_insurance_draft": "stage7_insurance_draft.svg",
+	&"stage7_burned_rewrite": "stage7_burned_rewrite.svg",
 }
 
 const EFFECT_ICON_FILES := {
@@ -65,6 +71,10 @@ const EFFECT_ICON_FILES := {
 		"grant_intel_on_condition.svg"
 	),
 	EffectSpec.Operation.QUEUE_SEARCH: "reverse_resolution.svg",
+	EffectSpec.Operation.FAULT_DIE: "lock_die_with_bonus.svg",
+	EffectSpec.Operation.ALL_IN: "grant_intel_on_condition.svg",
+	EffectSpec.Operation.GRANT_UNDOS: "refund_calibration.svg",
+	EffectSpec.Operation.BURNED_REWRITE: "repeat_table.svg",
 }
 
 const TARGET_ICON_FILES := {
@@ -93,12 +103,14 @@ func shop_compact_copy(
 		footer_parts.append(identity_copy)
 	if price >= 0:
 		footer_parts.append("%d 情报券" % price)
+	footer_parts.append(Phase3SuitRules.meaning_copy(card.suit))
 	lines.append(" · ".join(footer_parts))
 	return "\n".join(lines)
 
 func detail_copy(card: CardDefinition, next_action: String = "") -> String:
 	var lines: PackedStringArray = [
 		"%s · %s" % [header_copy(card), card.rarity_copy()],
+		"花色语义：%s" % Phase3SuitRules.meaning_copy(card.suit),
 		"规则：%s" % card.rule_text,
 		"目标：%s" % target_copy_for(card),
 	]
@@ -184,6 +196,16 @@ func effect_short_copy(card: CardDefinition) -> String:
 			return _condition_short_copy(effect)
 		EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
 			return "情报券 +%d" % effect.amount
+		EffectSpec.Operation.QUEUE_SEARCH:
+			return "下轮定向检索"
+		EffectSpec.Operation.FAULT_DIE:
+			return "固定为 1 · 所在台 +3"
+		EffectSpec.Operation.ALL_IN:
+			return "全过复制卡牌情报"
+		EffectSpec.Operation.GRANT_UNDOS:
+			return "两类撤销各 +%d" % effect.amount
+		EffectSpec.Operation.BURNED_REWRITE:
+			return "降 1 系数复写"
 	return _effect_copy(effect)
 
 func effect_detail_copy(card: CardDefinition) -> String:
@@ -234,6 +256,14 @@ func _effect_detail_for(effect: EffectSpec) -> String:
 			return _condition_detail_copy(effect)
 		EffectSpec.Operation.GRANT_INTEL_ON_CONDITION:
 			return _intel_condition_trigger_copy(effect)
+		EffectSpec.Operation.FAULT_DIE:
+			return "整次远征持久生效"
+		EffectSpec.Operation.ALL_IN:
+			return "普通房与庄家基础奖励不翻倍"
+		EffectSpec.Operation.GRANT_UNDOS:
+			return "需弃置 1 张其他手牌"
+		EffectSpec.Operation.BURNED_REWRITE:
+			return "需弃置 2 张；不计桥接次数"
 	return ""
 
 func has_card_face_art(card: CardDefinition) -> bool:
@@ -330,6 +360,14 @@ func _effect_copy(effect: EffectSpec) -> String:
 			return "下轮优先检索%s" % BuildIdentityCatalog.new().display_name(
 				effect.search_identity
 			)
+		EffectSpec.Operation.FAULT_DIE:
+			return "固定最终值为 1；所在台系数 +3"
+		EffectSpec.Operation.ALL_IN:
+			return "耗尽校准；三台全过时复制卡牌情报"
+		EffectSpec.Operation.GRANT_UNDOS:
+			return "弃置 1 张；校准与卡牌撤销各 +%d" % effect.amount
+		EffectSpec.Operation.BURNED_REWRITE:
+			return "弃置 2 张；按原系数 −1 复写一次"
 	return "查看完整规则"
 
 func _condition_modifier_copy(effect: EffectSpec) -> String:

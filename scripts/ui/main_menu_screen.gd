@@ -9,9 +9,13 @@ const FACELESS_HUB_SCENE := "res://scenes/run/faceless_hub_run_screen.tscn"
 const RULE_HANDBOOK_SCENE := "res://scenes/run/rule_archive_screen.tscn"
 const EXPEDITION_SCENE := "res://scenes/run/expedition_run_screen.tscn"
 const EXPEDITION_SETUP_SCENE := "res://scenes/run/expedition_setup_screen.tscn"
+const CUSTOM_SETUP_SCENE := "res://scenes/run/custom_expedition_setup_screen.tscn"
+const ACHIEVEMENT_ARCHIVE_SCENE := "res://scenes/run/achievement_archive_screen.tscn"
 const TUTORIAL_CONFIG_META := "tutorial_config_path"
 const TUTORIAL_NEXT_SCENE_META := "tutorial_next_scene"
 const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
+const DailyService = preload("res://scripts/run/daily_challenge_service.gd")
+const StartConfig = preload("res://scripts/run/expedition_start_config.gd")
 
 @export_enum("Auto:-1", "Full:0", "Demo:1") var demo_scope_override := -1
 
@@ -26,6 +30,9 @@ const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
 @onready var continue_expedition_button: Button = %ContinueExpeditionButton
 @onready var abandon_expedition_button: Button = %AbandonExpeditionButton
 @onready var expedition_status_label: Label = %ExpeditionStatusLabel
+@onready var daily_challenge_button: Button = %DailyChallengeButton
+@onready var custom_expedition_button: Button = %CustomExpeditionButton
+@onready var achievement_archive_button: Button = %AchievementArchiveButton
 @onready var abandon_expedition_dialog: ConfirmationDialog = %AbandonExpeditionDialog
 @onready var new_expedition_dialog: ConfirmationDialog = %NewExpeditionDialog
 @onready var credits_button: Button = %CreditsButton
@@ -44,15 +51,32 @@ const DemoProfile := preload("res://scripts/run/demo_build_profile.gd")
 
 var expedition_store: ExpeditionSaveStore
 var expedition_save_path := "user://expedition_save.cfg"
+var daily_save_path := "user://daily_expedition_save.cfg"
+var custom_save_path := "user://custom_expedition_save.cfg"
+var meta_path := "user://expedition_meta.cfg"
+var custom_meta_path := "user://custom_expedition_meta.cfg"
+var daily_leaderboard_path := "user://daily_leaderboard.cfg"
 var tutorial_config_path := "user://onboarding.cfg"
 var _is_demo_build := false
 
 func _ready() -> void:
 	var root_window := get_tree().root
-	if root_window.has_meta("expedition_save_path"):
+	if root_window.has_meta("standard_expedition_save_path"):
+		expedition_save_path = String(
+			root_window.get_meta("standard_expedition_save_path")
+		)
+	elif root_window.has_meta("expedition_save_path"):
 		expedition_save_path = String(
 			root_window.get_meta("expedition_save_path")
 		)
+	meta_path = String(root_window.get_meta(
+		"standard_expedition_meta_path",
+		root_window.get_meta("expedition_meta_path", meta_path)
+	))
+	daily_save_path = String(root_window.get_meta("daily_expedition_save_path", daily_save_path))
+	custom_save_path = String(root_window.get_meta("custom_expedition_save_path", custom_save_path))
+	custom_meta_path = String(root_window.get_meta("custom_expedition_meta_path", custom_meta_path))
+	daily_leaderboard_path = String(root_window.get_meta("daily_leaderboard_path", daily_leaderboard_path))
 	if root_window.has_meta(TUTORIAL_CONFIG_META):
 		tutorial_config_path = String(root_window.get_meta(TUTORIAL_CONFIG_META))
 	expedition_store = ExpeditionSaveStore.new(expedition_save_path)
@@ -64,6 +88,14 @@ func _ready() -> void:
 	)
 	abandon_expedition_dialog.confirmed.connect(_on_abandon_confirmed)
 	new_expedition_dialog.confirmed.connect(_launch_new_expedition)
+	daily_challenge_button.pressed.connect(_on_daily_challenge_pressed)
+	custom_expedition_button.pressed.connect(_on_custom_expedition_pressed)
+	achievement_archive_button.pressed.connect(
+		func() -> void:
+			get_tree().root.set_meta("expedition_meta_path", meta_path)
+			get_tree().root.set_meta("standard_expedition_meta_path", meta_path)
+			_open_scene(ACHIEVEMENT_ARCHIVE_SCENE)
+	)
 	credits_button.pressed.connect(_on_credits_pressed)
 	close_credits_button.pressed.connect(_on_close_credits_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
@@ -88,6 +120,7 @@ func _ready() -> void:
 	_run_release_smoke_probe_if_requested()
 	_refresh_tutorial_entry()
 	_refresh_expedition_status()
+	_refresh_extended_modes()
 	_refresh_release_identity()
 
 func _apply_build_scope() -> void:
@@ -253,6 +286,71 @@ func _launch_expedition(mode: StringName, seed: int) -> void:
 	root_window.set_meta("expedition_launch_mode", mode)
 	root_window.set_meta("expedition_seed", seed)
 	root_window.set_meta("expedition_save_path", expedition_save_path)
+	root_window.set_meta("standard_expedition_save_path", expedition_save_path)
+	root_window.set_meta("expedition_meta_path", meta_path)
+	root_window.set_meta("standard_expedition_meta_path", meta_path)
+	_open_scene(EXPEDITION_SCENE)
+
+func _refresh_extended_modes() -> void:
+	var loaded := ExpeditionMetaStore.new(meta_path).load_snapshot()
+	var unlocked := loaded.accepted and bool(loaded.snapshot.get("challenges_unlocked", false))
+	for button in [daily_challenge_button, custom_expedition_button]:
+		button.disabled = not unlocked
+		button.tooltip_text = (
+			""
+			if unlocked
+			else "首次完成标准三区远征后开放"
+		)
+	daily_challenge_button.text = (
+		"继续每日挑战"
+		if unlocked and ExpeditionSaveStore.new(daily_save_path).has_save()
+		else "每日挑战"
+	)
+	custom_expedition_button.text = (
+		"继续 / 配置自定义"
+		if unlocked and ExpeditionSaveStore.new(custom_save_path).has_save()
+		else "自定义远征"
+	)
+	achievement_archive_button.tooltip_text = (
+		"查看已解锁称号、徽章与自定义装饰"
+		if loaded.accepted
+		else loaded.reason
+	)
+
+func _on_daily_challenge_pressed() -> void:
+	var store := ExpeditionSaveStore.new(daily_save_path)
+	if store.has_save():
+		_launch_extended_expedition(&"continue", {}, daily_save_path, meta_path)
+		return
+	var config = DailyService.new().config_for(DailyService.new().local_date_key())
+	if config == null:
+		expedition_status_label.text = "无法生成今日挑战配置"
+		return
+	_launch_extended_expedition(&"new", config.to_snapshot(), daily_save_path, meta_path)
+
+func _on_custom_expedition_pressed() -> void:
+	var root_window := get_tree().root
+	root_window.set_meta("custom_expedition_save_path", custom_save_path)
+	root_window.set_meta("custom_expedition_meta_path", custom_meta_path)
+	root_window.set_meta("expedition_meta_path", meta_path)
+	root_window.set_meta("standard_expedition_meta_path", meta_path)
+	root_window.set_meta("standard_expedition_save_path", expedition_save_path)
+	_open_scene(CUSTOM_SETUP_SCENE)
+
+func _launch_extended_expedition(
+	launch_mode: StringName,
+	config_snapshot: Dictionary,
+	save_file: String,
+	progress_file: String
+) -> void:
+	var root_window := get_tree().root
+	root_window.set_meta("expedition_launch_mode", launch_mode)
+	root_window.set_meta("expedition_start_config", config_snapshot.duplicate(true))
+	root_window.set_meta("expedition_save_path", save_file)
+	root_window.set_meta("expedition_meta_path", progress_file)
+	root_window.set_meta("standard_expedition_meta_path", meta_path)
+	root_window.set_meta("standard_expedition_save_path", expedition_save_path)
+	root_window.set_meta("daily_leaderboard_path", daily_leaderboard_path)
 	_open_scene(EXPEDITION_SCENE)
 
 func _on_abandon_confirmed() -> void:

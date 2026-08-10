@@ -76,7 +76,7 @@ static func make_hand() -> Array[CardDefinition]:
 			PackedStringArray(["桌间", "传递"])
 		),
 		_card(
-			&"heart_reverse",
+			&"spade_reverse",
 			"倒序",
 			CardDefinition.TargetType.GLOBAL,
 			EffectSpec.Operation.REVERSE_RESOLUTION,

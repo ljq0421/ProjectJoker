@@ -10,6 +10,7 @@ var source_card_id: StringName = &""
 var source_play_id: StringName = &""
 var source_slot_id: StringName = &""
 var runtime_effects: Array[EffectSpec] = []
+var discarded_card_ids: Array[StringName] = []
 
 func _init(
 	p_definition: CardDefinition,
@@ -29,7 +30,8 @@ func modified_die_ids() -> Array[StringName]:
 	var die_ids: Array[StringName] = []
 	for effect in effective_effects():
 		match effect.operation:
-			EffectSpec.Operation.ADJUST_DIE, EffectSpec.Operation.FLIP_DIE:
+			EffectSpec.Operation.ADJUST_DIE, EffectSpec.Operation.FLIP_DIE, \
+			EffectSpec.Operation.FAULT_DIE:
 				_append_unique(die_ids, primary_target)
 			EffectSpec.Operation.SWAP_DICE:
 				_append_unique(die_ids, primary_target)
@@ -54,6 +56,7 @@ func clone() -> PlayedCard:
 	copy.source_slot_id = source_slot_id
 	for effect in runtime_effects:
 		copy.runtime_effects.append(_clone_effect(effect))
+	copy.discarded_card_ids.assign(discarded_card_ids)
 	return copy
 
 func _clone_effect(effect: EffectSpec) -> EffectSpec:

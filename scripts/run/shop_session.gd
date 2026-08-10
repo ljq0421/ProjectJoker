@@ -40,6 +40,7 @@ var intel_unlocked := false
 var remove_card_used := false
 var transfer_engraving_used := false
 var area_refresh_count := 0
+var free_refresh_tokens := 0
 var rare_guarantee_unavailable_reason := ""
 var initialization_error := ""
 var last_error: String = ""
@@ -54,7 +55,8 @@ func _init(
 	p_services_enabled: bool = false,
 	p_price_modifier: int = 0,
 	p_append_purchases: bool = false,
-	p_area_refresh_count: int = 0
+	p_area_refresh_count: int = 0,
+	p_free_refresh_tokens: int = 0
 ) -> void:
 	catalog = p_catalog
 	deck_ids = p_deck_ids.duplicate()
@@ -66,6 +68,7 @@ func _init(
 	price_modifier = p_price_modifier
 	append_purchases = p_append_purchases
 	area_refresh_count = p_area_refresh_count
+	free_refresh_tokens = clampi(p_free_refresh_tokens, 0, 2)
 	initialization_error = _initialization_error()
 	if initialization_error.is_empty():
 		offer_ids = _next_offer_batch(deck_ids, [])
@@ -127,7 +130,8 @@ func refresh_offers() -> OperationResult:
 		return _fail("当前商店不提供刷新服务")
 	if refresh_used:
 		return _fail("本店已经刷新过候选")
-	if intel_tickets < refresh_price():
+	var price := refresh_price()
+	if intel_tickets < price:
 		return _fail("情报券不足，无法刷新")
 	var next_offers := _next_offer_batch(
 		deck_ids,
@@ -140,13 +144,15 @@ func refresh_offers() -> OperationResult:
 	offer_ids.assign(next_offers)
 	shown_offer_ids.append_array(next_offers)
 	sold_offer_ids.clear()
-	intel_tickets -= refresh_price()
+	intel_tickets -= price
+	if price == 0 and free_refresh_tokens > 0:
+		free_refresh_tokens -= 1
 	refresh_used = true
 	area_refresh_count += 1
 	service_records.append(ShopServiceRecord.new(
 		shop_index,
 		ShopServiceRecord.ServiceType.REFRESH,
-		refresh_price()
+		price
 	))
 	last_error = ""
 	return OperationResult.new(true)
@@ -266,6 +272,7 @@ func to_snapshot() -> Dictionary:
 		"remove_card_used": remove_card_used,
 		"transfer_engraving_used": transfer_engraving_used,
 		"area_refresh_count": area_refresh_count,
+		"free_refresh_tokens": free_refresh_tokens,
 		"rare_guarantee_unavailable_reason": rare_guarantee_unavailable_reason,
 	}
 
@@ -333,7 +340,8 @@ static func from_snapshot(
 		snapshot["services_enabled"],
 		snapshot["price_modifier"],
 		bool(snapshot.get("append_purchases", false)),
-		int(snapshot.get("area_refresh_count", 0))
+		int(snapshot.get("area_refresh_count", 0)),
+		int(snapshot.get("free_refresh_tokens", 0))
 	)
 	if not restored.initialization_error.is_empty():
 		return RestoreResult.new(false, restored.initialization_error)
@@ -383,6 +391,8 @@ func card_price(card_id: StringName = &"") -> int:
 	return base_price + price_modifier
 
 func refresh_price() -> int:
+	if free_refresh_tokens > 0:
+		return 0
 	return REFRESH_PRICE + price_modifier
 
 func intel_price() -> int:

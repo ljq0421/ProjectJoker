@@ -1,3 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" data-card-id="shop_chain_index" data-card-face="complete-v1">
-  <text id="card-identity">♠J</text><text id="card-name">连锁索引</text><g id="rarity-track"/><g id="effect-artwork"/><text id="effect-summary">定向检索</text><text id="effect-detail">下轮优先规则台连锁</text><g id="target-icon"/><text id="target-copy">全局</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="none" data-card-id="shop_chain_index" data-card-face="complete-v1">
+  <metadata>{&quot;detail&quot;: &quot;&quot;, &quot;effect&quot;: &quot;下轮定向检索&quot;, &quot;id&quot;: &quot;shop_chain_index&quot;, &quot;identity&quot;: &quot;♠J&quot;, &quot;name&quot;: &quot;连锁索引&quot;, &quot;rarity&quot;: 1, &quot;rarity_name&quot;: &quot;进阶&quot;, &quot;target&quot;: &quot;全局&quot;, &quot;target_type&quot;: 3}</metadata>
+  <rect x="5" y="5" width="290" height="190" rx="18" fill="#0E0B26" fill-opacity=".96" stroke="#D27BE5" stroke-width="3"/>
+  <path d="M5 38V5h33M262 195h33v-33" stroke="#D27BE5" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M16 44h268" stroke="#59E6DB" stroke-opacity=".26" stroke-width="1.5"/>
+  <rect x="14" y="137" width="272" height="48" rx="10" fill="#080619" fill-opacity=".92" stroke="#59E6DB" stroke-opacity=".28"/>
+  <text id="card-identity" data-copy="♠J" data-width="24.05" x="18" y="32" font-family="Noto Sans SC" font-size="16" text-anchor="start" fill="#8EA7FF" stroke="#8EA7FF" stroke-width="0.65" stroke-linejoin="round">♠J</text>
+  <text id="card-name" data-copy="连锁索引" data-width="88" x="58" y="34" font-family="Noto Sans SC" font-size="22" text-anchor="start" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="0.8" stroke-linejoin="round">连锁索引</text>
+  <g id="rarity-track"><path d="M251 20l5 5-5 5-5-5z" fill="#D27BE5" stroke="#D27BE5" stroke-width="1.5"/><path d="M265 20l5 5-5 5-5-5z" fill="#D27BE5" stroke="#D27BE5" stroke-width="1.5"/><path d="M279 20l5 5-5 5-5-5z" fill="none" stroke="#5A526F" stroke-width="1.5"/></g>
+  <g id="effect-artwork"><path d="M75 61h150v66H75zM89 75h122M89 112h122" fill="#151038" stroke="#D27BE5" stroke-width="3"/><path d="M103 101V83h36v18M161 101V83h36v18M139 92h22" stroke="#D27BE5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M221 76l11 11-11 11-11-11z" fill="#F4F0FF" stroke="#D27BE5" stroke-width="2"/></g>
+  <text id="effect-summary" data-copy="下轮定向检索" data-width="123" x="22" y="158" font-family="Noto Sans SC" font-size="20.5" text-anchor="start" fill="#F4F0FF" stroke="#F4F0FF" stroke-width="0.72" stroke-linejoin="round">下轮定向检索</text>
+  <g id="effect-detail" data-empty="true"/>
+  <g id="target-icon"><circle cx="205" cy="172" r="6" fill="none" stroke="#59E6DB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M205 166v12M199 172h12" fill="none" stroke="#59E6DB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text id="target-copy" data-copy="全局" data-width="28" x="280" y="178" font-family="Noto Sans SC" font-size="14" text-anchor="end" fill="#59E6DB" stroke="#59E6DB" stroke-width="0.45" stroke-linejoin="round">全局</text>
+  </svg>

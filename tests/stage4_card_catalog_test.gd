@@ -14,7 +14,7 @@ func run() -> void:
 		all_ids[card.id] = true
 		assert_false(card.rule_text.strip_edges().is_empty(), "rule text should be present")
 		assert_true(card.tags.size() >= 1, "every card should expose at least one display tag")
-	assert_equal(all_ids.size(), 42, "catalog should expose forty-two cards")
+	assert_equal(all_ids.size(), 46, "catalog should expose forty-six cards")
 	assert_equal(catalog.mirror_hall_card_ids().size(), 6, "mirror card group should stay separate")
 
 	for card_id in catalog.starter_ids():

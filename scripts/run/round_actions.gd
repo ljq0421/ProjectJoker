@@ -11,9 +11,13 @@ static func adjust_die(
 		return ActionResult.new(false, "校准只能调整 -1 或 +1", state)
 	if state.calibration_points <= 0:
 		return ActionResult.new(false, "校准点已经用完", state)
+	if state.calibration_locked:
+		return ActionResult.new(false, "孤注一掷已锁定本轮校准", state)
 	var current := state.find_die(die_id)
 	if current == null:
 		return ActionResult.new(false, "骰子不存在", state)
+	if current.faulted:
+		return ActionResult.new(false, "故障骰子最终值固定为 1，不能校准", state)
 	var block_reason := EngravingResolver.new().modification_block_reason(
 		state, die_id, context
 	)

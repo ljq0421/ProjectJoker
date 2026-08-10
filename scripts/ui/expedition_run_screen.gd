@@ -10,6 +10,9 @@ const AREA_SCENES := {
 const ExpeditionConfigs = preload("res://scripts/run/expedition_config_catalog.gd")
 const ExpeditionMeta = preload("res://scripts/run/expedition_meta_store.gd")
 const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd")
+const StartConfig = preload("res://scripts/run/expedition_start_config.gd")
+const DailyService = preload("res://scripts/run/daily_challenge_service.gd")
+const DailyLeaderboard = preload("res://scripts/run/daily_leaderboard_store.gd")
 
 @onready var area_host: Control = %AreaHost
 @onready var error_panel: Control = %ExpeditionErrorPanel
@@ -20,6 +23,7 @@ const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd"
 @onready var area_history_label: Label = %ExpeditionAreaHistoryLabel
 @onready var final_build_label: Label = %ExpeditionFinalBuildLabel
 @onready var epilogue_label: Label = %ExpeditionEpilogueLabel
+@onready var daily_leaderboard_label: Label = %DailyLeaderboardLabel
 @onready var return_button: Button = %ReturnFromExpeditionButton
 @onready var return_from_error_button: Button = %ReturnFromErrorButton
 @onready var narrative_card: Control = %NarrativeCard
@@ -28,6 +32,7 @@ var expedition := ExpeditionSession.new()
 var store: ExpeditionSaveStore
 var save_path := "user://expedition_save.cfg"
 var meta_path := "user://expedition_meta.cfg"
+var daily_leaderboard_path := "user://daily_leaderboard.cfg"
 var meta_store
 var current_area_screen: AreaRunScreen
 var _pending_completion: Dictionary = {}
@@ -56,10 +61,17 @@ func _ready() -> void:
 		save_path
 	))
 	meta_path = String(root_window.get_meta("expedition_meta_path", meta_path))
+	daily_leaderboard_path = String(root_window.get_meta(
+		"daily_leaderboard_path", daily_leaderboard_path
+	))
+	var launch_config_snapshot: Dictionary = root_window.get_meta(
+		"expedition_start_config", {}
+	).duplicate(true)
 	root_window.remove_meta("expedition_launch_mode")
 	root_window.remove_meta("expedition_seed")
 	root_window.remove_meta("expedition_starting_deck_id")
 	root_window.remove_meta("expedition_challenge_ids")
+	root_window.remove_meta("expedition_start_config")
 	store = ExpeditionSaveStore.new(save_path)
 	meta_store = ExpeditionMeta.new(meta_path)
 	if mode == &"new":
@@ -67,11 +79,16 @@ func _ready() -> void:
 		if not cleared.accepted:
 			_show_error(cleared.reason)
 			return
-		var result := expedition.start_new(
-			maxi(seed, 1),
-			starting_deck_id,
-			challenge_ids
-		)
+		var result: OperationResult
+		if launch_config_snapshot.is_empty():
+			result = expedition.start_new(
+				maxi(seed, 1), starting_deck_id, challenge_ids
+			)
+		else:
+			var launch_config := StartConfig.new()
+			result = launch_config.restore_snapshot(launch_config_snapshot)
+			if result.accepted:
+				result = expedition.start_with_config(launch_config)
 		if not result.accepted:
 			_show_error(result.reason)
 			return
@@ -85,7 +102,7 @@ func _ready() -> void:
 			_show_error(restored.reason)
 			return
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
-		var record_result := _record_run(&"complete", "")
+		var record_result := _record_completion()
 		if not record_result.accepted:
 			_show_error(record_result.reason)
 			return
@@ -126,7 +143,7 @@ func _mount_current_area() -> void:
 		expedition.seed_value,
 		expedition.current_entry_state(),
 		expedition.area_checkpoint,
-		expedition.current_area_index < ExpeditionSession.AREA_ORDER.size() - 1
+		expedition.current_area_index < expedition.start_config.area_sequence.size() - 1
 	)
 	area_host.add_child(screen)
 
@@ -169,7 +186,7 @@ func _on_continue_requested() -> void:
 		return
 	_pending_completion = {}
 	if expedition.status == ExpeditionSession.Status.COMPLETE:
-		var record_result := _record_run(&"complete", "")
+		var record_result := _record_completion()
 		if not record_result.accepted:
 			_show_error(record_result.reason)
 			return
@@ -193,6 +210,7 @@ func _show_summary() -> void:
 			ExpeditionConfigs.new()
 		),
 	]
+	config_label.text += "　模式｜%s" % _mode_name(expedition.start_config.mode)
 	var area_lines: Array[String] = []
 	for index in range(expedition.completed_areas.size()):
 		var completion: Dictionary = expedition.completed_areas[index]
@@ -220,9 +238,10 @@ func _show_summary() -> void:
 			"\n".join(engraving_lines) if not engraving_lines.is_empty() else "无",
 		]
 	)
+	_bind_daily_leaderboard()
 	epilogue_label.text = (
-		"三位庄家的规则都已留下可复核的轨迹。你没有靠运气赢走筹码；"
-		+ "你证明了公开规则可以被理解、预演并拆解。"
+		"%d 份区域契据都已留下可复核的轨迹。你证明了公开规则可以被理解、预演并拆解。"
+		% expedition.completed_areas.size()
 	)
 
 func _on_return_from_summary() -> void:
@@ -299,10 +318,12 @@ func _record_run(result_kind: StringName, reason: String) -> OperationResult:
 			"deck_ids": current_area_screen.area_session.deck_ids.duplicate(),
 			"intel_tickets": current_area_screen.area_session.intel_tickets,
 		}
+	var telemetry := expedition.balance_telemetry_snapshot()
 	return meta_store.record_run({
 		"run_id": expedition.run_id,
 		"ended_at": int(Time.get_unix_time_from_system()),
 		"result": result_kind,
+		"mode": expedition.start_config.mode,
 		"seed_value": expedition.seed_value,
 		"starting_deck_id": expedition.starting_deck_id,
 		"challenge_ids": expedition.challenge_ids.duplicate(),
@@ -312,7 +333,77 @@ func _record_run(result_kind: StringName, reason: String) -> OperationResult:
 		"final_deck_count": final_state.get("deck_ids", []).size(),
 		"intel_tickets": int(final_state.get("intel_tickets", 0)),
 		"failure_reason": reason,
+		"zero_calibration": int(telemetry.get("calibration_actions", 0)) == 0,
+		"full_allocation_every_round": (
+			int(telemetry.get("rounds_total", 0)) > 0
+			and int(telemetry.get("full_allocation_rounds", 0))
+				== int(telemetry.get("rounds_total", 0))
+		),
+		"emergency_spend": int(telemetry.get("emergency_spend_total", 0)),
+		"storm_count": int(telemetry.get("storm_rounds", 0)),
+		"engraving_set_activations": int(
+			telemetry.get("engraving_set_activations", 0)
+		),
+		"daily_score": (
+			DailyService.new().expedition_score(expedition.completed_areas)
+			if expedition.start_config.mode == StartConfig.DAILY
+			else 0
+		),
 	})
+
+func _record_completion() -> OperationResult:
+	var meta_result := _record_run(&"complete", "")
+	if not meta_result.accepted:
+		return meta_result
+	if expedition.start_config.mode != StartConfig.DAILY:
+		return OperationResult.new(true)
+	var daily := DailyService.new()
+	if not daily.leaderboard_eligible(
+		expedition.start_config, daily.local_date_key()
+	):
+		return OperationResult.new(true)
+	var telemetry := expedition.balance_telemetry_snapshot()
+	return DailyLeaderboard.new(daily_leaderboard_path).record({
+		"date_key": expedition.start_config.daily_date_key,
+		"run_id": expedition.run_id,
+		"score": daily.expedition_score(expedition.completed_areas),
+		"emergency_spend": int(telemetry.get("emergency_spend_total", 0)),
+		"completion_time": maxi(
+			int(Time.get_unix_time_from_system()) - expedition.started_at_unix, 0
+		),
+		"completed": true,
+	}, daily.local_date_key())
+
+func _mode_name(mode: StringName) -> String:
+	match mode:
+		StartConfig.DAILY:
+			return "每日挑战"
+		StartConfig.CUSTOM:
+			return "自定义远征"
+	return "标准远征"
+
+func _bind_daily_leaderboard() -> void:
+	daily_leaderboard_label.visible = expedition.start_config.mode == StartConfig.DAILY
+	if not daily_leaderboard_label.visible:
+		return
+	var entries := DailyLeaderboard.new(daily_leaderboard_path).entries(
+		expedition.start_config.daily_date_key
+	)
+	var lines: Array[String] = [
+		"本地每日榜 · %s · 前 10 名" % expedition.start_config.daily_date_key,
+	]
+	for index in entries.size():
+		var entry: Dictionary = entries[index]
+		lines.append("%d. %d 分｜应急 %d｜%d 秒%s" % [
+			index + 1,
+			entry.score,
+			entry.emergency_spend,
+			entry.completion_time,
+			"　← 本局" if entry.run_id == expedition.run_id else "",
+		])
+	if entries.is_empty():
+		lines.append("跨日旧局已完成，但不进入今日榜。")
+	daily_leaderboard_label.text = "\n".join(lines)
 
 func _show_area_transition() -> void:
 	summary_panel.visible = false

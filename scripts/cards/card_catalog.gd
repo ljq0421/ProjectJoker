@@ -55,10 +55,18 @@ const FACELESS_HUB_PATHS := [
 	"res://resources/cards/faceless_hub/faceless_closed_circuit.tres",
 ]
 
+const STAGE7_PATHS := [
+	"res://resources/cards/stage7/stage7_fault_die.tres",
+	"res://resources/cards/stage7/stage7_all_in.tres",
+	"res://resources/cards/stage7/stage7_insurance_draft.tres",
+	"res://resources/cards/stage7/stage7_burned_rewrite.tres",
+]
+
 var _starter_cards: Array[CardDefinition] = []
 var _shop_cards: Array[CardDefinition] = []
 var _mirror_hall_cards: Array[CardDefinition] = []
 var _faceless_hub_cards: Array[CardDefinition] = []
+var _stage7_cards: Array[CardDefinition] = []
 var _cards_by_id: Dictionary = {}
 var _load_errors: Array[String] = []
 
@@ -67,6 +75,7 @@ func _init() -> void:
 	_shop_cards = _load_cards(SHOP_PATHS)
 	_mirror_hall_cards = _load_cards(MIRROR_HALL_PATHS)
 	_faceless_hub_cards = _load_cards(FACELESS_HUB_PATHS)
+	_stage7_cards = _load_cards(STAGE7_PATHS)
 	for card in all_cards():
 		if _cards_by_id.has(card.id):
 			_load_errors.append("duplicate card ID: %s" % card.id)
@@ -79,6 +88,7 @@ func all_cards() -> Array[CardDefinition]:
 	cards.append_array(_shop_cards)
 	cards.append_array(_mirror_hall_cards)
 	cards.append_array(_faceless_hub_cards)
+	cards.append_array(_stage7_cards)
 	return cards
 
 func starter_deck() -> Array[CardDefinition]:
@@ -98,6 +108,9 @@ func mirror_hall_card_ids() -> Array[StringName]:
 
 func faceless_hub_card_ids() -> Array[StringName]:
 	return _ids(_faceless_hub_cards)
+
+func stage7_card_ids() -> Array[StringName]:
+	return _ids(_stage7_cards)
 
 func cards_for_suit(suit: CardDefinition.Suit) -> Array[CardDefinition]:
 	var cards: Array[CardDefinition] = []
@@ -120,6 +133,8 @@ func validate() -> Array[String]:
 		errors.append("mirror hall card group must contain exactly six cards")
 	if _faceless_hub_cards.size() != 16:
 		errors.append("faceless hub card group must contain exactly sixteen cards")
+	if _stage7_cards.size() != 4:
+		errors.append("stage seven card group must contain exactly four cards")
 	for card_id in starter_ids():
 		if card_id in shop_ids():
 			errors.append("starter and shop IDs overlap: %s" % card_id)
@@ -133,6 +148,9 @@ func validate() -> Array[String]:
 			or card_id in mirror_hall_card_ids()
 		):
 			errors.append("faceless hub and legacy card IDs overlap: %s" % card_id)
+	for card_id in stage7_card_ids():
+		if card_id in starter_ids() or card_id in shop_ids() or card_id in mirror_hall_card_ids() or card_id in faceless_hub_card_ids():
+			errors.append("stage seven and legacy card IDs overlap: %s" % card_id)
 	return errors
 
 func _load_cards(paths: Array) -> Array[CardDefinition]:

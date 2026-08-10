@@ -51,6 +51,10 @@ const CARD_FACE_IDS := [
 	"faceless_reverse_replay",
 	"faceless_compressed_repeat",
 	"faceless_closed_circuit",
+	"stage7_fault_die",
+	"stage7_all_in",
+	"stage7_insurance_draft",
+	"stage7_burned_rewrite",
 ]
 
 func run() -> void:

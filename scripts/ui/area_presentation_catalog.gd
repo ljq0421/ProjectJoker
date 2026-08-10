@@ -15,6 +15,10 @@ const PRESENTATIONS := {
 		"ordinary_title": "金线监理",
 		"ordinary_rule": "本区重点\n精确点数、奇偶与基础关系。先满足条件，再比较三张规则台的系数收益。",
 		"directive_title": "金线契约",
+		"gauge": "筹码刻度",
+		"contract": "联保契据",
+		"seat": "席位账页",
+		"mechanism": "金线机关",
 	},
 	&"mirror_hall": {
 		"primary": Color("#79d8ff"),
@@ -29,6 +33,10 @@ const PRESENTATIONS := {
 		"ordinary_title": "镜面监理",
 		"ordinary_rule": "本区重点\n结算方向与镜像副本会改变桌间牌的先后。先读方向，再安排原牌与倒影。",
 		"directive_title": "反照法则",
+		"gauge": "镜值刻度",
+		"contract": "双生牌面",
+		"seat": "反照席位",
+		"mechanism": "回折机关",
 	},
 	&"faceless_hub": {
 		"primary": Color("#ff71b7"),
@@ -43,6 +51,10 @@ const PRESENTATIONS := {
 		"ordinary_title": "无名协议",
 		"ordinary_rule": "本区重点\n复合条件与公开限制会共同约束布局。先确认协议，再决定骰子和手法牌。",
 		"directive_title": "无名协议",
+		"gauge": "无名刻度",
+		"contract": "协议链",
+		"seat": "索引阵",
+		"mechanism": "异常终端",
 	},
 }
 

@@ -10,6 +10,7 @@ var intel_delta: int = 0
 var events: Array[ResolutionEvent] = []
 var assigned_dice: int = 0
 var unassigned_dice: int = 0
+var calibration_actions := 0
 var dealer_reward: int = 0
 var dealer_reward_lost: int = 0
 var rule_failures: Array[Dictionary] = []
@@ -27,6 +28,9 @@ var resonance_awarded := false
 var full_clear_calibration_awarded := false
 var successful_bridge_count := 0
 var storm_awarded := false
+var all_in_awarded := false
+var all_in_bonus_intel := 0
+var engraving_set_activations: Array[StringName] = []
 var score_breakdown: Dictionary = {
 	ResolutionEvent.ScoreSource.BASE: 0,
 	ResolutionEvent.ScoreSource.COEFFICIENT: 0,

@@ -1,12 +1,15 @@
 class_name SingleEncounterSession
 extends RefCounted
 
+const Phase3CardSuitRules = preload("res://scripts/cards/card_suit_rules.gd")
+
 var controller: RoundController
 var hand: Array[CardDefinition]
 var selection := InteractionState.new()
 var last_error: String = ""
 var undo_allowed := true
 var is_final_round := false
+var rank_conversion_allowed := true
 
 func _init(
 	state: RoundState,
@@ -17,7 +20,8 @@ func _init(
 	p_additional_restrictions: Array[FinalRestrictionDefinition] = [],
 	p_undo_allowed: bool = true,
 	p_undo_mode: RoundController.UndoMode = RoundController.UndoMode.GLOBAL_ONE,
-	p_is_final_round: bool = false
+	p_is_final_round: bool = false,
+	p_rank_conversion_allowed: bool = true
 ) -> void:
 	controller = RoundController.new(
 		state,
@@ -30,6 +34,7 @@ func _init(
 	hand = p_hand
 	undo_allowed = p_undo_allowed
 	is_final_round = p_is_final_round
+	rank_conversion_allowed = p_rank_conversion_allowed
 
 func activate_die(die_id: StringName) -> bool:
 	if selection.kind == InteractionState.Kind.CARD:
@@ -284,6 +289,41 @@ func return_die_to_tray(die_id: StringName) -> bool:
 func calibrate_die(die_id: StringName, delta: int) -> bool:
 	return _accept(controller.adjust_die(die_id, delta), true)
 
+func play_card_with_discards(
+	card_index: int,
+	primary_target: StringName,
+	discard_indices: Array[int]
+) -> bool:
+	if card_index < 0 or card_index >= hand.size():
+		return _fail("手法牌不在当前手牌中")
+	if is_card_used(card_index):
+		return _fail("这张手法牌已经使用")
+	var discarded_ids: Array[StringName] = []
+	for index in discard_indices:
+		if index < 0 or index >= hand.size() or index == card_index:
+			return _fail("弃置目标必须是其他未使用手牌")
+		if is_card_used(index) or hand[index].id in discarded_ids:
+			return _fail("弃置目标已经离开手牌")
+		discarded_ids.append(hand[index].id)
+	var played := PlayedCard.new(hand[card_index], primary_target)
+	played.discarded_card_ids.assign(discarded_ids)
+	return _accept(controller.play_card(played), true)
+
+func convert_rank_card_to_calibration(card_index: int) -> bool:
+	if card_index < 0 or card_index >= hand.size():
+		return _fail("手法牌不在当前手牌中")
+	if is_card_used(card_index):
+		return _fail("这张手法牌已经使用")
+	if not rank_conversion_allowed:
+		return _fail("固定手牌谜题不能把牌面折作校准")
+	var amount: int = Phase3CardSuitRules.rank_calibration_value(
+		hand[card_index].rank_label
+	)
+	return _accept(
+		controller.convert_rank_card(hand[card_index].id, amount),
+		true
+	)
+
 func undo() -> bool:
 	if not undo_allowed:
 		return _fail("本次遭遇禁止撤销")
@@ -302,6 +342,8 @@ func commit() -> ResolutionReport:
 
 func is_card_used(card_index: int) -> bool:
 	var id := hand[card_index].id
+	if id in controller.state.discarded_card_ids:
+		return true
 	return controller.state.played_cards.any(
 		func(played_card) -> bool:
 			return (
@@ -370,6 +412,7 @@ func to_snapshot() -> Dictionary:
 		"last_error": last_error,
 		"undo_allowed": undo_allowed,
 		"is_final_round": is_final_round,
+		"rank_conversion_allowed": rank_conversion_allowed,
 		"controller": controller.to_snapshot(),
 	}
 
@@ -389,4 +432,5 @@ func restore_snapshot(snapshot: Dictionary, catalog: CardCatalog) -> OperationRe
 	last_error = String(snapshot.get("last_error", ""))
 	undo_allowed = bool(snapshot.get("undo_allowed", true))
 	is_final_round = bool(snapshot.get("is_final_round", false))
+	rank_conversion_allowed = bool(snapshot.get("rank_conversion_allowed", true))
 	return controller.restore_snapshot(snapshot.get("controller", {}), catalog)

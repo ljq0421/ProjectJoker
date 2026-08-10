@@ -25,6 +25,7 @@ var _committed_report: ResolutionReport
 var _calibration_undo_count := 0
 var _card_undo_count := 0
 var _global_undo_count := 0
+var _calibration_action_count := 0
 
 func _init(
 	p_state: RoundState,
@@ -104,6 +105,8 @@ func apply_paid_reroll(die_id: StringName, rolled_value: int) -> OperationResult
 		return OperationResult.new(false, "重投目标骰子不存在")
 	if die_id in state.locked_die_ids():
 		return OperationResult.new(false, "已锁定骰子不能重投")
+	if die.faulted:
+		return OperationResult.new(false, "故障骰子最终值固定为 1，不能重投")
 	_history.transform_all_states(
 		func(snapshot: RoundState) -> RoundState:
 			var target := snapshot.find_die(die_id)
@@ -119,6 +122,8 @@ func apply_paid_reroll(die_id: StringName, rolled_value: int) -> OperationResult
 func apply_paid_calibration() -> OperationResult:
 	if committed:
 		return OperationResult.new(false, "本轮已经结算")
+	if state.calibration_locked:
+		return OperationResult.new(false, "孤注一掷已锁定本轮校准")
 	_history.transform_all_states(
 		func(snapshot: RoundState) -> RoundState:
 			snapshot.calibration_points += 1
@@ -126,6 +131,26 @@ func apply_paid_calibration() -> OperationResult:
 	)
 	state = _history.current_state()
 	return OperationResult.new(true)
+
+func convert_rank_card(card_id: StringName, amount: int) -> ActionResult:
+	if committed:
+		return ActionResult.new(false, "本轮已经结算", state)
+	if state.rank_conversion_used:
+		return ActionResult.new(false, "本轮已经折算过一张数字牌", state)
+	if state.calibration_locked:
+		return ActionResult.new(false, "孤注一掷已锁定本轮校准", state)
+	if amount < 1 or amount > 3:
+		return ActionResult.new(false, "这张牌不能折作校准", state)
+	if card_id == &"" or card_id in state.discarded_card_ids:
+		return ActionResult.new(false, "这张牌已经离开手牌", state)
+	var next_state := state.clone()
+	next_state.discarded_card_ids.append(card_id)
+	next_state.rank_conversion_used = true
+	next_state.calibration_points += amount
+	return _accept(
+		ActionResult.new(true, "", next_state),
+		ActionHistory.Kind.CARD
+	)
 
 func validate_card_start() -> OperationResult:
 	if committed:
@@ -203,10 +228,16 @@ func undo_remaining() -> int:
 	return 0
 
 func calibration_undos_remaining() -> int:
-	return maxi(MAX_CATEGORY_UNDOS - _calibration_undo_count, 0)
+	return maxi(
+		MAX_CATEGORY_UNDOS + state.extra_calibration_undos - _calibration_undo_count,
+		0
+	)
 
 func card_undos_remaining() -> int:
-	return maxi(MAX_CATEGORY_UNDOS - _card_undo_count, 0)
+	return maxi(
+		MAX_CATEGORY_UNDOS + state.extra_card_undos - _card_undo_count,
+		0
+	)
 
 func placement_undo_copy() -> String:
 	return "落子不限" if undo_mode == UndoMode.SPLIT else "全局 %d" % undo_remaining()
@@ -214,9 +245,11 @@ func placement_undo_copy() -> String:
 func undo_status_copy() -> String:
 	if undo_mode == UndoMode.GLOBAL_ONE:
 		return "落子无悔：全局撤销 %d/1" % undo_remaining()
-	return "落子不限 · 校准撤销 %d/1 · 卡牌撤销 %d/1" % [
+	return "落子不限 · 校准撤销 %d/%d · 卡牌撤销 %d/%d" % [
 		calibration_undos_remaining(),
+		MAX_CATEGORY_UNDOS + state.extra_calibration_undos,
 		card_undos_remaining(),
+		MAX_CATEGORY_UNDOS + state.extra_card_undos,
 	]
 
 func undo_block_reason() -> String:
@@ -238,6 +271,7 @@ func preview() -> ResolutionReport:
 	if committed:
 		return _committed_report
 	var report := _resolver.resolve(state, encounter, resolution_context)
+	report.calibration_actions = _calibration_action_count
 	_attach_restriction(report)
 	return report
 
@@ -245,6 +279,7 @@ func commit() -> ResolutionReport:
 	if committed:
 		return _committed_report
 	var report := _resolver.resolve(state, encounter, resolution_context)
+	report.calibration_actions = _calibration_action_count
 	_attach_restriction(report)
 	if not report.restriction_satisfied:
 		report.valid = false
@@ -277,6 +312,8 @@ func _accept(
 	if result.accepted:
 		state = result.next_state
 		_history.push(state, kind)
+		if kind == ActionHistory.Kind.CALIBRATION:
+			_calibration_action_count += 1
 	return result
 
 func to_snapshot() -> Dictionary:
@@ -291,6 +328,7 @@ func to_snapshot() -> Dictionary:
 		"calibration_undo_count": _calibration_undo_count,
 		"card_undo_count": _card_undo_count,
 		"global_undo_count": _global_undo_count,
+		"calibration_action_count": _calibration_action_count,
 		"undo_mode": undo_mode,
 	}
 
@@ -307,6 +345,7 @@ func restore_snapshot(snapshot: Dictionary, catalog: CardCatalog) -> OperationRe
 	_calibration_undo_count = int(snapshot.get("calibration_undo_count", 0))
 	_card_undo_count = int(snapshot.get("card_undo_count", 0))
 	_global_undo_count = int(snapshot.get("global_undo_count", 0))
+	_calibration_action_count = int(snapshot.get("calibration_action_count", 0))
 	var report_snapshot: Dictionary = snapshot.get("committed_report", {})
 	_committed_report = (
 		SnapshotCodec.report_from_snapshot(report_snapshot)

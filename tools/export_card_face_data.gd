@@ -28,6 +28,8 @@ const CARD_IDS := [
 	&"mirror_silver_bridge",
 	&"shop_amplified_chain",
 	&"shop_reverse_backup",
+	&"shop_dice_index",
+	&"shop_chain_index",
 	&"faceless_swap_values",
 	&"faceless_flip_value",
 	&"faceless_refund_calibration",
@@ -42,6 +44,10 @@ const CARD_IDS := [
 	&"faceless_reverse_replay",
 	&"faceless_compressed_repeat",
 	&"faceless_closed_circuit",
+	&"stage7_fault_die",
+	&"stage7_all_in",
+	&"stage7_insurance_draft",
+	&"stage7_burned_rewrite",
 ]
 
 var output_path := (
