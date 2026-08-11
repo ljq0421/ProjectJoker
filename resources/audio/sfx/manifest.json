@@ -462,6 +462,96 @@
       "seed": 26087161,
       "sha256": "830dedccee3223ba60de07b8bfea58a78f1e9ecc0f66091a4d844fcf98e87e6e",
       "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "feedback_faceless_highlight"
+      ],
+      "file": "zz_feedback_faceless_hub.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 760.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 760,
+        "profile": "gated_protocol_pulse",
+        "pulses": [
+          54.0,
+          81.0,
+          108.0
+        ]
+      },
+      "parameters_sha256": "86d9366731987cdb2b5fb363ea4bf0014a155fefb4a568d9058076e6314dd4a2",
+      "seed": 26088170,
+      "sha256": "5273f4ee76e50975e5ee7f13768bd93f8c39ef9650689d26e818159d20c24d89",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "feedback_gold_highlight"
+      ],
+      "file": "zz_feedback_gold_corridor.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 720.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "body": [
+          92.0,
+          184.0,
+          368.0
+        ],
+        "duration_ms": 720,
+        "metal": [
+          1760.0,
+          2630.0,
+          3910.0
+        ],
+        "profile": "mechanical_seal"
+      },
+      "parameters_sha256": "2242149ad83be1784c161f2579facda62b7800723d0d5f83447d95abce9a8a69",
+      "seed": 26089179,
+      "sha256": "8aeb9e6f85ece89b655d6b27455a60b03e2e0a054f617b2a0a259b55d86dac3f",
+      "third_party_samples": false
+    },
+    {
+      "commercial_review": "procedural_no_external_samples",
+      "cue_ids": [
+        "feedback_mirror_highlight"
+      ],
+      "file": "zz_feedback_mirror_hall.wav",
+      "format": {
+        "bit_depth": 16,
+        "channels": 1,
+        "duration_ms": 820.0,
+        "sample_rate": 48000
+      },
+      "generation_assistance": "OpenAI Codex",
+      "parameters": {
+        "duration_ms": 820,
+        "harmonics": [
+          910.0,
+          1820.0,
+          2730.0
+        ],
+        "profile": "reverse_glass_harmonic",
+        "sweep": [
+          3180.0,
+          640.0
+        ]
+      },
+      "parameters_sha256": "2320712c3c7744aafd2febd3314d6daf3b816b148ab37c4f08965761aff9cc08",
+      "seed": 26090188,
+      "sha256": "004d49f35ee613de7cbacd25a99bf1d49dfdd3e3b4f40c2409aa39b4ba03c89e",
+      "third_party_samples": false
     }
   ],
   "generated_on": "2026-07-26",
@@ -469,7 +559,7 @@
     "master_seed": 26072026,
     "path": "tools/generate_sfx.py",
     "runtime_dependencies": [],
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "schema_version": 1
 }

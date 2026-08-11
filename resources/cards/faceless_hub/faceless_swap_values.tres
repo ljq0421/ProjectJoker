@@ -6,13 +6,14 @@
 [sub_resource type="Resource" id="Effect_swap"]
 script = ExtResource("1_effect")
 operation = 5
+amount = 1
 
 [resource]
 script = ExtResource("2_card")
 id = &"faceless_swap_values"
-display_name = "换位"
-rule_text = "交换两颗不同骰子的当前有效点数。"
-tags = PackedStringArray("双骰", "骰值", "重构")
+display_name = "换值联动"
+rule_text = "选择两颗当前有效点数不同的骰子并交换点数；按最终摆位，使它们所在的每张不同规则台系数 +1（未入台不加成）。"
+tags = PackedStringArray("双骰", "骰值", "规则台")
 target_type = 4
 suit = 0
 rank_label = "7"

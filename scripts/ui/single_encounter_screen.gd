@@ -72,6 +72,9 @@ var _emergency_tickets := 0
 var _paid_reroll_used := false
 var _paid_calibration_used := false
 var _paid_retry_used := false
+var _rule_feedback_snapshot: Dictionary = {}
+var _last_preview_total := 0
+var _preview_total_initialized := false
 
 func _ready() -> void:
 	_apply_tutorial_launch_path()
@@ -115,6 +118,12 @@ func _ready() -> void:
 	)
 	resolution_panel.event_focus_requested.connect(
 		_on_resolution_event_focus_requested
+	)
+	resolution_panel.rare_highlight_requested.connect(
+		_on_rare_highlight_requested
+	)
+	resolution_panel.highlight_cancel_requested.connect(
+		interaction_motion_layer.cancel_rare_highlights
 	)
 	refresh_from_session()
 	tutorial.configure(self, TutorialProgressStore.new(tutorial_config_path))
@@ -165,6 +174,8 @@ func bind_external_session(
 	session = p_session
 	owns_session = false
 	_last_action_feedback = ""
+	_rule_feedback_snapshot.clear()
+	_preview_total_initialized = false
 	set_run_status(area_copy, goal_copy)
 	refresh_from_session()
 
@@ -199,6 +210,7 @@ func apply_area_presentation(area_id: StringName) -> void:
 	if presentation.is_empty():
 		return
 	_area_id = area_id
+	interaction_motion_layer.set_area_id(area_id)
 	background.color = presentation["background"]
 	area_identity_bar.color = presentation["primary"]
 	area_label.add_theme_color_override("font_color", presentation["secondary"])
@@ -260,10 +272,16 @@ func show_transient_warning(message: String) -> void:
 func refresh_from_session() -> void:
 	var state := session.controller.state
 	var preview := session.preview()
+	var next_rule_feedback_snapshot := _build_rule_feedback_snapshot(state, preview)
+	var rule_feedback_entries := _changed_rule_feedback_entries(
+		_rule_feedback_snapshot,
+		next_rule_feedback_snapshot
+	)
 	var selected_target_type := _selected_card_target_type()
 	var engraving_catalog := session.controller.resolution_context.engraving_catalog
 	var accessibility := _accessibility_settings()
 	var motion_reduced := bool(accessibility.get("disable_distortion", false))
+	var locked_die_ids: Array = state.locked_die_ids()
 	interaction_motion_layer.configure(accessibility)
 	for lane_index in range(lanes.size()):
 		var rule := session.controller.encounter.rules[lane_index]
@@ -290,7 +308,9 @@ func refresh_from_session() -> void:
 				rule.coefficient
 			)),
 			int(preview.table_resolution_counts.get(rule.id, 1)),
-			_lane_evaluation_state(preview, rule.id, slot_ids)
+			_lane_evaluation_state(preview, rule.id, slot_ids),
+			preview.rule_diagnostics.get(rule.id, {}),
+			locked_die_ids
 		)
 		var table_target_active := (
 			selected_target_type == CardDefinition.TargetType.TABLE
@@ -328,7 +348,8 @@ func refresh_from_session() -> void:
 				session.selection.die_id == die.id,
 				engraving_catalog,
 				false,
-				int(preview.effective_die_values.get(die.id, die.value))
+				int(preview.effective_die_values.get(die.id, die.value)),
+				die.id in locked_die_ids
 			)
 			var die_target_active := selected_target_type in [
 				CardDefinition.TargetType.DIE,
@@ -395,6 +416,17 @@ func refresh_from_session() -> void:
 	)
 	_refresh_direction(preview)
 	_refresh_mirror_layers(state)
+	if (
+		_preview_total_initialized
+		and not session.controller.committed
+		and preview.total != _last_preview_total
+	):
+		interaction_motion_layer.show_score_delta(
+			resolution_panel.get_node_or_null("%PredictionTotal") as Control,
+			preview.total - _last_preview_total
+		)
+	_last_preview_total = preview.total
+	_preview_total_initialized = true
 	resolution_panel.bind_report(preview)
 	if dealer_definition != null:
 		%DealerHint.text = "已分配：%d / 6\n当前固定奖励：%d / %d" % [
@@ -428,6 +460,8 @@ func refresh_from_session() -> void:
 	%MinusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	%PlusButton.disabled = session.controller.committed or state.calibration_points <= 0
 	_refresh_formal_emergency()
+	_rule_feedback_snapshot = next_rule_feedback_snapshot
+	_play_rule_evaluation_feedback(rule_feedback_entries)
 	view_refreshed.emit()
 
 func _refresh_formal_emergency() -> void:
@@ -654,6 +688,34 @@ func _motion_allowed() -> bool:
 func _refresh_mirror_layers(state: RoundState) -> void:
 	%LeftMirrorLayer.visible = false
 	%RightMirrorLayer.visible = false
+	%LeftMirrorLayer.text = ""
+	%RightMirrorLayer.text = ""
+	for played_card in state.played_cards:
+		var is_bridge := false
+		for effect in played_card.effective_effects():
+			if effect.operation == EffectSpec.Operation.LINK_NEIGHBORS:
+				is_bridge = true
+				break
+		if not played_card.is_mirror_copy and not is_bridge:
+			continue
+		var targets := {
+			played_card.primary_target: true,
+			played_card.secondary_target: true,
+		}
+		var layer: Label
+		if targets.has(&"left") and targets.has(&"middle"):
+			layer = %LeftMirrorLayer
+		elif targets.has(&"middle") and targets.has(&"right"):
+			layer = %RightMirrorLayer
+		if layer != null:
+			var marker := "┄ 镜像牌影 ┄" if played_card.is_mirror_copy else "⟷ 桥接契据"
+			var entry := "%s\n%s" % [marker, played_card.definition.display_name]
+			layer.text += ("\n" if not layer.text.is_empty() else "") + entry
+			layer.visible = true
+
+func _refresh_mirror_layers_legacy(state: RoundState) -> void:
+	%LeftMirrorLayer.visible = false
+	%RightMirrorLayer.visible = false
 	for played_card in state.played_cards:
 		if not played_card.is_mirror_copy:
 			continue
@@ -678,6 +740,8 @@ func reset_teaching_encounter() -> void:
 	)
 	owns_session = true
 	_last_action_feedback = ""
+	_rule_feedback_snapshot.clear()
+	_preview_total_initialized = false
 	refresh_from_session()
 
 func start_tutorial_replay() -> void:
@@ -940,8 +1004,7 @@ func _play_card_transition(capture: Dictionary, target: Control) -> void:
 func _play_die_rule_response(
 	die_id: StringName,
 	table_id: StringName,
-	initial_delay := 0.12,
-	include_rule_lane := false
+	initial_delay := 0.12
 ) -> void:
 	var source_token := _find_die_token(die_id)
 	var source: Control = source_token
@@ -956,8 +1019,7 @@ func _play_die_rule_response(
 		source,
 		affected,
 		table_id,
-		initial_delay,
-		include_rule_lane
+		initial_delay
 	)
 
 
@@ -979,33 +1041,18 @@ func _play_rule_response(
 	source: Control,
 	affected: Control,
 	table_id: StringName,
-	initial_delay := 0.0,
-	include_rule_lane := true
+	initial_delay := 0.0
 ) -> void:
 	var lane := _lane_for_id(table_id)
 	if affected == null and lane != null:
 		affected = lane.get_node_or_null("%Formula") as Control
-	var prediction := resolution_panel.get_node_or_null("%Total") as Control
+	var prediction := resolution_panel.get_node_or_null("%PredictionTotal") as Control
 	interaction_motion_layer.play_response_sequence([
 		{"role": &"source", "target": source},
 		{"role": &"affected", "target": affected},
-		{
-			"role": &"rule",
-			"target": lane if include_rule_lane else null,
-			"tone": _rule_response_tone(table_id),
-		},
 		{"role": &"prediction", "target": prediction},
 	], initial_delay)
 
-
-func _table_slots_full(table_id: StringName) -> bool:
-	if table_id == &"":
-		return false
-	var slot_count := session.controller.effective_slot_count(table_id)
-	if slot_count <= 0:
-		return false
-	var slots := session.controller.state.slot_values(table_id, slot_count)
-	return slots.size() == slot_count and not slots.has(RoundState.EMPTY_SLOT)
 
 func _lane_for_id(table_id: StringName) -> RuleLane:
 	var lane_by_id := {
@@ -1037,7 +1084,6 @@ func _on_lane_activated(table_id: StringName) -> void:
 		payload = {"table_id": table_id}
 	if not _tutorial_allows(action, payload):
 		return
-	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.activate_table(table_id)
 	if accepted:
 		_record_tutorial_action(action, payload)
@@ -1057,8 +1103,7 @@ func _on_lane_activated(table_id: StringName) -> void:
 		_play_die_rule_response(
 			payload["die_id"],
 			table_id,
-			0.32,
-			not table_was_full and _table_slots_full(table_id)
+			0.32
 		)
 	elif not accepted:
 		_reject_feedback(_lane_for_id(table_id))
@@ -1080,7 +1125,6 @@ func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 		card_motion = _capture_card_motion(session.selection.card_index)
 	if not _tutorial_allows(action, payload):
 		return
-	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.activate_slot(table_id, slot_index)
 	if accepted:
 		_record_tutorial_action(action, payload)
@@ -1103,8 +1147,7 @@ func _on_slot_activated(table_id: StringName, slot_index: int) -> void:
 		_play_die_rule_response(
 			payload["die_id"],
 			table_id,
-			0.32,
-			not table_was_full and _table_slots_full(table_id)
+			0.32
 		)
 	elif not accepted:
 		_reject_feedback(_lane_for_id(table_id))
@@ -1113,7 +1156,6 @@ func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 	var payload := {"die_id": die_id, "table_id": table_id}
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
-	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.assign_dropped_die(die_id, table_id)
 	if accepted:
 		_record_tutorial_action(&"drag_assign", payload)
@@ -1125,8 +1167,7 @@ func _on_die_drop_requested(die_id: StringName, table_id: StringName) -> void:
 		_play_die_rule_response(
 			die_id,
 			table_id,
-			0.12,
-			not table_was_full and _table_slots_full(table_id)
+			0.12
 		)
 	else:
 		_reject_feedback(_lane_for_id(table_id))
@@ -1143,7 +1184,6 @@ func _on_die_drop_to_slot_requested(
 	}
 	if not _tutorial_allows(&"drag_assign", payload):
 		return
-	var table_was_full := _table_slots_full(table_id)
 	var accepted := session.assign_dropped_die_to_slot(
 		die_id,
 		table_id,
@@ -1159,8 +1199,7 @@ func _on_die_drop_to_slot_requested(
 		_play_die_rule_response(
 			die_id,
 			table_id,
-			0.12,
-			not table_was_full and _table_slots_full(table_id)
+			0.12
 		)
 	else:
 		_reject_feedback(_lane_for_id(table_id))
@@ -1322,10 +1361,25 @@ func _on_resolution_event_focus_requested(event: ResolutionEvent) -> void:
 		})
 	if event.combo_kind in [&"echo", &"rewrite"] and stages.size() > 1:
 		stages.append(stages[0].duplicate())
-	if event.combo_kind == &"storm":
-		interaction_motion_layer.play_resolution_climax(event.running_total)
-	elif not stages.is_empty():
+	if not stages.is_empty():
+		stages.append({
+			"target": resolution_panel.get_node_or_null("%PredictionTotal"),
+			"role": &"prediction",
+			"tone": &"success",
+		})
+	if not stages.is_empty():
 		interaction_motion_layer.play_response_sequence(stages)
+
+func _on_rare_highlight_requested(
+	kind: StringName,
+	running_total: int
+) -> void:
+	interaction_motion_layer.play_rare_highlight(
+		kind,
+		running_total,
+		_area_id,
+		resolution_panel.resume_after_highlight
+	)
 
 func _clear_resolution_source_focus() -> void:
 	for lane in lanes:
@@ -1361,19 +1415,6 @@ func _lane_evaluation_state(
 		else RuleLane.EvaluationState.PASSED
 	)
 
-func _rule_response_tone(table_id: StringName) -> StringName:
-	if table_id == &"":
-		return &"neutral"
-	var slot_count := session.controller.effective_slot_count(table_id)
-	var slot_ids := session.controller.state.slot_values(table_id, slot_count)
-	if slot_ids.is_empty() or slot_ids.has(RoundState.EMPTY_SLOT):
-		return &"neutral"
-	return (
-		&"failure"
-		if _report_has_rule_failure(session.preview(), table_id)
-		else &"success"
-	)
-
 func _report_has_rule_failure(
 	report: ResolutionReport,
 	table_id: StringName
@@ -1382,6 +1423,97 @@ func _report_has_rule_failure(
 		func(failure: Dictionary) -> bool:
 			return failure.get("rule_id", &"") == table_id
 	)
+
+
+func _build_rule_feedback_snapshot(
+	state: RoundState,
+	report: ResolutionReport
+) -> Dictionary:
+	var snapshot: Dictionary = {}
+	for rule in session.controller.encounter.rules:
+		var slot_count := session.controller.effective_slot_count(rule.id)
+		var slot_ids: Array = state.slot_values(rule.id, slot_count)
+		var effective_values: Array[int] = []
+		for die_id in slot_ids:
+			if die_id == RoundState.EMPTY_SLOT:
+				effective_values.append(0)
+				continue
+			var die: DieState = state.find_die(die_id)
+			effective_values.append(int(report.effective_die_values.get(
+				die_id,
+				die.value if die != null else 0
+			)))
+		var evaluation_state := _lane_evaluation_state(report, rule.id, slot_ids)
+		var complete := not slot_ids.is_empty() and not slot_ids.has(
+			RoundState.EMPTY_SLOT
+		)
+		snapshot[rule.id] = {
+			"complete": complete,
+			"evaluation_state": evaluation_state,
+			"fingerprint": [
+				slot_count,
+				slot_ids.duplicate(),
+				effective_values,
+				int(report.effective_table_coefficients.get(
+					rule.id,
+					rule.coefficient
+				)),
+				int(report.table_resolution_counts.get(rule.id, 1)),
+				session.controller.condition_summary(rule.id),
+				evaluation_state,
+			],
+		}
+	return snapshot
+
+
+func _changed_rule_feedback_entries(
+	previous: Dictionary,
+	current: Dictionary
+) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if previous.is_empty():
+		return entries
+	for rule in session.controller.encounter.rules:
+		if not previous.has(rule.id) or not current.has(rule.id):
+			continue
+		var previous_entry: Dictionary = previous[rule.id]
+		var current_entry: Dictionary = current[rule.id]
+		if previous_entry.get("fingerprint") == current_entry.get("fingerprint"):
+			continue
+		if not bool(current_entry.get("complete", false)):
+			continue
+		var evaluation_state := int(current_entry.get(
+			"evaluation_state",
+			RuleLane.EvaluationState.NEUTRAL
+		))
+		if evaluation_state not in [
+			RuleLane.EvaluationState.PASSED,
+			RuleLane.EvaluationState.FAILED,
+		]:
+			continue
+		var lane := _lane_for_id(rule.id)
+		if lane == null:
+			continue
+		entries.append({
+			"target": lane,
+			"tone": (
+				&"success"
+				if evaluation_state == RuleLane.EvaluationState.PASSED
+				else &"failure"
+			),
+		})
+	return entries
+
+
+func _play_rule_evaluation_feedback(entries: Array[Dictionary]) -> void:
+	if entries.is_empty():
+		return
+	interaction_motion_layer.play_rule_evaluation_feedback(entries)
+	if entries.any(
+		func(entry: Dictionary) -> bool:
+			return entry.get("tone", &"neutral") == &"success"
+	):
+		SfxAccess.play(self, &"rule_satisfied")
 
 func _accessibility_settings() -> Dictionary:
 	var settings_service := get_node_or_null("/root/SettingsService")

@@ -20,6 +20,8 @@ signal verification_retry_requested
 @onready var score_value: Label = %RoundScoreValue
 @onready var score_ledger: Label = %RoundScoreLedger
 @onready var engraving_total: Label = %RoundEngravingTotal
+@onready var fact_seal: TextureRect = %RoundFactSeal
+@onready var fact_badges: Label = %RoundFactBadges
 @onready var retention_block: VBoxContainer = %RetentionBlock
 @onready var retention_choice: OptionButton = %RetentionChoice
 @onready var next_button: Button = %NextRoundButton
@@ -50,7 +52,10 @@ func _ready() -> void:
 	)
 	retention_choice.item_selected.connect(_on_retention_selected)
 
-func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
+func show_run_state(
+	run_session: ThreeRoundEncounterSession,
+	emergency_free: bool = false
+) -> void:
 	visible = true
 	_hide_actions()
 	match run_session.status:
@@ -59,10 +64,11 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 		ThreeRoundEncounterSession.Status.FAILED:
 			SfxAccess.play(self, &"round_failure")
 		_:
-			SfxAccess.play(self, &"resolution_climax")
+			SfxAccess.play(self, &"panel_open")
 	var last_total := 0
+	var last_report: ResolutionReport
 	if not run_session.committed_reports.is_empty():
-		var last_report: ResolutionReport = run_session.committed_reports[-1]
+		last_report = run_session.committed_reports[-1]
 		last_total = last_report.total
 		score_ledger.text = ScoreLedger.compact_copy(
 			last_report
@@ -74,9 +80,11 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 			)
 		)
 	else:
+		last_report = ResolutionReport.new()
 		score_ledger.text = ScoreLedger.compact_copy(ResolutionReport.new())
 		engraving_total.text = "本轮刻印贡献：+0"
 	score_block.visible = true
+	_bind_fact_badges(last_report, emergency_free)
 	score_value.text = str(last_total)
 	title_label.text = _title_for_status(run_session.status)
 	detail_label.text = (
@@ -88,6 +96,10 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 			maxi(run_session.target_total - run_session.cumulative_total, 0),
 		]
 	)
+	detail_label.text += "\n契约封印｜%s" % _contract_seal_copy(
+		run_session.cumulative_total,
+		run_session.target_total
+	)
 	if run_session.status == ThreeRoundEncounterSession.Status.FAILED:
 		_bind_failure_review(run_session, false)
 	next_button.visible = run_session.status == ThreeRoundEncounterSession.Status.ROUND_SUMMARY
@@ -96,7 +108,7 @@ func show_run_state(run_session: ThreeRoundEncounterSession) -> void:
 	retry_button.visible = run_session.status == ThreeRoundEncounterSession.Status.FAILED
 	retry_button.text = "同种子重试"
 	return_button.visible = true
-	_play_round_summary_climax()
+	_play_round_summary_climax(_rare_fact_kind(last_report))
 
 func show_room_checkpoint(room_summary: Dictionary) -> void:
 	visible = true
@@ -248,8 +260,11 @@ func _on_retention_selected(index: int) -> void:
 		retention_choice.select(0)
 
 
-func _play_round_summary_climax() -> void:
-	set_meta("last_motion_kind", &"round_complete_climax")
+func _play_round_summary_climax(rare_kind: StringName = &"") -> void:
+	set_meta(
+		"last_motion_kind",
+		&"rare_fact_summary" if rare_kind != &"" else &"round_complete_summary"
+	)
 	if _summary_tween != null and _summary_tween.is_valid():
 		_summary_tween.kill()
 	var settings := get_node_or_null("/root/SettingsService")
@@ -260,36 +275,85 @@ func _play_round_summary_climax() -> void:
 		disable_distortion = bool(
 			settings.call("accessibility_value", &"disable_distortion")
 		)
-	dimmer.modulate.a = 1.0 if reduce_flashes else 0.0
+	dimmer.modulate.a = 1.0
 	panel_card.pivot_offset = panel_card.size * 0.5
 	score_value.pivot_offset = score_value.size * 0.5
-	panel_card.scale = Vector2.ONE if disable_distortion else Vector2(0.82, 0.82)
-	score_value.scale = Vector2.ONE if disable_distortion else Vector2(1.32, 1.32)
-	score_value.modulate = Color.WHITE if reduce_flashes else Color(0.92, 0.72, 1.0, 1.0)
+	panel_card.scale = Vector2.ONE if disable_distortion else (
+		Vector2(0.9, 0.9) if rare_kind != &"" else Vector2(0.96, 0.96)
+	)
+	score_value.scale = Vector2.ONE if disable_distortion else (
+		Vector2(1.12, 1.12) if rare_kind != &"" else Vector2(1.04, 1.04)
+	)
+	score_value.modulate = (
+		Color.WHITE
+		if reduce_flashes or rare_kind == &""
+		else Color(0.92, 0.72, 1.0, 1.0)
+	)
 	_summary_tween = create_tween()
 	_summary_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	if not reduce_flashes:
-		_summary_tween.tween_property(dimmer, "modulate:a", 1.0, 0.2)
+	if not reduce_flashes and rare_kind != &"":
 		_summary_tween.parallel().tween_property(
 			score_value,
 			"modulate",
 			Color.WHITE,
-			0.46
+			0.28
 		)
 	if not disable_distortion:
 		_summary_tween.parallel().tween_property(
 			panel_card,
 			"scale",
-			Vector2(1.045, 1.045),
-			0.3
+			Vector2.ONE,
+			0.22
 		)
 		_summary_tween.parallel().tween_property(
 			score_value,
 			"scale",
 			Vector2.ONE,
-			0.46
+			0.28
 		)
-		_summary_tween.tween_property(panel_card, "scale", Vector2.ONE, 0.14)
+
+func _bind_fact_badges(
+	report: ResolutionReport,
+	emergency_free: bool = false
+) -> void:
+	var facts: Array[String] = []
+	if report.calibration_actions == 0:
+		facts.append("零校准")
+	if report.assigned_dice == 6:
+		facts.append("六骰齐备")
+	if report.passed_rule_count == 3:
+		facts.append("三台全过")
+	if emergency_free:
+		facts.append("无应急")
+	fact_badges.text = " · ".join(facts) if not facts.is_empty() else "本轮无额外事实徽章"
+	var rare_kind := _rare_fact_kind(report)
+	fact_seal.visible = rare_kind != &""
+	fact_seal.texture = (
+		load(_rare_fact_seal_path(rare_kind)) as Texture2D
+		if rare_kind != &""
+		else null
+	)
+
+func _rare_fact_kind(report: ResolutionReport) -> StringName:
+	if report.storm_awarded:
+		return &"storm"
+	if report.resonance_awarded:
+		return &"resonance"
+	for event in report.events:
+		if event.source_id == &"full_table_critical":
+			return &"lucky"
+	if not report.engraving_set_activations.is_empty():
+		return &"engraving_set"
+	return &""
+
+func _rare_fact_seal_path(kind: StringName) -> String:
+	return "res://resources/ui/dream_glass/feedback/seal_%s.svg" % kind
+
+func _contract_seal_copy(cumulative_total: int, target_total: int) -> String:
+	var lit_count := 0
+	if target_total > 0:
+		lit_count = clampi(floori(float(cumulative_total) / float(target_total) * 4.0 + 0.0001), 0, 4)
+	return "◆".repeat(lit_count) + "◇".repeat(4 - lit_count)
 
 func _title_for_status(status: ThreeRoundEncounterSession.Status) -> String:
 	match status:
@@ -327,7 +391,7 @@ func _bind_failure_review(
 		losses.append("庄家固定奖励损失 %d 点" % review["dealer_reward_lost"])
 	for failure in review["rule_failures"].slice(
 		0,
-		mini(2, review["rule_failures"].size())
+		mini(1, review["rule_failures"].size())
 	):
 		losses.append(
 			"%s：%s"
@@ -340,7 +404,7 @@ func _bind_failure_review(
 		losses.append("未记录额外损失；主要差距来自各轮累计得分。")
 	failure_loss_label.text = "主要损失｜%s" % "；".join(losses)
 	var suggestions: Array[String] = []
-	for index in range(review["suggestions"].size()):
+	for index in range(mini(1, review["suggestions"].size())):
 		suggestions.append(
 			"%d. %s" % [index + 1, review["suggestions"][index]]
 		)

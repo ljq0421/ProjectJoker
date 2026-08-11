@@ -93,6 +93,9 @@ func _run() -> void:
 		"formal services should remain visible beside a fifteen-card deck"
 	)
 	for node_path in [
+		"%OfferTitle",
+		"%OfferHint",
+		"%OfferColumn",
 		"%FormalServicePanel",
 		"%RemoveCardButton",
 		"%EngravingSourceChoice",

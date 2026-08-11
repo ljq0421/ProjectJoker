@@ -151,6 +151,8 @@ func suit_mark_copy(suit: CardDefinition.Suit) -> String:
 	return "?"
 
 func effect_short_copy(card: CardDefinition) -> String:
+	if card != null and card.id == &"starter_link":
+		return "复制左台结算分"
 	if card != null and card.effects.size() > 1:
 		var parts: PackedStringArray = []
 		for combined_effect in card.effects:
@@ -183,7 +185,11 @@ func effect_short_copy(card: CardDefinition) -> String:
 		EffectSpec.Operation.LINK_NEIGHBORS:
 			return "连接相邻台"
 		EffectSpec.Operation.SWAP_DICE:
-			return "交换两颗骰值"
+			return (
+				"换值 · 台系数 %s" % _signed(effect.amount)
+				if effect.amount != 0
+				else "交换两颗骰值"
+			)
 		EffectSpec.Operation.COPY_DIE:
 			return "复制第一颗"
 		EffectSpec.Operation.FLIP_DIE:
@@ -211,6 +217,8 @@ func effect_short_copy(card: CardDefinition) -> String:
 func effect_detail_copy(card: CardDefinition) -> String:
 	if card == null:
 		return ""
+	if card.id == &"starter_link":
+		return "左台先通过 · 右台也通过"
 	var parts: PackedStringArray = []
 	for direct_effect in card.effects:
 		var direct_detail := _effect_detail_for(direct_effect)
@@ -243,13 +251,17 @@ func _effect_detail_for(effect: EffectSpec) -> String:
 		EffectSpec.Operation.LINK_NEIGHBORS:
 			return "传递已解析结果"
 		EffectSpec.Operation.SWAP_DICE:
-			return "当前有效点数"
+			return (
+				"异值目标 · 按最终摆位"
+				if effect.amount != 0
+				else "当前有效点数"
+			)
 		EffectSpec.Operation.COPY_DIE:
 			return "当前有效点数"
 		EffectSpec.Operation.FLIP_DIE:
 			return "7 - 当前值"
 		EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
-			return "规则台通过 %s" % _signed(effect.amount)
+			return "每次结算 %s" % _signed(effect.amount)
 		EffectSpec.Operation.REFUND_CALIBRATION:
 			return "校准点上限 2"
 		EffectSpec.Operation.MODIFY_CONDITION:
@@ -343,13 +355,18 @@ func _effect_copy(effect: EffectSpec) -> String:
 		EffectSpec.Operation.LINK_NEIGHBORS:
 			return "连接相邻规则台"
 		EffectSpec.Operation.SWAP_DICE:
-			return "交换两颗骰子的骰值"
+			return (
+				"交换两颗不同骰值；最终所在的每张规则台系数 %s"
+				% _signed(effect.amount)
+				if effect.amount != 0
+				else "交换两颗骰子的骰值"
+			)
 		EffectSpec.Operation.COPY_DIE:
 			return "第二颗复制第一颗骰值"
 		EffectSpec.Operation.FLIP_DIE:
 			return "骰值变为 7 − 当前值"
 		EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
-			return "锁定骰值；通过奖励 %s" % _signed(effect.amount)
+			return "锁定骰值；所在台每次成功结算 %s" % _signed(effect.amount)
 		EffectSpec.Operation.REFUND_CALIBRATION:
 			return "返还 %d 校准点（上限 2）" % effect.amount
 		EffectSpec.Operation.MODIFY_CONDITION:

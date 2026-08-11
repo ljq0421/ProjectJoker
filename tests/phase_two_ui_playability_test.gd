@@ -109,8 +109,8 @@ func _test_resolution_combo_feedback_contract() -> void:
 	).instantiate()
 	tree.root.add_child(panel)
 	assert_true(
-		panel.get_node_or_null("%EngravingTotal") != null,
-		"resolution panel should expose engraving contribution separately"
+		panel.get_node_or_null("%PredictionTotal") != null,
+		"resolution panel should expose the total-first score control"
 	)
 	var storm := ResolutionEvent.new(
 		&"bridge_storm",
@@ -138,7 +138,7 @@ func _test_resolution_combo_feedback_contract() -> void:
 	report.events = [storm]
 	panel.bind_report(report)
 	assert_true(
-		panel.get_node("%EngravingTotal").text.contains("+7"),
-		"engraving contribution should show its signed value"
+		panel.get_node("%PredictionTotal").tooltip_text.contains("刻印 +7"),
+		"engraving contribution should remain available in total detail"
 	)
 	panel.free()

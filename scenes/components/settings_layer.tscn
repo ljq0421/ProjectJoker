@@ -34,6 +34,7 @@ grow_horizontal = 0
 mouse_filter = 0
 text = "设置"
 tooltip_text = "打开声音、显示与无障碍设置"
+theme_override_font_sizes/font_size = 16
 
 [node name="RuleReferenceButton" type="Button" parent="SettingsRoot"]
 unique_name_in_owner = true
@@ -50,6 +51,7 @@ grow_horizontal = 0
 mouse_filter = 0
 text = "规则手册"
 tooltip_text = "查看当前牌局和全部十八种规则台（F1）"
+theme_override_font_sizes/font_size = 16
 
 [node name="RuleReferenceOverlay" parent="SettingsRoot" instance=ExtResource("3_rule_reference")]
 unique_name_in_owner = true

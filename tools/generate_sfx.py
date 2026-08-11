@@ -14,7 +14,7 @@ import wave
 
 
 SAMPLE_RATE = 48000
-GENERATOR_VERSION = "1.0.0"
+GENERATOR_VERSION = "1.1.0"
 MASTER_SEED = 26072026
 PEAK_AMPLITUDE = 10 ** (-3.2 / 20.0)
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -128,6 +128,26 @@ RECIPES = {
         "profile": "restrained_warning",
         "frequencies": [174.0, 226.0, 452.0],
         "cue_ids": ["error"],
+    },
+    "zz_feedback_gold_corridor.wav": {
+        "duration_ms": 720,
+        "profile": "mechanical_seal",
+        "body": [92.0, 184.0, 368.0],
+        "metal": [1760.0, 2630.0, 3910.0],
+        "cue_ids": ["feedback_gold_highlight"],
+    },
+    "zz_feedback_mirror_hall.wav": {
+        "duration_ms": 820,
+        "profile": "reverse_glass_harmonic",
+        "sweep": [3180.0, 640.0],
+        "harmonics": [910.0, 1820.0, 2730.0],
+        "cue_ids": ["feedback_mirror_highlight"],
+    },
+    "zz_feedback_faceless_hub.wav": {
+        "duration_ms": 760,
+        "profile": "gated_protocol_pulse",
+        "pulses": [54.0, 81.0, 108.0],
+        "cue_ids": ["feedback_faceless_highlight"],
     },
 }
 
@@ -496,6 +516,47 @@ def render_recipe(file_name: str, recipe: dict, seed: int) -> list[float]:
                 15.0 + index * 4.0,
             )
         add_noise(samples, rng, 0.0, 0.045, 0.11, 48.0)
+    elif profile == "mechanical_seal":
+        add_noise(samples, rng, 0.0, 0.055, 0.34, 52.0)
+        for index, frequency in enumerate(recipe["body"]):
+            add_tone(
+                samples, 0.0, 0.42, frequency,
+                amplitude=0.62 / (1.0 + index * 0.5), decay=8.0 + index * 2.0,
+            )
+        for hit, start in enumerate((0.07, 0.23)):
+            add_noise(samples, rng, start, 0.045, 0.22, 68.0)
+            for index, frequency in enumerate(recipe["metal"]):
+                add_tone(
+                    samples, start, 0.24, frequency * (1.0 + hit * 0.015),
+                    amplitude=0.34 / (index + 1), decay=22.0 + index * 5.0,
+                )
+    elif profile == "reverse_glass_harmonic":
+        add_noise(
+            samples, rng, 0.0, 0.48, 0.22, 3.0, 0.11,
+            reverse_envelope=True,
+        )
+        add_tone(
+            samples, 0.0, 0.58, recipe["sweep"][0], recipe["sweep"][1],
+            0.32, 3.8, 0.16,
+        )
+        for index, frequency in enumerate(recipe["harmonics"]):
+            add_tone(
+                samples, 0.31 + index * 0.035, 0.42, frequency,
+                amplitude=0.42 / (index + 1), decay=9.0 + index * 2.0,
+                attack_s=0.04,
+            )
+    elif profile == "gated_protocol_pulse":
+        for pulse_index, start in enumerate((0.035, 0.235, 0.435)):
+            frequency = recipe["pulses"][pulse_index]
+            add_tone(
+                samples, start, 0.155, frequency, frequency * 0.92,
+                0.76, 12.0, 0.006,
+            )
+            add_tone(
+                samples, start, 0.12, frequency * 3.0,
+                amplitude=0.22, decay=18.0, attack_s=0.004,
+            )
+            add_noise(samples, rng, start, 0.025, 0.14, 80.0)
     else:
         raise ValueError(f"Unknown synthesis profile for {file_name}: {profile}")
 

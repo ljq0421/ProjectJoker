@@ -21,6 +21,8 @@ const AreaPresentation = preload(
 
 @onready var deck_grid: GridContainer = %DeckGrid
 @onready var offer_column: VBoxContainer = %OfferColumn
+@onready var offer_title: Label = %OfferTitle
+@onready var offer_hint: Label = %OfferHint
 @onready var ticket_label: Label = %TicketLabel
 @onready var selection_label: Label = %ShopSelectionLabel
 @onready var card_detail_panel: PanelContainer = %ShopCardDetailPanel
@@ -51,6 +53,7 @@ var selected_deck_id: StringName = &""
 var _formal_profiles: Array[DieState] = []
 var _engraving_catalog: EngravingCatalog
 var _formal_context_bound := false
+var _service_feedback := ""
 
 func _ready() -> void:
 	safe_area.offset_top += content_top_inset
@@ -93,6 +96,7 @@ func bind_session(p_session: ShopSession, p_catalog: CardCatalog) -> void:
 	_formal_profiles.clear()
 	_engraving_catalog = null
 	_formal_context_bound = false
+	_service_feedback = ""
 	error_label.text = ""
 	visible = true
 	_refresh()
@@ -119,11 +123,27 @@ func show_service_error(message: String) -> void:
 	if not message.is_empty():
 		SfxAccess.play(self, &"error")
 
+func show_service_success(message: String) -> void:
+	_service_feedback = message
+	error_label.text = ""
+	service_status_label.visible = not message.is_empty()
+	service_status_label.text = message
+
 func _refresh() -> void:
 	for child in deck_grid.get_children():
 		child.queue_free()
 	for child in offer_column.get_children():
 		child.queue_free()
+	if shop_session.append_purchases:
+		offer_title.text = "可购入手法牌（加入牌组）"
+		offer_hint.text = (
+			"购买后加入本次远征牌组，从下一场遭遇起可抽到；牌组最多 15 张。"
+		)
+	else:
+		offer_title.text = "可替换手法牌（一换一）"
+		offer_hint.text = (
+			"同时选择待换入与待换出牌，确认后完成一换一；新牌从下一场遭遇起可抽到。"
+		)
 
 	for card_id in shop_session.deck_ids:
 		_add_card(deck_grid, card_id, &"deck", selected_deck_id == card_id, false, -1)
@@ -143,14 +163,14 @@ func _refresh() -> void:
 		CardDeck.MAX_DECK_SIZE if shop_session.append_purchases else shop_session.deck_ids.size(),
 	]
 	selection_label.text = (
-		"候选：%s　牌组：%d / %d　整备所选：%s" % [
+		"待购入：%s　远征牌组：%d / %d　整备所选：%s" % [
 			_card_name(selected_offer_id),
 			shop_session.deck_ids.size(),
 			CardDeck.MAX_DECK_SIZE,
 			_card_name(selected_deck_id),
 		]
 		if shop_session.append_purchases
-		else "候选：%s　替换：%s" % [
+		else "待换入：%s　待换出：%s" % [
 			_card_name(selected_offer_id),
 			_card_name(selected_deck_id),
 		]
@@ -165,7 +185,7 @@ func _refresh() -> void:
 		or (not shop_session.append_purchases and selected_deck_id == &"")
 	)
 	confirm_button.text = (
-		"购入候选（%d 情报券）" % shop_session.card_price(selected_offer_id)
+		"购入并加入牌组（%d 情报券）" % shop_session.card_price(selected_offer_id)
 		if shop_session.append_purchases
 		else "确认替换（%d 情报券）" % shop_session.card_price(selected_offer_id)
 	)
@@ -193,6 +213,9 @@ func _refresh() -> void:
 			else "购买%s（%d 情报券）" % [intel_name, shop_session.intel_price()]
 		)
 	_refresh_formal_service_status()
+	if not _service_feedback.is_empty():
+		service_status_label.visible = true
+		service_status_label.text = _service_feedback
 
 func _refresh_card_detail() -> void:
 	var has_offer := selected_offer_id != &""
@@ -205,12 +228,12 @@ func _refresh_card_detail() -> void:
 	var lines: PackedStringArray = []
 	if has_offer:
 		lines.append(formatter.comparison_copy(
-			"候选",
+			"待购入" if shop_session.append_purchases else "待换入",
 			catalog.find_card(selected_offer_id)
 		))
 	if has_deck:
 		lines.append(formatter.comparison_copy(
-			"整备所选" if shop_session.append_purchases else "替换",
+			"整备所选" if shop_session.append_purchases else "待换出",
 			catalog.find_card(selected_deck_id)
 		))
 	card_detail_text.text = "\n".join(lines)
@@ -249,9 +272,26 @@ func _on_card_selected(card_id: StringName, role: StringName) -> void:
 	_refresh()
 
 func _on_confirm_pressed() -> void:
+	var purchased_card := catalog.find_card(selected_offer_id)
+	var replaced_card := catalog.find_card(selected_deck_id)
+	var before_count := shop_session.deck_ids.size()
 	var result := shop_session.purchase(selected_offer_id, selected_deck_id)
 	error_label.text = result.reason
 	if result.accepted:
+		var action_copy := (
+			"购入"
+			if shop_session.append_purchases
+			else "换入（换出 %s）" % (
+				replaced_card.display_name if replaced_card != null else "未知牌"
+			)
+		)
+		_service_feedback = "%s《%s》｜%s｜牌组 %d→%d｜下一场遭遇起生效" % [
+			action_copy,
+			purchased_card.display_name if purchased_card != null else "未知牌",
+			CardFormatter.new().effect_short_copy(purchased_card) if purchased_card != null else "未知功能",
+			before_count,
+			shop_session.deck_ids.size(),
+		]
 		selected_offer_id = &""
 		selected_deck_id = &""
 		SfxAccess.play(self, &"shop_purchase")

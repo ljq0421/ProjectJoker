@@ -134,6 +134,55 @@ func restore_engraving_selection(engraving_id: StringName) -> void:
 func close() -> void:
 	visible = false
 
+func play_install_feedback(
+	engraving_id: StringName,
+	die_id: StringName,
+	face: int,
+	on_finished: Callable = Callable()
+) -> void:
+	%InstallEngravingButton.disabled = true
+	%RewardErrorLabel.text = "%s → %s → 骰面 %d｜刻印已生效" % [
+		_engraving_name(engraving_id),
+		String(die_id).to_upper(),
+		face,
+	]
+	SfxAccess.play(self, &"engraving_install")
+	var nodes: Array[Control] = []
+	for child in %OfferRow.get_children():
+		if child is EngravingOptionToken and child.engraving_id == engraving_id:
+			nodes.append(child)
+	for child in %DieRow.get_children():
+		if child is Button and child.get_meta("die_id", &"") == die_id:
+			nodes.append(child)
+	for child in %FaceGrid.get_children():
+		if child is Button and int(child.get_meta("face", 0)) == face:
+			nodes.append(child)
+	var settings := get_node_or_null("/root/SettingsService")
+	var reduced := false
+	if settings != null and settings.has_method("accessibility_value"):
+		reduced = bool(settings.call("accessibility_value", &"disable_distortion"))
+	if reduced or nodes.is_empty():
+		if on_finished.is_valid():
+			on_finished.call()
+		return
+	var tween := create_tween()
+	for node in nodes:
+		tween.tween_callback(_pulse_install_node.bind(node))
+		tween.tween_interval(0.16)
+	if on_finished.is_valid():
+		tween.tween_callback(on_finished)
+
+func _pulse_install_node(node: Control) -> void:
+	if node == null or not node.is_inside_tree():
+		return
+	node.pivot_offset = node.size * 0.5
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	node.scale = Vector2(1.1, 1.1)
+	node.modulate = Color("e7b84b")
+	tween.tween_property(node, "scale", Vector2.ONE, 0.22)
+	tween.tween_property(node, "modulate", Color.WHITE, 0.22)
+
 func _on_engraving_selected(engraving_id: StringName) -> void:
 	selected_engraving_id = engraving_id
 	engraving_selected.emit(engraving_id)

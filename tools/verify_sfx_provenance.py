@@ -38,6 +38,9 @@ EXPECTED_FILES = {
     "success.wav",
     "failure.wav",
     "error.wav",
+    "zz_feedback_gold_corridor.wav",
+    "zz_feedback_mirror_hall.wav",
+    "zz_feedback_faceless_hub.wav",
 }
 FORBIDDEN_AUDIO_SUFFIXES = {".wav", ".ogg", ".mp3", ".flac"}
 MAX_PCM_PEAK = round(32767 * (10 ** (-3.0 / 20.0))) + 1

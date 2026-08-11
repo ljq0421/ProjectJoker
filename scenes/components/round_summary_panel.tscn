@@ -90,6 +90,27 @@ horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
 theme_override_font_sizes/font_size = 14
 
+[node name="FactBadgeRow" type="HBoxContainer" parent="Center/Panel/Content/RoundScoreBlock"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="RoundFactSeal" type="TextureRect" parent="Center/Panel/Content/RoundScoreBlock/FactBadgeRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RoundFactBadges" type="Label" parent="Center/Panel/Content/RoundScoreBlock/FactBadgeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "事实徽章"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.6784, 1, 0.9608, 1)
+theme_override_font_sizes/font_size = 18
+
 [node name="SummaryDetail" type="Label" parent="Center/Panel/Content"]
 unique_name_in_owner = true
 layout_mode = 2

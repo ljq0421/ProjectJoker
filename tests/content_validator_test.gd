@@ -58,6 +58,30 @@ func run() -> void:
 		"empty card rank labels should be reported"
 	)
 
+	var enhanced_swap := CardDefinitionScript.new()
+	enhanced_swap.id = &"enhanced_swap"
+	enhanced_swap.display_name = "换值联动"
+	enhanced_swap.rule_text = "交换不同点数并强化最终所在规则台。"
+	enhanced_swap.tags = PackedStringArray(["骰值"])
+	enhanced_swap.target_type = CardDefinitionScript.TargetType.DICE_PAIR
+	enhanced_swap.suit = CardDefinitionScript.Suit.CLUBS
+	enhanced_swap.rank_label = "7"
+	var enhanced_swap_effect := EffectSpecScript.new()
+	enhanced_swap_effect.operation = EffectSpecScript.Operation.SWAP_DICE
+	enhanced_swap_effect.amount = 1
+	enhanced_swap.effects = [enhanced_swap_effect]
+	assert_equal(
+		validator.validate([], [enhanced_swap]),
+		[],
+		"swap amount may carry a non-negative final-table coefficient bonus"
+	)
+	enhanced_swap_effect.amount = -1
+	assert_true(
+		"card enhanced_swap swap coefficient bonus cannot be negative"
+		in validator.validate([], [enhanced_swap]),
+		"negative swap coefficient bonuses are rejected"
+	)
+
 	var restriction = FinalRestrictionDefinitionScript.new()
 	restriction.id = &"invalid_limit"
 	restriction.display_name = "无效上限"

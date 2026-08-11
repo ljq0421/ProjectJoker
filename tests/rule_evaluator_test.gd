@@ -15,11 +15,15 @@ func run() -> void:
 	var exact_result = evaluator.evaluate(exact, [1, 6])
 	assert_true(exact_result.valid, "1 + 6 should satisfy exact sum 7")
 	assert_equal(exact_result.total, 14, "exact sum should use sum times coefficient")
+	assert_equal(exact_result.diagnostics.get("actual"), 7, "diagnostics should expose actual sum")
+	assert_equal(exact_result.diagnostics.get("target"), 7, "diagnostics should expose target sum")
+	var incomplete_result = evaluator.evaluate(exact, [1])
 	assert_equal(
-		evaluator.evaluate(exact, [1]).reason,
+		incomplete_result.reason,
 		"需要放入 2 颗骰子",
 		"incomplete rules should provide player-facing Chinese feedback"
 	)
+	assert_equal(incomplete_result.diagnostics.get("delta"), -1, "incomplete diagnostics should expose slot difference")
 
 	var even := RuleDefinitionScript.new()
 	even.id = &"all_even"

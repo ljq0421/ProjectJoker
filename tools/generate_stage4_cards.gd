@@ -25,7 +25,7 @@ func _run() -> void:
 		_spec(&"starter_stable_repeat", "稳态复写", "令一张规则台的系数 -1（最低为 1），并额外结算 1 次。", CardDefinition.TargetType.TABLE, ["规则台", "权衡"], [[EffectSpec.Operation.MODIFY_COEFFICIENT, -1], [EffectSpec.Operation.REPEAT_TABLE, 1]]),
 		_spec(&"starter_amplified_repeat", "增幅复写", "令一张规则台的系数 +1，并额外结算 1 次。", CardDefinition.TargetType.TABLE, ["规则台", "联动"], [[EffectSpec.Operation.MODIFY_COEFFICIENT, 1], [EffectSpec.Operation.REPEAT_TABLE, 1]]),
 		_spec(&"starter_reverse", "倒序", "反转本轮规则台的解析顺序。", CardDefinition.TargetType.GLOBAL, ["全局", "顺序"], [[EffectSpec.Operation.REVERSE_RESOLUTION, 0]]),
-		_spec(&"starter_link", "桥接", "把左侧规则台的已解析结果传递到右侧规则台。", CardDefinition.TargetType.GAP, ["桌间", "传递"], [[EffectSpec.Operation.LINK_NEIGHBORS, 1]]),
+		_spec(&"starter_link", "桥接", "左台先通过并结算，右台也通过时，复制左台本轮结算分。", CardDefinition.TargetType.GAP, ["桌间", "传递"], [[EffectSpec.Operation.LINK_NEIGHBORS, 1]]),
 		_spec(&"shop_precision_map", "精密映射", "令一张规则台的系数 +3。", CardDefinition.TargetType.TABLE, ["商店", "系数"], [[EffectSpec.Operation.MODIFY_COEFFICIENT, 3]]),
 		_spec(&"shop_triple_repeat", "三重复写", "令一张规则台额外结算 3 次。", CardDefinition.TargetType.TABLE, ["商店", "重复"], [[EffectSpec.Operation.REPEAT_TABLE, 3]]),
 		_spec(&"shop_long_push", "长距推码", "令一颗骰子的点数 +3，最终点数限制在 1..6。", CardDefinition.TargetType.DIE, ["商店", "骰值"], [[EffectSpec.Operation.ADJUST_DIE, 3]]),

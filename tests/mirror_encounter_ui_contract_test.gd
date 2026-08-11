@@ -33,8 +33,8 @@ func run() -> void:
 		ResolutionEvent.new(
 			&"mirror_folded_map",
 			"镜像副本：折光映射｜right → middle｜系数 +1",
-			0,
-			0,
+			3,
+			3,
 			true,
 			true,
 			&"mirror_folded_map",
@@ -42,10 +42,14 @@ func run() -> void:
 			&"right_gap"
 		),
 	]
+	report.total = 3
 	panel.bind_report(report)
-	var row := panel.get_node("%EventList").get_child(0) as Label
-	assert_true(row.text.contains("镜像副本"), "mirror event must use a text label")
-	assert_true(row.text.contains("right → middle"), "mirror event must show endpoints")
-	assert_true(row.text.contains("系数 +1"), "mirror event must show weakened effect")
+	var row = panel.get_node("%EventList").get_child(0)
+	assert_true(
+		row.get_node("%EventTitle").text.contains("镜像"),
+		"mirror event must retain a compact visible identity"
+	)
+	assert_true(row.tooltip_text.contains("right → middle"), "mirror detail must show endpoints")
+	assert_true(row.tooltip_text.contains("系数 +1"), "mirror detail must show weakened effect")
 	assert_true(row.get_meta("is_mirror_copy"), "mirror row keeps source metadata")
 	panel.free()

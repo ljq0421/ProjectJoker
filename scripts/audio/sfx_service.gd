@@ -20,6 +20,15 @@ const ROUND_COMMIT := preload("res://resources/audio/sfx/round_commit.wav")
 const SUCCESS := preload("res://resources/audio/sfx/success.wav")
 const FAILURE := preload("res://resources/audio/sfx/failure.wav")
 const ERROR := preload("res://resources/audio/sfx/error.wav")
+const FEEDBACK_GOLD := preload(
+	"res://resources/audio/sfx/zz_feedback_gold_corridor.wav"
+)
+const FEEDBACK_MIRROR := preload(
+	"res://resources/audio/sfx/zz_feedback_mirror_hall.wav"
+)
+const FEEDBACK_FACELESS := preload(
+	"res://resources/audio/sfx/zz_feedback_faceless_hub.wav"
+)
 
 const CUES := {
 	&"ui_confirm": {
@@ -193,6 +202,15 @@ const CUES := {
 		"cooldown_ms": 0,
 		"priority": 2,
 	},
+	&"rule_satisfied": {
+		"stream": PROGRESS_CONFIRM,
+		"bus": &"Gameplay",
+		"volume_db": -4.0,
+		"pitch_min": 1.12,
+		"pitch_max": 1.16,
+		"cooldown_ms": 80,
+		"priority": 3,
+	},
 	&"resolution_impact": {
 		"stream": ENGRAVING,
 		"bus": &"Gameplay",
@@ -210,6 +228,33 @@ const CUES := {
 		"pitch_max": 1.1,
 		"cooldown_ms": 120,
 		"priority": 4,
+	},
+	&"feedback_gold_highlight": {
+		"stream": FEEDBACK_GOLD,
+		"bus": &"Gameplay",
+		"volume_db": 0.5,
+		"pitch_min": 1.0,
+		"pitch_max": 1.0,
+		"cooldown_ms": 300,
+		"priority": 5,
+	},
+	&"feedback_mirror_highlight": {
+		"stream": FEEDBACK_MIRROR,
+		"bus": &"Gameplay",
+		"volume_db": 0.5,
+		"pitch_min": 1.0,
+		"pitch_max": 1.0,
+		"cooldown_ms": 300,
+		"priority": 5,
+	},
+	&"feedback_faceless_highlight": {
+		"stream": FEEDBACK_FACELESS,
+		"bus": &"Gameplay",
+		"volume_db": 0.5,
+		"pitch_min": 1.0,
+		"pitch_max": 1.0,
+		"cooldown_ms": 300,
+		"priority": 5,
 	},
 	&"round_success": {
 		"stream": SUCCESS,

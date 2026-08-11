@@ -56,6 +56,11 @@ func _assert_key_effects(catalog: CardCatalog) -> void:
 		"swap card uses deterministic swap"
 	)
 	assert_equal(
+		catalog.find_card(&"faceless_swap_values").effects[0].amount,
+		1,
+		"enhanced swap grants one coefficient per unique final table"
+	)
+	assert_equal(
 		catalog.find_card(&"faceless_exact_tolerance").effects[0].condition_modifier,
 		EffectSpec.ConditionModifier.EXACT_TOLERANCE,
 		"exact tolerance stores its modifier"

@@ -75,7 +75,18 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						errors.append("card %s adjust-die effect requires a die target" % card.id)
 					if effect.amount == 0:
 						errors.append("card %s adjust-die amount cannot be zero" % card.id)
-				EffectSpec.Operation.SWAP_DICE, EffectSpec.Operation.COPY_DIE:
+				EffectSpec.Operation.SWAP_DICE:
+					if card.target_type != CardDefinition.TargetType.DICE_PAIR:
+						errors.append(
+							"card %s pair-die effect requires a dice-pair target"
+							% card.id
+						)
+					if effect.amount < 0:
+						errors.append(
+							"card %s swap coefficient bonus cannot be negative"
+							% card.id
+						)
+				EffectSpec.Operation.COPY_DIE:
 					if card.target_type != CardDefinition.TargetType.DICE_PAIR:
 						errors.append(
 							"card %s pair-die effect requires a dice-pair target"
@@ -83,7 +94,7 @@ func validate(rules: Array, cards: Array) -> Array[String]:
 						)
 					if effect.amount != 0:
 						errors.append(
-							"card %s pair-die amount must equal zero" % card.id
+							"card %s copy-die amount must equal zero" % card.id
 						)
 				EffectSpec.Operation.FLIP_DIE:
 					if card.target_type != CardDefinition.TargetType.DIE:

@@ -7,6 +7,8 @@ func run() -> void:
 	_test_route_copy_explains_random_position()
 	_test_rule_lane_semantic_colors_and_target_precedence()
 	_test_used_die_card_exposes_confirmed_target()
+	_test_rule_feedback_uses_changed_complete_lanes()
+	_test_rule_feedback_reports_both_sides_of_a_value_swap()
 
 func _test_locked_modifier_uses_gold_star() -> void:
 	var reveal: NarrativeCard = (
@@ -144,3 +146,132 @@ func _test_used_die_card_exposes_confirmed_target() -> void:
 		"the badge should name the locked die target"
 	)
 	token.free()
+
+
+func _test_rule_feedback_uses_changed_complete_lanes() -> void:
+	var screen: SingleEncounterScreen = load(
+		"res://scenes/run/single_encounter_screen.tscn"
+	).instantiate()
+	screen.tutorial_auto_start = false
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(screen)
+	var layer: InteractionMotionLayer = screen.get_node("%InteractionMotionLayer")
+	var left: RuleLane = screen.get_node("%LeftLane")
+
+	_clear_rule_feedback_meta(layer)
+	assert_true(screen.session.activate_die(&"d1"), "fixture should select d1")
+	assert_true(screen.session.activate_table(&"left"), "fixture should place d1")
+	screen.refresh_from_session()
+	assert_equal(
+		layer.get_meta("last_rule_evaluation_targets", []),
+		[],
+		"an incomplete changed lane should not pulse"
+	)
+
+	assert_true(screen.session.activate_die(&"d6"), "fixture should select d6")
+	assert_true(screen.session.activate_table(&"left"), "fixture should complete left")
+	screen.refresh_from_session()
+	_assert_rule_feedback(layer, [left], [&"success"], "completing exact seven")
+
+	_clear_rule_feedback_meta(layer)
+	screen.refresh_from_session()
+	assert_equal(
+		layer.get_meta("last_rule_evaluation_targets", []),
+		[],
+		"an unchanged refresh should not replay feedback"
+	)
+
+	_clear_rule_feedback_meta(layer)
+	assert_true(screen.session.activate_card(1), "coefficient card should select")
+	assert_true(screen.session.activate_table(&"left"), "coefficient card should play")
+	screen.refresh_from_session()
+	_assert_rule_feedback(
+		layer,
+		[left],
+		[&"success"],
+		"a changed lane that stays satisfied"
+	)
+
+	_clear_rule_feedback_meta(layer)
+	assert_true(screen.session.calibrate_die(&"d5", -1), "unassigned d5 should calibrate")
+	screen.refresh_from_session()
+	assert_equal(
+		layer.get_meta("last_rule_evaluation_targets", []),
+		[],
+		"calibrating an unassigned die should not pulse a rule lane"
+	)
+
+	_clear_rule_feedback_meta(layer)
+	assert_true(screen.session.calibrate_die(&"d1", 1), "assigned d1 should calibrate")
+	screen.refresh_from_session()
+	_assert_rule_feedback(layer, [left], [&"failure"], "breaking exact seven")
+
+	_clear_rule_feedback_meta(layer)
+	assert_true(screen.session.undo(), "undo should restore the assigned calibration")
+	screen.refresh_from_session()
+	_assert_rule_feedback(layer, [left], [&"success"], "undo restoring exact seven")
+	screen.free()
+
+
+func _test_rule_feedback_reports_both_sides_of_a_value_swap() -> void:
+	var screen: SingleEncounterScreen = load(
+		"res://scenes/run/single_encounter_screen.tscn"
+	).instantiate()
+	screen.tutorial_auto_start = false
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(screen)
+	for assignment in [
+		[&"d2", &"left"],
+		[&"d5", &"left"],
+		[&"d4", &"right"],
+	]:
+		assert_true(
+			screen.session.activate_die(assignment[0]),
+			"swap fixture should select %s" % assignment[0]
+		)
+		assert_true(
+			screen.session.activate_table(assignment[1]),
+			"swap fixture should place %s" % assignment[0]
+		)
+	screen.refresh_from_session()
+	var layer: InteractionMotionLayer = screen.get_node("%InteractionMotionLayer")
+	_clear_rule_feedback_meta(layer)
+	var source := screen.session.controller.state.find_die(&"d2")
+	var target := screen.session.controller.state.find_die(&"d4")
+	var source_value := source.value
+	source.value = target.value
+	target.value = source_value
+	screen.refresh_from_session()
+	_assert_rule_feedback(
+		layer,
+		[screen.get_node("%LeftLane"), screen.get_node("%RightLane")],
+		[&"failure", &"success"],
+		"a cross-lane value swap"
+	)
+	screen.free()
+
+
+func _clear_rule_feedback_meta(layer: InteractionMotionLayer) -> void:
+	layer.set_meta("last_rule_evaluation_targets", [])
+	layer.set_meta("last_rule_evaluation_tones", [])
+
+
+func _assert_rule_feedback(
+	layer: InteractionMotionLayer,
+	targets: Array,
+	tones: Array,
+	context: String
+) -> void:
+	var expected_ids: Array[int] = []
+	for target in targets:
+		expected_ids.append((target as Control).get_instance_id())
+	assert_equal(
+		layer.get_meta("last_rule_evaluation_targets", []),
+		expected_ids,
+		"%s should target the changed complete lanes" % context
+	)
+	assert_equal(
+		layer.get_meta("last_rule_evaluation_tones", []),
+		tones,
+		"%s should expose the semantic result" % context
+	)

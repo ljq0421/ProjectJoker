@@ -150,6 +150,10 @@ func _test_response_sequence_and_climax_contract() -> void:
 		layer.has_method("play_response_sequence"),
 		"motion layer should sequence source, affected object, rule, and prediction"
 	)
+	assert_true(
+		layer.has_method("play_rule_evaluation_feedback"),
+		"motion layer should support multi-lane rule evaluation feedback"
+	)
 	if layer.has_method("play_response_sequence"):
 		layer.play_response_sequence([
 			{"role": &"source", "target": screen.get_node("%Hand")},
@@ -157,7 +161,7 @@ func _test_response_sequence_and_climax_contract() -> void:
 			{"role": &"rule", "target": screen.get_node("%MiddleLane")},
 			{
 				"role": &"prediction",
-				"target": screen.resolution_panel.get_node("%Total"),
+				"target": screen.resolution_panel.get_node("%PredictionTotal"),
 			},
 		])
 		assert_equal(
@@ -178,6 +182,11 @@ func _test_response_sequence_and_climax_contract() -> void:
 			&"rule",
 			&"failure"
 		)
+		assert_equal(
+			screen.get_node("%MiddleLane").scale,
+			Vector2.ONE,
+			"rule response feedback must not scale the actual lane"
+		)
 		var rule_pulse := layer.get_node_or_null("ResponsePulse_rule") as Panel
 		assert_true(
 			rule_pulse != null
@@ -189,14 +198,50 @@ func _test_response_sequence_and_climax_contract() -> void:
 			var rule_style := rule_pulse.get_theme_stylebox("panel") as StyleBoxFlat
 			assert_true(
 				rule_style != null
-				and rule_style.get_border_width(SIDE_LEFT) >= 8,
-				"the full-lane response should use a clearly visible luminous border"
+				and rule_style.get_border_width(SIDE_LEFT) <= 4,
+				"rule feedback should use a restrained local contract outline"
 			)
 			assert_equal(
 				rule_style.border_color,
 				InteractionMotionLayer.RULE_FAILURE,
 				"failed rule responses should use the red semantic color"
 			)
+	if layer.has_method("play_rule_evaluation_feedback"):
+		var left := screen.get_node("%LeftLane") as Control
+		var middle := screen.get_node("%MiddleLane") as Control
+		layer.play_rule_evaluation_feedback([
+			{"target": left, "tone": &"success"},
+			{"target": middle, "tone": &"failure"},
+		])
+		assert_equal(
+			layer.get_meta("last_rule_evaluation_targets", []),
+			[left.get_instance_id(), middle.get_instance_id()],
+			"multi-lane feedback should preserve left-to-right targets"
+		)
+		layer._pulse_rule_evaluation_stage(left.get_instance_id(), &"success")
+		layer._pulse_rule_evaluation_stage(middle.get_instance_id(), &"failure")
+		assert_equal(
+			left.scale,
+			Vector2.ONE,
+			"successful rule evaluation must keep the lane geometry stable"
+		)
+		assert_equal(
+			middle.scale,
+			Vector2.ONE,
+			"failed rule evaluation must keep the lane geometry stable"
+		)
+		assert_true(
+			layer.get_node_or_null(
+				"ResponsePulse_rule_%d" % left.get_instance_id()
+			) != null,
+			"the first rule lane should keep its own response ring"
+		)
+		assert_true(
+			layer.get_node_or_null(
+				"ResponsePulse_rule_%d" % middle.get_instance_id()
+			) != null,
+			"the second rule lane should keep its own response ring"
+		)
 	screen.free()
 
 

@@ -29,11 +29,15 @@ func _run() -> void:
 	await _drag_to_point(d1, second_slot_label_point)
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"", &"d1"],
-		"real drag should assign d1 to slot 2 instead of the first empty slot"
+		== [&"d1", &""],
+		"real drag should use the first empty slot regardless of the drop side"
 	)
+	var lingering_die_ghosts := 0
+	for motion_child in screen.get_node("%InteractionMotionLayer").get_children():
+		if motion_child.name in [&"LandingDieGhost", &"ReturningDieGhost"]:
+			lingering_die_ghosts += 1
 	_assert_true(
-		screen.get_node("%InteractionMotionLayer").get_child_count() == 0,
+		lingering_die_ghosts == 0,
 		"a completed pointer drag must not replay a second automatic die flight"
 	)
 	_assert_true(
@@ -49,34 +53,45 @@ func _run() -> void:
 	await _drag(_find_die(&"d2"), _find_die(&"d1"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"", &"d2"],
-		"a free die dropped on occupied slot 2 should replace its occupant"
+		== [&"d1", &"d2"],
+		"a free die dropped on an occupant should fill the remaining empty slot"
 	)
 	var swap_tray: Control = screen.get_node("%DiceTray")
-	var displaced_d1 := _find_die(&"d1")
+	var retained_d1 := _find_die(&"d1")
 	_assert_true(
-		displaced_d1 != null and swap_tray.is_ancestor_of(displaced_d1),
-		"the displaced die should reappear in the tray"
+		retained_d1 != null and left.is_ancestor_of(retained_d1),
+		"the targeted die should remain assigned while another slot is empty"
 	)
 	_assert_true(
 		screen.get_node("%ErrorLabel").text.is_empty(),
-		"a successful free-to-occupied drag should not show an error"
+		"a successful empty-slot-first drag should not show an error"
 	)
 	_assert_true(
 		screen.get_node("%InteractionMotionLayer").get_meta(
 			"last_response_sequence", []
 		) == [&"source", &"affected", &"prediction"],
-		"replacing one die should update the source, target, and prediction"
+		"filling the remaining slot should update the source, target, and prediction"
+	)
+	await _drag(_find_die(&"d3"), _find_die(&"d1"))
+	_assert_true(
+		screen.session.controller.state.assignments.get(&"left", [])
+		== [&"d3", &"d2"],
+		"a full table should replace the die at the actual drop slot"
+	)
+	var displaced_d1 := _find_die(&"d1")
+	_assert_true(
+		displaced_d1 != null and swap_tray.is_ancestor_of(displaced_d1),
+		"the die displaced from a full table should reappear in the tray"
 	)
 	await _click(screen.get_node("%UndoButton"))
 	_assert_true(
 		screen.session.controller.state.assignments.get(&"left", [])
-		== [&"", &"d1"],
+		== [&"d1", &"d2"],
 		"one undo should restore the displaced die to its original slot"
 	)
-	var reverted_d2 := _find_die(&"d2")
+	var reverted_d3 := _find_die(&"d3")
 	_assert_true(
-		reverted_d2 != null and swap_tray.is_ancestor_of(reverted_d2),
+		reverted_d3 != null and swap_tray.is_ancestor_of(reverted_d3),
 		"undo should return the incoming die to the tray"
 	)
 	_assert_true(

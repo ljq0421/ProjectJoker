@@ -46,16 +46,16 @@ func run() -> void:
 	)
 	assert_true(
 		drag_session.assign_dropped_die_to_slot(&"d2", &"left", 1),
-		"a free dragged die should replace the explicitly targeted occupant"
+		"a free dragged die should use an empty slot before replacing"
 	)
 	assert_equal(
 		drag_session.controller.state.assignments[&"left"],
-		[&"", &"d2", &""],
-		"drag placement should not redirect to a nearby empty slot"
+		[&"d2", &"d1", &""],
+		"drag placement should ignore the occupied target and use the first empty slot"
 	)
-	assert_false(
+	assert_true(
 		drag_session.controller.state.is_assigned(&"d1"),
-		"the drag target occupant should become unassigned"
+		"the drag target occupant should remain assigned while an empty slot exists"
 	)
 	assert_equal(
 		drag_session.last_error,
@@ -134,6 +134,7 @@ func _state() -> RoundState:
 	state.dice = [
 		DieStateScript.new(&"d1", 1),
 		DieStateScript.new(&"d2", 2),
+		DieStateScript.new(&"d3", 3),
 	]
 	return state
 

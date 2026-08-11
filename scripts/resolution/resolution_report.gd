@@ -31,6 +31,9 @@ var storm_awarded := false
 var all_in_awarded := false
 var all_in_bonus_intel := 0
 var engraving_set_activations: Array[StringName] = []
+# Presentation-only diagnostics. This remains outside run snapshots and never
+# participates in score or reward calculation.
+var rule_diagnostics: Dictionary = {}
 var score_breakdown: Dictionary = {
 	ResolutionEvent.ScoreSource.BASE: 0,
 	ResolutionEvent.ScoreSource.COEFFICIENT: 0,

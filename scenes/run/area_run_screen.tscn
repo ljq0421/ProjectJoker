@@ -28,19 +28,16 @@ unique_name_in_owner = true
 
 [node name="NavigationBar" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
+custom_minimum_size = Vector2(1640, 48)
 offset_left = 32.0
 offset_top = 24.0
-offset_right = -248.0
+offset_right = 1672.0
 offset_bottom = 72.0
-grow_horizontal = 2
-grow_vertical = 0
 z_index = 60
 
 [node name="ChromeRow" type="HBoxContainer" parent="NavigationBar"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 8
 
 [node name="HomeButton" type="Button" parent="NavigationBar/ChromeRow"]
 unique_name_in_owner = true
@@ -51,8 +48,8 @@ tooltip_text = "结束当前区域试炼并返回梦层入口"
 
 [node name="AreaChromeLabel" type="Label" parent="NavigationBar/ChromeRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(884, 48)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "区域契据"
 horizontal_alignment = 2
 vertical_alignment = 1

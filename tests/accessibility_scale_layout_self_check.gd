@@ -6,6 +6,16 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	_assert_true(
+		String(ProjectSettings.get_setting("display/window/stretch/mode"))
+		== "canvas_items",
+		"project stretch mode should use canvas_items"
+	)
+	_assert_true(
+		String(ProjectSettings.get_setting("display/window/stretch/aspect"))
+		== "keep",
+		"project stretch aspect should preserve the 16:9 canvas"
+	)
 	for window_size in [
 		Vector2i(1280, 720),
 		Vector2i(1920, 1080),
@@ -32,6 +42,34 @@ func _check_layout(window_size: Vector2i, scale_percent: int) -> void:
 	root.add_child(screen)
 	await process_frame
 	await process_frame
+	for fixed_control in [
+		[screen.get_node("SafeArea/RootColumn/TopBar"), Vector2(1856, 32), "TopBar"],
+		[screen.get_node("SafeArea/RootColumn/TopBar/RestrictionSlot"), Vector2(260, 32), "RestrictionSlot"],
+		[screen.get_node("SafeArea/RootColumn/AreaDirectiveSlot"), Vector2(1856, 40), "AreaDirectiveSlot"],
+		[screen.get_node("SafeArea/RootColumn/Body"), Vector2(1856, 836), "Body"],
+		[screen.get_node("SafeArea/RootColumn/Body/DealerPanel"), Vector2(230, 836), "DealerPanel"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center"), Vector2(1290, 836), "Center"],
+		[screen.get_node("%LeftLane"), Vector2(371, 302), "LeftLane"],
+		[screen.get_node("%MiddleLane"), Vector2(372, 302), "MiddleLane"],
+		[screen.get_node("%RightLane"), Vector2(371, 302), "RightLane"],
+		[screen.get_node("%LeftGap"), Vector2(72, 256), "LeftGap"],
+		[screen.get_node("%RightGap"), Vector2(72, 256), "RightGap"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn/LeftMirrorSlot"), Vector2(72, 40), "LeftMirrorSlot"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn/RightMirrorSlot"), Vector2(72, 40), "RightMirrorSlot"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center/DiceRow"), Vector2(1290, 102), "DiceRow"],
+		[screen.get_node("%Hand"), Vector2(1290, 126), "Hand"],
+		[screen.get_node("%CardDetailPanel"), Vector2(1290, 150), "CardDetailPanel"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center/ActionBar"), Vector2(1290, 42), "ActionBar"],
+		[screen.get_node("SafeArea/RootColumn/Body/Center/EmergencyBar"), Vector2(1290, 42), "EmergencyBar"],
+		[screen.get_node("%ResolutionPanel"), Vector2(300, 836), "ResolutionPanel"],
+	]:
+		_assert_size(
+			fixed_control[0],
+			fixed_control[1],
+			fixed_control[2],
+			window_size,
+			scale_percent
+		)
 	var viewport_rect := root.get_visible_rect()
 	_assert_rect_inside(
 		screen.get_global_rect(),
@@ -85,20 +123,17 @@ func _check_layout(window_size: Vector2i, scale_percent: int) -> void:
 		"disable_distortion": true,
 	})
 	await process_frame
-	for node_name in [
-		"ResolutionPanel",
-		"BoostResolutionButton",
-		"FinishResolutionButton",
+	for fixed_control in [
+		[screen.resolution_panel, Vector2(300, 836), "ResolutionPanel"],
+		[screen.resolution_panel.get_node("%TimelineShell"), Vector2(268, 608), "TimelineShell"],
+		[screen.resolution_panel.get_node("%PlaybackActionSlot"), Vector2(268, 46), "PlaybackActionSlot"],
+		[screen.resolution_panel.get_node("%BoostResolutionButton"), Vector2(132, 46), "BoostResolutionButton"],
+		[screen.resolution_panel.get_node("%FinishResolutionButton"), Vector2(132, 46), "FinishResolutionButton"],
 	]:
-		var control: Control = (
-			screen.resolution_panel
-			if node_name == "ResolutionPanel"
-			else screen.resolution_panel.get_node("%%%s" % node_name)
-		)
-		_assert_rect_inside(
-			control.get_global_rect(),
-			viewport_rect,
-			node_name,
+		_assert_size(
+			fixed_control[0],
+			fixed_control[1],
+			fixed_control[2],
 			window_size,
 			scale_percent
 		)
@@ -189,3 +224,20 @@ func _assert_rect_inside(
 			"%s should stay visible at %s / %d%%: %s within %s"
 			% [name, window_size, scale_percent, rect, bounds]
 		)
+
+func _assert_size(
+	control: Control,
+	expected: Vector2,
+	name: String,
+	window_size: Vector2i,
+	scale_percent: int
+) -> void:
+	if not control.size.is_equal_approx(expected):
+		failures.append(
+			"%s should keep fixed logical size at %s / %d%%: %s, expected %s"
+			% [name, window_size, scale_percent, control.size, expected]
+		)
+
+func _assert_true(value: bool, message: String) -> void:
+	if not value:
+		failures.append(message)

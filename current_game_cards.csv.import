@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://d0m4gvxn5didx"
+
+[deps]
+
+files=["res://current_game_cards.星级.translation", "res://current_game_cards.效果.translation"]
+
+source_file="res://current_game_cards.csv"
+dest_files=["res://current_game_cards.星级.translation", "res://current_game_cards.效果.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

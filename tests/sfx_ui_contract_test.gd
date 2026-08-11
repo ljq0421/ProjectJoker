@@ -40,6 +40,19 @@ func _test_core_encounter_cues() -> void:
 	_assert_latest(&"undo", "successful undo should sound")
 
 	screen.reset_teaching_encounter()
+	assert_true(screen.session.activate_die(&"d1"), "feedback fixture selects d1")
+	assert_true(screen.session.activate_table(&"left"), "feedback fixture places d1")
+	screen.refresh_from_session()
+	screen._on_die_activated(&"d6")
+	started_cues.clear()
+	screen._on_lane_activated(&"left")
+	assert_equal(
+		started_cues,
+		[&"die_place", &"rule_satisfied"],
+		"a satisfying action should keep its operation cue then add one rule cue"
+	)
+
+	screen.reset_teaching_encounter()
 	screen.session.activate_die(&"d1")
 	screen.session.activate_table(&"left")
 	screen.session.activate_die(&"d6")

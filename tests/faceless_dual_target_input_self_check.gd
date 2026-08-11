@@ -18,7 +18,7 @@ func _run() -> void:
 	for die_index in range(1, 7):
 		state.dice.append(DieState.new(
 			StringName("d%d" % die_index),
-			die_index
+			1 if die_index == 2 else die_index
 		))
 	var catalog := CardCatalog.new()
 	var hand: Array[CardDefinition] = [
@@ -68,7 +68,18 @@ func _run() -> void:
 		screen.get_node("%ErrorLabel").text == "双骰手法牌需要两颗不同的骰子",
 		"reusing the source die should show a concrete reason"
 	)
+	_assert(
+		_find_die(screen, &"d2").self_modulate.a < 1.0,
+		"an equal-value die should be shown as an illegal second target"
+	)
 	_find_die(screen, &"d2").emit_signal("pressed")
+	await process_frame
+	_assert(
+		screen.get_node("%ErrorLabel").text
+		== "换值联动需要选择当前有效点数不同的两颗骰子",
+		"equal-value targeting should show the concrete swap requirement"
+	)
+	_find_die(screen, &"d3").emit_signal("pressed")
 	await process_frame
 	_assert(
 		session.controller.state.played_cards.size() == 1,
@@ -76,13 +87,13 @@ func _run() -> void:
 	)
 	var played: PlayedCard = session.controller.state.played_cards[0]
 	_assert(
-		played.primary_target == &"d1" and played.secondary_target == &"d2",
+		played.primary_target == &"d1" and played.secondary_target == &"d3",
 		"pair play should preserve source and target order"
 	)
 
 	_press_card(screen, 1)
 	await process_frame
-	_find_die(screen, &"d3").emit_signal("pressed")
+	_find_die(screen, &"d4").emit_signal("pressed")
 	await process_frame
 	var escape := InputEventKey.new()
 	escape.keycode = KEY_ESCAPE

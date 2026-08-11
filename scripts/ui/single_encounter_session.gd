@@ -273,15 +273,20 @@ func assign_dropped_die_to_slot(
 	if rule == null:
 		return _fail("规则轨不存在")
 	var slot_limit := controller.effective_slot_count(table_id)
-	return _accept(
-		controller.assign_die_to_slot(
+	var result: ActionResult
+	if controller.state.slot_values(
+		table_id,
+		slot_limit
+	).has(RoundState.EMPTY_SLOT):
+		result = controller.assign_die(die_id, table_id, slot_limit)
+	else:
+		result = controller.assign_die_to_slot(
 			die_id,
 			table_id,
 			slot_index,
 			slot_limit
-		),
-		false
-	)
+		)
+	return _accept(result, false)
 
 func return_die_to_tray(die_id: StringName) -> bool:
 	return _accept(controller.unassign_die(die_id), false)

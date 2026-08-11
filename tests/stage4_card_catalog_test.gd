@@ -36,6 +36,15 @@ func run() -> void:
 			"stable repeat should repeat the table second"
 		)
 
+	var bridge := catalog.find_card(&"starter_link")
+	assert_true(bridge != null, "bridge starter card should load")
+	if bridge != null:
+		assert_equal(
+			bridge.rule_text,
+			"左台先通过并结算，右台也通过时，复制左台本轮结算分。",
+			"bridge copy should state its score transfer and trigger conditions"
+		)
+
 	var deep_drop := catalog.find_card(&"shop_deep_drop")
 	assert_true(deep_drop != null, "deep drop shop card should load")
 	if deep_drop != null:

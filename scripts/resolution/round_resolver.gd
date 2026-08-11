@@ -73,12 +73,35 @@ func resolve(
 						not die_values.has(played_card.primary_target)
 						or not die_values.has(played_card.secondary_target)
 					):
-						return _invalid("换位手法牌指向了未知骰子")
+						return _invalid("换值手法牌指向了未知骰子")
 					var first_value: int = die_values[played_card.primary_target]
+					var second_value: int = die_values[played_card.secondary_target]
+					if effect.amount != 0 and first_value == second_value:
+						return _invalid(
+							"换值联动需要选择当前有效点数不同的两颗骰子"
+						)
 					die_values[played_card.primary_target] = (
-						die_values[played_card.secondary_target]
+						second_value
 					)
 					die_values[played_card.secondary_target] = first_value
+					if effect.amount != 0:
+						var bonus_table_ids: Dictionary = {}
+						for die_id in [
+							played_card.primary_target,
+							played_card.secondary_target,
+						]:
+							var assignment := state.find_assignment(die_id)
+							var table_id: StringName = assignment.get("table_id", &"")
+							if table_id == &"":
+								continue
+							if not table_ids.has(table_id):
+								return _invalid("换值联动指向了未知规则台")
+							bonus_table_ids[table_id] = true
+						for table_id in bonus_table_ids:
+							coefficient_modifiers[table_id] = (
+								coefficient_modifiers.get(table_id, 0)
+								+ effect.amount
+							)
 				EffectSpec.Operation.COPY_DIE:
 					if (
 						not die_values.has(played_card.primary_target)
@@ -211,6 +234,7 @@ func resolve(
 			)
 		)
 		precomputed_results[rule.id] = precomputed_result
+		report.rule_diagnostics[rule.id] = precomputed_result.diagnostics.duplicate(true)
 		if (
 			rule.template != null
 			and rule.template.post_pass_effect
@@ -306,6 +330,7 @@ func resolve(
 				normalized_context
 			)
 		)
+		report.rule_diagnostics[rule.id] = result.diagnostics.duplicate(true)
 		if not result.valid:
 			report.events.append(ResolutionEvent.new(rule.id, result.reason, 0, report.total))
 			report.rule_failures.append({
@@ -364,6 +389,7 @@ func resolve(
 			continue
 
 		var table_total_before := report.total
+		var lock_reward_total := 0
 		var resolution_count: int = 1 + repeat_counts.get(rule.id, 0)
 		for repeat_index in range(resolution_count):
 			report.total += result.total
@@ -409,6 +435,13 @@ func resolve(
 					else ResolutionEvent.ScoreSource.CARD
 				)
 			))
+			lock_reward_total += _append_lock_rewards(
+				report,
+				state,
+				assigned_ids,
+				true,
+				label
+			)
 		if (
 			rule.template != null
 			and rule.template.post_pass_effect
@@ -422,6 +455,18 @@ func resolve(
 				result.total,
 				report.total
 			))
+			var echo_label := (
+				rule.display_name
+				if not rule.display_name.is_empty()
+				else String(rule.id)
+			)
+			lock_reward_total += _append_lock_rewards(
+				report,
+				state,
+				assigned_ids,
+				true,
+				"%s（回声）" % echo_label
+			)
 		if burned_rewrite_targets.has(rule.id):
 			var rewrite_coefficient := maxi(
 				int(report.effective_table_coefficients.get(rule.id, 1)) - 1,
@@ -456,14 +501,10 @@ func resolve(
 			normalized_context,
 			table_total_before
 		)
-		resolved_table_totals[rule.id] = report.total - table_total_before
-		passed_rule_ids[rule.id] = true
-		_append_lock_rewards(
-			report,
-			state,
-			assigned_ids,
-			true
+		resolved_table_totals[rule.id] = (
+			report.total - table_total_before - lock_reward_total
 		)
+		passed_rule_ids[rule.id] = true
 
 		for pending in pending_bridges.get(rule.id, []):
 			_append_outcome(report, pending)
@@ -976,8 +1017,10 @@ func _append_lock_rewards(
 	report: ResolutionReport,
 	state: RoundState,
 	assigned_ids: Array,
-	table_passed: bool
-) -> void:
+	table_passed: bool,
+	trigger_label: String = ""
+) -> int:
+	var awarded_total := 0
 	for played_card in state.played_cards:
 		if played_card is not PlayedCard:
 			continue
@@ -987,8 +1030,8 @@ func _append_lock_rewards(
 			if effect.operation != EffectSpec.Operation.LOCK_DIE_WITH_BONUS:
 				continue
 			var label := (
-				"%s：定格骰所在规则台通过，固定奖励 +%d"
-				% [played_card.definition.display_name, effect.amount]
+				"%s：%s成功结算，固定奖励 +%d"
+				% [played_card.definition.display_name, trigger_label, effect.amount]
 				if table_passed
 				else "%s：定格骰所在规则台未通过"
 					% played_card.definition.display_name
@@ -1000,6 +1043,9 @@ func _append_lock_rewards(
 				&"",
 				table_passed
 			), ResolutionEvent.ScoreSource.CARD)
+			if table_passed:
+				awarded_total += effect.amount
+	return awarded_total
 
 func _append_outcome(
 	report: ResolutionReport,

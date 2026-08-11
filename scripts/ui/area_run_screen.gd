@@ -402,6 +402,7 @@ func _encounter_goal_copy() -> String:
 
 func _on_round_committed(report: ResolutionReport) -> void:
 	_close_context_hint()
+	var completed_dealer := area_session.phase == AreaRunSession.Phase.DEALER
 	var result := area_session.accept_encounter_report(report)
 	if not result.accepted:
 		encounter_screen.show_external_error(result.reason)
@@ -427,6 +428,14 @@ func _on_round_committed(report: ResolutionReport) -> void:
 			summary_panel.get_node("%RetryRunButton").visible = false
 			expedition_failed.emit(area_session.last_error)
 		return
+	if completed_dealer and area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:
+		encounter_screen.interaction_motion_layer.play_rare_highlight(
+			&"dealer_complete",
+			report.total,
+			area_session.area_definition.id,
+			Callable(self, "_continue_after_dealer_highlight")
+		)
+		return
 	if area_session.phase == AreaRunSession.Phase.ENGRAVING_REWARD:
 		summary_panel.close()
 		SfxAccess.play(self, &"round_success")
@@ -444,6 +453,26 @@ func _on_round_committed(report: ResolutionReport) -> void:
 		call_deferred("_request_context_hint", &"engraving")
 		_emit_expedition_checkpoint()
 		return
+	_continue_standard_report_flow()
+
+func _continue_after_dealer_highlight() -> void:
+	summary_panel.close()
+	SfxAccess.play(self, &"round_success")
+	_request_music_for_phase(&"engraving_reward")
+	reward_panel.bind_reward(
+		area_session.engraving_offer_ids,
+		area_session.die_profiles,
+		area_session.engraving_catalog,
+		area_session.rare_card_offer_ids,
+		area_session.deck_ids,
+		area_session.card_catalog,
+		area_session.selected_reward_card_id,
+		area_session.replaced_reward_card_id
+	)
+	call_deferred("_request_context_hint", &"engraving")
+	_emit_expedition_checkpoint()
+
+func _continue_standard_report_flow() -> void:
 	if area_session.phase == AreaRunSession.Phase.EVENT:
 		summary_panel.close()
 		encounter_screen.visible = false
@@ -470,9 +499,22 @@ func _on_round_committed(report: ResolutionReport) -> void:
 	if _show_restriction_choice_if_needed():
 		return
 	encounter_screen.set_run_status(_area_copy(), _encounter_goal_copy())
-	summary_panel.show_run_state(area_session.encounter_session)
+	summary_panel.show_run_state(
+		area_session.encounter_session,
+		_current_encounter_emergency_free()
+	)
 	if area_session.phase == AreaRunSession.Phase.AFTER_NORMAL_ROOM:
 		_emit_expedition_checkpoint()
+
+func _current_encounter_emergency_free() -> bool:
+	if area_session == null or area_session.encounter_session == null:
+		return false
+	var run_session := area_session.encounter_session
+	return (
+		run_session.paid_reroll_rounds.is_empty()
+		and run_session.paid_calibration_rounds.is_empty()
+		and not area_session.area_retry_used
+	)
 
 func _on_event_choice_requested(
 	choice_id: StringName,
@@ -573,13 +615,21 @@ func _bind_shop_screen() -> void:
 	)
 
 func _on_remove_shop_card_requested(card_id: StringName) -> void:
+	var before_count := area_session.shop_session.deck_ids.size()
+	var removed_card := area_session.card_catalog.find_card(card_id)
 	var result := area_session.remove_shop_card(card_id)
 	if not result.accepted:
 		shop_screen.show_service_error(result.reason)
 		shop_screen.refresh_from_session()
 		return
 	SfxAccess.play(self, &"shop_purchase")
-	shop_screen.show_service_error("")
+	shop_screen.show_service_success(
+		"移除《%s》｜牌组 %d→%d｜下一场遭遇起生效" % [
+			removed_card.display_name if removed_card != null else String(card_id),
+			before_count,
+			area_session.shop_session.deck_ids.size(),
+		]
+	)
 	shop_screen.refresh_from_session(true)
 	_emit_expedition_checkpoint()
 
@@ -598,7 +648,13 @@ func _on_transfer_shop_engraving_requested(
 		shop_screen.refresh_from_session()
 		return
 	SfxAccess.play(self, &"engraving_select")
-	shop_screen.show_service_error("")
+	shop_screen.show_service_success(
+		"刻印转移｜%s → %s｜骰面 %d｜下一场遭遇起生效" % [
+			String(source_die_id).to_upper(),
+			String(target_die_id).to_upper(),
+			target_face,
+		]
+	)
 	shop_screen.bind_formal_context(
 		area_session.die_profiles,
 		area_session.engraving_catalog
@@ -675,7 +731,12 @@ func _on_install_requested(
 	if not result.accepted:
 		reward_panel.show_error(result.reason)
 		return
-	_show_area_completion()
+	reward_panel.play_install_feedback(
+		engraving_id,
+		die_id,
+		face,
+		Callable(self, "_show_area_completion")
+	)
 
 func _on_card_reward_requested(
 	card_id: StringName,

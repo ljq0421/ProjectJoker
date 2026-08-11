@@ -45,8 +45,9 @@ func _test_card_tokens_use_scene_owned_hierarchy() -> void:
 	var face := token.get_node("CardFaceContent")
 	assert_true(face != null, "hand card should own a structured card face")
 	assert_true(
-		"交换两颗骰值" in face.visible_copy() and "当前有效点数" in face.visible_copy(),
-		"hand card should expose its action, value, and limit"
+		"换值 · 台系数 +1" in face.visible_copy()
+		and "异值目标 · 按最终摆位" in face.visible_copy(),
+		"hand card should expose its swap requirement and final-table bonus"
 	)
 	assert_true(
 		face.is_complete_card_face(),
@@ -103,10 +104,10 @@ func _test_rarity_track_is_explicit() -> void:
 	var cases := {
 		&"starter_nudge_down_1": ["骰值 -1", "范围 1–6", "◆◇◇"],
 		&"shop_precision_map": ["系数 +3", "", "◆◆◇"],
-		&"starter_link": ["连接相邻台", "传递已解析结果", "◆◆◇"],
+		&"starter_link": ["复制左台结算分", "左台先通过 · 右台也通过", "◆◆◇"],
 		&"starter_reverse": ["反转顺序", "本轮生效", "◆◆◇"],
 		&"faceless_copy_value": ["复制第一颗", "当前有效点数", "◆◆◇"],
-		&"faceless_lock_bonus": ["锁定骰值", "规则台通过 +4", "◆◆◆"],
+		&"faceless_lock_bonus": ["锁定骰值", "每次结算 +4", "◆◆◆"],
 		&"starter_nudge_up_1": ["骰值 +1", "范围 1–6", "◆◇◇"],
 		&"starter_nudge_down_2": ["骰值 -2", "范围 1–6", "◆◆◇"],
 		&"starter_nudge_up_2": ["骰值 +2", "范围 1–6", "◆◆◇"],
@@ -127,7 +128,11 @@ func _test_rarity_track_is_explicit() -> void:
 		&"mirror_silver_bridge": ["连接 · 结算 +1 次", "镜像：连接相邻规则台", "◆◆◆"],
 		&"shop_amplified_chain": ["系数 +2 · 结算 +1 次", "本轮生效", "◆◆◇"],
 		&"shop_reverse_backup": ["反转顺序", "本轮生效", "◆◆◆"],
-		&"faceless_swap_values": ["交换两颗骰值", "当前有效点数", "◆◆◇"],
+		&"faceless_swap_values": [
+			"换值 · 台系数 +1",
+			"异值目标 · 按最终摆位",
+			"◆◆◇",
+		],
 		&"faceless_flip_value": ["骰值翻面", "7 - 当前值", "◆◆◆"],
 		&"faceless_refund_calibration": ["返还 1 校准点", "校准点上限 2", "◆◆◇"],
 		&"faceless_exact_tolerance": ["精确条件放宽", "允许 ±1", "◆◆◇"],

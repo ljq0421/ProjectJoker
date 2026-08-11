@@ -73,7 +73,7 @@ func _run() -> void:
 	_assert_true(report != null, "domain commit should already be complete")
 	if report != null:
 		_assert_equal(
-			screen.resolution_panel.get_node("%EventList").get_child_count(),
+			_event_row_count(),
 			0,
 			"formal playback should begin before revealing the first event"
 		)
@@ -106,9 +106,9 @@ func _run() -> void:
 	)
 	if report != null:
 		_assert_equal(
-			screen.resolution_panel.get_node("%EventList").get_child_count(),
+			_represented_event_count(),
 			report.events.size(),
-			"finished playback should show every committed event"
+			"finished playback should account for every committed event"
 		)
 		_assert_equal(
 			committed_reports[0].event_signature(),
@@ -117,6 +117,28 @@ func _run() -> void:
 		)
 
 	await _finish()
+
+func _event_row_count() -> int:
+	var event_list: Control = screen.resolution_panel.get_node("%EventList")
+	var hidden_summary: Control = screen.resolution_panel.get_node(
+		"%HiddenEventSummary"
+	)
+	var count := 0
+	for child in event_list.get_children():
+		if child != hidden_summary:
+			count += 1
+	return count
+
+func _represented_event_count() -> int:
+	var hidden_summary: Control = screen.resolution_panel.get_node(
+		"%HiddenEventSummary"
+	)
+	var collapsed_count := (
+		int(hidden_summary.get_meta("collapsed_event_count", 0))
+		if hidden_summary.visible
+		else 0
+	)
+	return _event_row_count() + collapsed_count
 
 func _install_settings_fixture() -> void:
 	temporary_settings_path = (

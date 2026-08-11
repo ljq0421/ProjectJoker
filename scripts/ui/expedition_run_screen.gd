@@ -13,6 +13,7 @@ const ChallengeRules = preload("res://scripts/run/expedition_challenge_rules.gd"
 const StartConfig = preload("res://scripts/run/expedition_start_config.gd")
 const DailyService = preload("res://scripts/run/daily_challenge_service.gd")
 const DailyLeaderboard = preload("res://scripts/run/daily_leaderboard_store.gd")
+const Achievements = preload("res://scripts/run/achievement_catalog.gd")
 
 @onready var area_host: Control = %AreaHost
 @onready var error_panel: Control = %ExpeditionErrorPanel
@@ -27,6 +28,7 @@ const DailyLeaderboard = preload("res://scripts/run/daily_leaderboard_store.gd")
 @onready var return_button: Button = %ReturnFromExpeditionButton
 @onready var return_from_error_button: Button = %ReturnFromErrorButton
 @onready var narrative_card: Control = %NarrativeCard
+@onready var feedback_layer: InteractionMotionLayer = %ExpeditionFeedbackLayer
 
 var expedition := ExpeditionSession.new()
 var store: ExpeditionSaveStore
@@ -36,6 +38,7 @@ var daily_leaderboard_path := "user://daily_leaderboard.cfg"
 var meta_store
 var current_area_screen: AreaRunScreen
 var _pending_completion: Dictionary = {}
+var _new_achievement_ids: Array[StringName] = []
 
 func _ready() -> void:
 	return_button.pressed.connect(_on_return_from_summary)
@@ -243,6 +246,22 @@ func _show_summary() -> void:
 		"%d 份区域契据都已留下可复核的轨迹。你证明了公开规则可以被理解、预演并拆解。"
 		% expedition.completed_areas.size()
 	)
+	if not _new_achievement_ids.is_empty():
+		var achievement_names: Array[String] = []
+		for achievement_id in _new_achievement_ids:
+			var definition := Achievements.new().find(achievement_id)
+			achievement_names.append(
+				String(achievement_id)
+				if definition.is_empty()
+				else String(definition.get("display_name", achievement_id))
+			)
+		epilogue_label.text += "\n新成就｜%s" % " · ".join(achievement_names)
+		feedback_layer.call_deferred(
+			"play_rare_highlight",
+			&"achievement",
+			0,
+			&"faceless_hub"
+		)
 
 func _on_return_from_summary() -> void:
 	var result := store.clear()
@@ -352,9 +371,19 @@ func _record_run(result_kind: StringName, reason: String) -> OperationResult:
 	})
 
 func _record_completion() -> OperationResult:
+	_new_achievement_ids.clear()
+	var before_meta = meta_store.load_snapshot()
 	var meta_result := _record_run(&"complete", "")
 	if not meta_result.accepted:
 		return meta_result
+	var after_meta = meta_store.load_snapshot()
+	if before_meta.accepted and after_meta.accepted:
+		for achievement_id in after_meta.snapshot.get("achievements", {}):
+			if (
+				bool(after_meta.snapshot["achievements"].get(achievement_id, false))
+				and not bool(before_meta.snapshot["achievements"].get(achievement_id, false))
+			):
+				_new_achievement_ids.append(StringName(achievement_id))
 	if expedition.start_config.mode != StartConfig.DAILY:
 		return OperationResult.new(true)
 	var daily := DailyService.new()

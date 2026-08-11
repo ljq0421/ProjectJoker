@@ -17,7 +17,7 @@ tooltips/full rules, and runtime-only commerce data such as shop prices.
 | `starter_link` | topology | resolved output crosses a gap |
 | `starter_reverse` | topology | global resolution order reverses |
 | `faceless_copy_value` | before / after | a second die copies the first |
-| `faceless_lock_bonus` | contract state | a die locks and yields a fixed reward |
+| `faceless_lock_bonus` | contract state | a locked die rewards every successful table resolution |
 
 First confirmed expansion batch:
 
@@ -58,7 +58,7 @@ Fourth expansion review batch:
 |---|---|---|
 | `shop_amplified_chain` | coefficient gain / loop | coefficient increases by two, then table repeats |
 | `shop_reverse_backup` | opposing global arcs | global resolution order reverses |
-| `faceless_swap_values` | opposing transfer arcs | two dice exchange effective values |
+| `faceless_swap_values` | opposing transfer arcs | two dice exchange effective values and empower their unique final tables |
 | `faceless_flip_value` | half-turn / before-after | die becomes seven minus its current value |
 | `faceless_refund_calibration` | returning charge | one spent calibration point is restored |
 | `faceless_exact_tolerance` | target with accepted neighbors | exact condition accepts plus or minus one |

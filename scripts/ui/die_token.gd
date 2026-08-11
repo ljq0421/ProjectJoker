@@ -71,6 +71,7 @@ func bind_die(
 	if engraving_status != null:
 		engraving_status.visible = false
 		engraving_status.text = ""
+	_set_locked_badge(false)
 	set_meta("engraving_state", EngravingState.NONE)
 	button_pressed = selected
 	_selected = selected
@@ -94,9 +95,11 @@ func bind_die_with_engravings(
 	selected: bool,
 	catalog: EngravingCatalog = null,
 	assigned: bool = false,
-	effective_value: int = -1
+	effective_value: int = -1,
+	locked: bool = false
 ) -> void:
 	bind_die(state, selected, effective_value)
+	_set_locked_badge(locked)
 	_accept_die_drops = assigned
 	var engraving := (
 		catalog.find_engraving(state.engraving_id)
@@ -241,6 +244,14 @@ func _face_icon() -> TextureRect:
 
 func _engraving_status() -> Label:
 	return get_node_or_null("%EngravingStatus") as Label
+
+func _set_locked_badge(locked: bool) -> void:
+	var lock_status := get_node_or_null("%LockStatus") as Label
+	if lock_status == null:
+		return
+	lock_status.visible = locked
+	lock_status.text = "🔒 定格" if locked else ""
+	set_meta("locked", locked)
 
 func _refresh_face_cue() -> void:
 	var face_icon := _face_icon()

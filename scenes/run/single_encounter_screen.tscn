@@ -85,22 +85,24 @@ grow_vertical = 2
 
 [node name="RootColumn" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="TopBar" type="HBoxContainer" parent="SafeArea/RootColumn"]
+custom_minimum_size = Vector2(1856, 32)
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="AreaLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(570, 32)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "梦层 01 · 无尽牌厅"
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 23
 
 [node name="DirectionBadge" type="Label" parent="SafeArea/RootColumn/TopBar"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(210, 0)
+custom_minimum_size = Vector2(210, 32)
 layout_mode = 2
 text = "→ 从左向右结算"
 horizontal_alignment = 1
@@ -108,56 +110,74 @@ theme_override_colors/font_color = Color(0.74, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 18
 tooltip_text = "当前遭遇的公开结算方向"
 
-[node name="ActiveRestrictionBadge" type="Label" parent="SafeArea/RootColumn/TopBar"]
+[node name="RestrictionSlot" type="Control" parent="SafeArea/RootColumn/TopBar"]
+custom_minimum_size = Vector2(260, 32)
+layout_mode = 2
+
+[node name="ActiveRestrictionBadge" type="Label" parent="SafeArea/RootColumn/TopBar/RestrictionSlot"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(260, 0)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "公开限制"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 
 [node name="GoalLabel" type="Label" parent="SafeArea/RootColumn/TopBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(560, 32)
 layout_mode = 2
 text = "解析目标：0 / 100　轮次 1 / 3"
 
 [node name="UtilityDockSpacer" type="Control" parent="SafeArea/RootColumn/TopBar"]
-custom_minimum_size = Vector2(224, 0)
+custom_minimum_size = Vector2(224, 32)
 layout_mode = 2
 
-[node name="AreaDirectivePanel" type="PanelContainer" parent="SafeArea/RootColumn"]
+[node name="AreaDirectiveSlot" type="Control" parent="SafeArea/RootColumn"]
+custom_minimum_size = Vector2(1856, 40)
+layout_mode = 2
+
+[node name="AreaDirectivePanel" type="PanelContainer" parent="SafeArea/RootColumn/AreaDirectiveSlot"]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("DirectivePanelStyle")
 
-[node name="DirectiveRow" type="HBoxContainer" parent="SafeArea/RootColumn/AreaDirectivePanel"]
+[node name="DirectiveRow" type="HBoxContainer" parent="SafeArea/RootColumn/AreaDirectiveSlot/AreaDirectivePanel"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="AreaDirectiveAccent" type="ColorRect" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+[node name="AreaDirectiveAccent" type="ColorRect" parent="SafeArea/RootColumn/AreaDirectiveSlot/AreaDirectivePanel/DirectiveRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(7, 0)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.55, 1, 0.94, 1)
 
-[node name="AreaDirectiveTitle" type="Label" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+[node name="AreaDirectiveTitle" type="Label" parent="SafeArea/RootColumn/AreaDirectiveSlot/AreaDirectivePanel/DirectiveRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
 text = "区域指令"
 theme_override_font_sizes/font_size = 17
 
-[node name="AreaDirectiveStatus" type="Label" parent="SafeArea/RootColumn/AreaDirectivePanel/DirectiveRow"]
+[node name="AreaDirectiveStatus" type="Label" parent="SafeArea/RootColumn/AreaDirectiveSlot/AreaDirectivePanel/DirectiveRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(1627, 24)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "读取当前区域规则"
 theme_override_colors/font_color = Color(0.78, 0.84, 0.94, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 
 [node name="RunStatusSlot" type="CenterContainer" parent="SafeArea/RootColumn"]
 unique_name_in_owner = true
@@ -165,13 +185,13 @@ visible = false
 layout_mode = 2
 
 [node name="Body" type="HBoxContainer" parent="SafeArea/RootColumn"]
+custom_minimum_size = Vector2(1856, 836)
 layout_mode = 2
-size_flags_vertical = 3
 theme_override_constants/separation = 18
 
 [node name="DealerPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(230, 0)
+custom_minimum_size = Vector2(230, 836)
 layout_mode = 2
 
 [node name="DealerSigil" type="Control" parent="SafeArea/RootColumn/Body/DealerPanel"]
@@ -188,30 +208,36 @@ grow_horizontal = 0
 mouse_filter = 2
 script = ExtResource("9_sigil")
 
-[node name="DealerCopy" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel"]
+[node name="DealerScroll" type="ScrollContainer" parent="SafeArea/RootColumn/Body/DealerPanel"]
 layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="DealerCopy" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll"]
+custom_minimum_size = Vector2(0, 808)
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 14
 
-[node name="DealerEyebrow" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="DealerEyebrow" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "规则监理 / MIRROR-01"
 theme_override_colors/font_color = Color(0.83, 0.48, 0.92, 1)
 theme_override_font_sizes/font_size = 14
 
-[node name="DealerName" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="DealerName" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "镜面夫人"
 theme_override_font_sizes/font_size = 24
 
-[node name="DealerRule" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="DealerRule" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "本场规则\n从左向右逐轨解析。所有变化都会先出现在结算轨迹中。"
 autowrap_mode = 2
 
-[node name="DealerHint" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="DealerHint" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -220,129 +246,136 @@ vertical_alignment = 2
 autowrap_mode = 2
 theme_override_colors/font_color = Color(0.66, 0.78, 0.84, 1)
 
-[node name="EntryGroups" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy"]
+[node name="EntryGroups" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="PracticeEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups"]
+[node name="PracticeEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PracticeEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
+[node name="PracticeEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/PracticeEntryGroup"]
 layout_mode = 2
 text = "练习"
 theme_override_colors/font_color = Color(0.55, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 14
 
-[node name="ReplayTutorialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
+[node name="ReplayTutorialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/PracticeEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看引导"
 tooltip_text = "重置当前教学局并重新开始引导"
 
-[node name="ReplayAdvancedGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/PracticeEntryGroup"]
+[node name="ReplayAdvancedGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/PracticeEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看铁算盘原型引导"
 tooltip_text = "重置旧五点提示并进入包含刻印验证的铁算盘原型"
 
-[node name="AreaTrialEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups"]
+[node name="AreaTrialEntryGroup" type="VBoxContainer" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="AreaTrialEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="AreaTrialEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 layout_mode = 2
 text = "地区试玩"
 theme_override_colors/font_color = Color(0.83, 0.48, 0.92, 1)
 theme_override_font_sizes/font_size = 14
 
-[node name="GoldCorridorEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="GoldCorridorEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 layout_mode = 2
 text = "金线回廊"
 theme_override_colors/font_color = Color(0.88, 0.78, 0.4, 1)
 
-[node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="RunTrialButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "进入金线回廊"
 tooltip_text = "完成两次路线选择、两个普通房、两次情报交换、铁算盘与区域刻印奖励"
 
-[node name="ReplayGoldCorridorGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="ReplayGoldCorridorGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看金线回廊提示"
 tooltip_text = "重置四个正式区域提示并从金线回廊第一组路线开始"
 
-[node name="MirrorHallEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="MirrorHallEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 layout_mode = 2
 text = "反照牌厅"
 theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
 
-[node name="MirrorHallRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="MirrorHallRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "进入反照牌厅"
 tooltip_text = "体验公开反向结算、牌面镜像与镜面夫人挑战"
 
-[node name="ReplayMirrorHallGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="ReplayMirrorHallGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看反照牌厅提示"
 tooltip_text = "只重置反照牌厅的方向、镜像与庄家提示"
 
-[node name="FacelessHubEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="FacelessHubEntryLabel" type="Label" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 layout_mode = 2
 text = "无面中枢"
 theme_override_colors/font_color = Color(1, 0.76, 0.38, 1)
 
-[node name="FacelessHubRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="FacelessHubRunButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "进入无面中枢"
 tooltip_text = "体验复合规则、公开三轮议程、双骰手法与最终限制选择"
 
-[node name="ReplayFacelessHubGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
+[node name="ReplayFacelessHubGuideButton" type="Button" parent="SafeArea/RootColumn/Body/DealerPanel/DealerScroll/DealerCopy/EntryGroups/AreaTrialEntryGroup"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "重看无面中枢提示"
 tooltip_text = "只重置无面中枢的复合规则、三轮议程与最终限制提示"
 
 [node name="Center" type="VBoxContainer" parent="SafeArea/RootColumn/Body"]
+custom_minimum_size = Vector2(1290, 836)
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 8
 
 [node name="Lanes" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+custom_minimum_size = Vector2(1290, 302)
 layout_mode = 2
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="LeftLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(371, 302)
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="LeftGapColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/Center/Lanes"]
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(72, 302)
 layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="LeftGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(72, 256)
 layout_mode = 2
-size_flags_vertical = 3
 text = "◇"
 tooltip_text = "左侧桌间槽"
 
-[node name="LeftMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn"]
-unique_name_in_owner = true
-visible = false
+[node name="LeftMirrorSlot" type="Control" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn"]
 custom_minimum_size = Vector2(72, 40)
 layout_mode = 2
+
+[node name="LeftMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/LeftGapColumn/LeftMirrorSlot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 text = "┄ 镜像 ┄"
 horizontal_alignment = 1
@@ -353,27 +386,34 @@ tooltip_text = "由另一侧真实牌生成的虚拟镜像副本"
 
 [node name="MiddleLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(372, 302)
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="RightGapColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/Center/Lanes"]
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(72, 302)
 layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="RightGap" type="Button" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(72, 256)
 layout_mode = 2
-size_flags_vertical = 3
 text = "◇"
 tooltip_text = "右侧桌间槽"
 
-[node name="RightMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn"]
-unique_name_in_owner = true
-visible = false
+[node name="RightMirrorSlot" type="Control" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn"]
 custom_minimum_size = Vector2(72, 40)
 layout_mode = 2
+
+[node name="RightMirrorLayer" type="Label" parent="SafeArea/RootColumn/Body/Center/Lanes/RightGapColumn/RightMirrorSlot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 text = "┄ 镜像 ┄"
 horizontal_alignment = 1
@@ -384,10 +424,11 @@ tooltip_text = "由另一侧真实牌生成的虚拟镜像副本"
 
 [node name="RightLane" parent="SafeArea/RootColumn/Body/Center/Lanes" instance=ExtResource("3")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(371, 302)
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="DiceRow" type="PanelContainer" parent="SafeArea/RootColumn/Body/Center"]
+custom_minimum_size = Vector2(1290, 102)
 layout_mode = 2
 tooltip_text = "待分配骰子区；点击或拖动骰子，把它放入规则台"
 
@@ -412,21 +453,22 @@ theme_override_font_sizes/font_size = 15
 
 [node name="SelectionHintLabel" type="Label" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(1290, 24)
 layout_mode = 2
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.68, 1, 0.96, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 
 [node name="Hand" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(1290, 126)
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 10
 
 [node name="CardDetailPanel" type="PanelContainer" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 132)
+custom_minimum_size = Vector2(1290, 150)
 layout_mode = 2
 tooltip_text = "固定的手法牌说明区；选择手法牌后显示完整规则"
 
@@ -443,7 +485,12 @@ expand_mode = 1
 stretch_mode = 5
 mouse_filter = 2
 
-[node name="CardDetailText" type="Label" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel/CardDetailRow"]
+[node name="CardDetailTextScroll" type="ScrollContainer" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel/CardDetailRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="CardDetailText" type="Label" parent="SafeArea/RootColumn/Body/Center/CardDetailPanel/CardDetailRow/CardDetailTextScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -453,45 +500,56 @@ theme_override_colors/font_color = Color(0.9, 0.9, 0.98, 1)
 theme_override_font_sizes/font_size = 15
 
 [node name="ActionBar" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
+custom_minimum_size = Vector2(1290, 42)
 layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="CalibrationLabel" type="Label" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(838, 42)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "校准点：2"
+vertical_alignment = 1
 
 [node name="MinusButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 42)
 layout_mode = 2
 text = "点数 -1"
+theme_override_font_sizes/font_size = 16
 
 [node name="PlusButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 42)
 layout_mode = 2
 text = "点数 +1"
+theme_override_font_sizes/font_size = 16
 
 [node name="UndoButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 42)
 layout_mode = 2
 text = "撤销"
+theme_override_font_sizes/font_size = 16
 
 [node name="ConfirmButton" type="Button" parent="SafeArea/RootColumn/Body/Center/ActionBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(132, 42)
 layout_mode = 2
 text = "确认结算"
+theme_override_font_sizes/font_size = 16
 
 [node name="EmergencyBar" type="HBoxContainer" parent="SafeArea/RootColumn/Body/Center"]
 unique_name_in_owner = true
 visible = false
+custom_minimum_size = Vector2(1290, 42)
 layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="EmergencyTicketLabel" type="Label" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(796, 42)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "应急情报：0"
 vertical_alignment = 1
 theme_override_colors/font_color = Color(0.92, 0.72, 1, 1)
@@ -502,6 +560,7 @@ custom_minimum_size = Vector2(150, 42)
 layout_mode = 2
 text = "重投所选骰（1）"
 tooltip_text = "选择一颗未锁定骰子；保留既有校准差值和卡牌目标；不可撤销"
+theme_override_font_sizes/font_size = 15
 
 [node name="PaidCalibrationButton" type="Button" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
 unique_name_in_owner = true
@@ -509,6 +568,7 @@ custom_minimum_size = Vector2(150, 42)
 layout_mode = 2
 text = "增加 1 校准（2）"
 tooltip_text = "本轮一次；不可撤销"
+theme_override_font_sizes/font_size = 15
 
 [node name="PaidRetryButton" type="Button" parent="SafeArea/RootColumn/Body/Center/EmergencyBar"]
 unique_name_in_owner = true
@@ -516,6 +576,7 @@ custom_minimum_size = Vector2(170, 42)
 layout_mode = 2
 text = "同种子重试（3）"
 tooltip_text = "从当前房间入口按相同种子重试；每区域一次；不可撤销"
+theme_override_font_sizes/font_size = 15
 
 [node name="ResolutionPanel" parent="SafeArea/RootColumn/Body" instance=ExtResource("4")]
 unique_name_in_owner = true
@@ -523,7 +584,7 @@ layout_mode = 2
 
 [node name="ErrorLabel" type="Label" parent="SafeArea/RootColumn"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(1856, 28)
 layout_mode = 2
 text = ""
 autowrap_mode = 2

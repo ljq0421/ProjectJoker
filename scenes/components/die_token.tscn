@@ -6,6 +6,7 @@
 
 [node name="DieToken" type="Button"]
 custom_minimum_size = Vector2(60, 60)
+size_flags_vertical = 4
 toggle_mode = true
 focus_mode = 1
 clip_text = true
@@ -52,3 +53,20 @@ theme_override_font_sizes/font_size = 11
 text = "激活"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="LockStatus" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+offset_left = 5.0
+offset_top = 3.0
+offset_right = -5.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.9059, 0.7216, 0.2941, 1)
+theme_override_colors/font_outline_color = Color(0.0275, 0.0706, 0.1098, 0.96)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "🔒 定格"
+horizontal_alignment = 2

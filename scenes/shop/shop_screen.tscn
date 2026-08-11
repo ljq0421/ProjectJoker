@@ -218,9 +218,18 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="OfferTitle" type="Label" parent="SafeArea/RootColumn/Body/OfferPanel/OfferStack"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "本次候选"
+text = "可购入/替换手法牌"
 theme_override_font_sizes/font_size = 22
+
+[node name="OfferHint" type="Label" parent="SafeArea/RootColumn/Body/OfferPanel/OfferStack"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "购买或替换后，新牌会从后续遭遇开始进入抽牌池。"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 1)
+theme_override_font_sizes/font_size = 14
 
 [node name="OfferColumn" type="VBoxContainer" parent="SafeArea/RootColumn/Body/OfferPanel/OfferStack"]
 unique_name_in_owner = true

@@ -52,7 +52,9 @@ func bind_lane(
 	effective_die_values: Dictionary = {},
 	effective_coefficient: int = -1,
 	resolution_count: int = 1,
-	p_evaluation_state: int = EvaluationState.NEUTRAL
+	p_evaluation_state: int = EvaluationState.NEUTRAL,
+	diagnostics: Dictionary = {},
+	locked_die_ids: Array = []
 ) -> void:
 	table_id = rule.id
 	title_label.text = rule.display_name
@@ -81,6 +83,10 @@ func bind_lane(
 			if slot_index < assigned_dice.size()
 			else null
 		)
+		var slot_diagnostics: Dictionary = {}
+		var diagnostic_slots: Array = diagnostics.get("slots", [])
+		if slot_index < diagnostic_slots.size() and diagnostic_slots[slot_index] is Dictionary:
+			slot_diagnostics = diagnostic_slots[slot_index]
 		slot.bind_slot(
 			slot_index,
 			die,
@@ -92,7 +98,9 @@ func bind_lane(
 				int(effective_die_values.get(die.id, die.value))
 				if die != null
 				else -1
-			)
+			),
+			slot_diagnostics,
+			die != null and die.id in locked_die_ids
 		)
 		slot.slot_activated.connect(
 			func(index: int) -> void:
@@ -111,6 +119,11 @@ func bind_lane(
 				die_drop_to_slot_requested.emit(id, table_id, index)
 		)
 	set_evaluation_state(p_evaluation_state)
+	if not diagnostics.is_empty():
+		set_meta("diagnostics", diagnostics.duplicate(true))
+		var failure_reason := String(diagnostics.get("failure_reason", ""))
+		if not failure_reason.is_empty():
+			tooltip_text += "\n诊断：%s" % failure_reason
 
 func set_legal_target(value: bool) -> void:
 	self_modulate = Color(0.68, 1.0, 0.96, 1.0) if value else Color.WHITE
