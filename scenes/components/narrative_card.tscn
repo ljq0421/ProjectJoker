@@ -4,10 +4,10 @@
 [ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="CardStyle"]
-content_margin_left = 48.0
-content_margin_top = 40.0
-content_margin_right = 48.0
-content_margin_bottom = 40.0
+content_margin_left = 40.0
+content_margin_top = 32.0
+content_margin_right = 40.0
+content_margin_bottom = 32.0
 bg_color = Color(0.025, 0.032, 0.105, 0.99)
 border_width_left = 2
 border_width_top = 2
@@ -58,13 +58,13 @@ layout_mode = 2
 
 [node name="NarrativeCard" type="PanelContainer" parent="SafeArea/Center"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1040, 620)
+custom_minimum_size = Vector2(1040, 600)
 layout_mode = 2
 theme_override_styles/panel = SubResource("CardStyle")
 
 [node name="Content" type="VBoxContainer" parent="SafeArea/Center/NarrativeCard"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="NarrativeKindLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
 unique_name_in_owner = true
@@ -98,7 +98,7 @@ color = Color(0.85, 0.705, 0.37, 0.7)
 
 [node name="NarrativeBody" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 size_flags_vertical = 3
 text = ""
@@ -110,19 +110,20 @@ theme_override_font_sizes/font_size = 25
 [node name="ModifierCandidates" type="RichTextLabel" parent="SafeArea/Center/NarrativeCard/Content"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 142)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 mouse_filter = 2
 bbcode_enabled = true
-fit_content = true
+fit_content = false
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 21
-theme_override_font_sizes/bold_font_size = 22
+theme_override_constants/line_separation = 4
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 19
 text = "[center][b][color=#f5c94d]★ 已锁定项[/color][/b][/center]"
 
 [node name="NarrativeContextLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = ""
 horizontal_alignment = 1
@@ -132,7 +133,7 @@ theme_override_font_sizes/font_size = 20
 
 [node name="NarrativeRuleLabel" type="Label" parent="SafeArea/Center/NarrativeCard/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = ""
 autowrap_mode = 2
@@ -148,12 +149,12 @@ theme_override_constants/separation = 16
 
 [node name="NarrativeExitButton" type="Button" parent="SafeArea/Center/NarrativeCard/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 56)
+custom_minimum_size = Vector2(260, 52)
 layout_mode = 2
 text = "保存并返回入口"
 
 [node name="NarrativeContinueButton" type="Button" parent="SafeArea/Center/NarrativeCard/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 56)
+custom_minimum_size = Vector2(300, 52)
 layout_mode = 2
 text = "进入区域"

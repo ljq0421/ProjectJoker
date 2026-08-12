@@ -350,6 +350,12 @@ layout_mode = 2
 text = "试玩：骰子优先原型"
 tooltip_text = "独立于三区远征：选择骰子重投，让未拆散的组合升级并触发破局"
 
+[node name="EngineSliceButton" type="Button" parent="SafeArea/Content/PracticeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "试玩：金线引擎切片"
+tooltip_text = "独立存档：用常驻手法处理骰子，再在破绽、护契与引擎之间做取舍"
+
 [node name="PracticeButton" type="Button" parent="SafeArea/Content/PracticeRow"]
 unique_name_in_owner = true
 layout_mode = 2

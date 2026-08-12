@@ -1,0 +1,654 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/engine_slice_screen.gd" id="1_script"]
+[ext_resource type="Theme" path="res://resources/themes/neon_dream_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/components/settings_layer.tscn" id="3_settings"]
+
+[node name="EngineSliceScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.018, 0.085, 1)
+mouse_filter = 2
+
+[node name="GoldRail" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 88.0
+offset_bottom = 92.0
+grow_horizontal = 2
+color = Color(0.95, 0.75, 0.24, 0.55)
+mouse_filter = 2
+
+[node name="SettingsLayer" parent="." instance=ExtResource("3_settings")]
+unique_name_in_owner = true
+show_rule_entry = false
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 20.0
+offset_right = -28.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Root" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/Root"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="SafeArea/Root/Header"]
+layout_mode = 2
+text = "金线引擎切片"
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="PhaseLabel" type="Label" parent="SafeArea/Root/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "独立试玩 · 不影响正式远征"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="HealthLabel" type="Label" parent="SafeArea/Root/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "生命 40 / 40"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.47, 0.57, 1)
+
+[node name="IntelLabel" type="Label" parent="SafeArea/Root/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "情报 2"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+
+[node name="GlossaryButton" type="Button" parent="SafeArea/Root/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 48)
+layout_mode = 2
+text = "术语"
+tooltip_text = "展开本切片的战斗术语说明"
+
+[node name="HomeButton" type="Button" parent="SafeArea/Root/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 48)
+layout_mode = 2
+text = "返回梦层入口"
+
+[node name="SettingsClearance" type="Control" parent="SafeArea/Root/Header"]
+custom_minimum_size = Vector2(92, 1)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="SetupPanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/SetupPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="Eyebrow" type="Label" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+text = "ENGINE CONTRACT / PARALLEL PLAYTEST"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+
+[node name="Heading" type="Label" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+text = "让六颗骰子驱动一台会反击的引擎"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 38
+
+[node name="Description" type="Label" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+text = "常驻手法处理骰子，破绽台造成伤害，护契台抵挡庄家意图，引擎台为下一轮增加骰子。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.84, 0.94, 1)
+
+[node name="BuildRow" type="HBoxContainer" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="DiceControlButton" type="Button" parent="SafeArea/Root/SetupPanel/Content/BuildRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(480, 110)
+layout_mode = 2
+text = "骰值控制\n改值后返回骰盘，稳定满足规则"
+
+[node name="TableChainButton" type="Button" parent="SafeArea/Root/SetupPanel/Content/BuildRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(480, 110)
+layout_mode = 2
+text = "规则台连锁\n消耗骰子制造倍率、复写与蓄能"
+
+[node name="SeedRow" type="HBoxContainer" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="SeedLabel" type="Label" parent="SafeArea/Root/SetupPanel/Content/SeedRow"]
+layout_mode = 2
+text = "复盘种子"
+vertical_alignment = 1
+
+[node name="SeedInput" type="LineEdit" parent="SafeArea/Root/SetupPanel/Content/SeedRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 50)
+layout_mode = 2
+text = "731031"
+placeholder_text = "输入正整数"
+
+[node name="SetupActions" type="HBoxContainer" parent="SafeArea/Root/SetupPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="ContinueButton" type="Button" parent="SafeArea/Root/SetupPanel/Content/SetupActions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "继续引擎切片"
+
+[node name="DiscardButton" type="Button" parent="SafeArea/Root/SetupPanel/Content/SetupActions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+text = "清除切片记录"
+
+[node name="StartButton" type="Button" parent="SafeArea/Root/SetupPanel/Content/SetupActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "签署并开始"
+
+[node name="RoutePanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/RoutePanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="RouteTitle" type="Label" parent="SafeArea/Root/RoutePanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "选择下一份公开契据"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 36
+
+[node name="RouteHint" type="Label" parent="SafeArea/Root/RoutePanel/Content"]
+layout_mode = 2
+text = "双方路线仅代表本次随机摆位。生命会跨房间继承。"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.82, 0.93, 1)
+
+[node name="RouteButtons" type="HBoxContainer" parent="SafeArea/Root/RoutePanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="BattlePanel" type="VBoxContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="EnemyPanel" type="PanelContainer" parent="SafeArea/Root/BattlePanel"]
+custom_minimum_size = Vector2(0, 205)
+layout_mode = 2
+
+[node name="EnemyRow" type="HBoxContainer" parent="SafeArea/Root/BattlePanel/EnemyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="EnemyPortrait" type="TextureRect" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 175)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EnemyCopy" type="VBoxContainer" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EnemyName" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/EnemyCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "铁算盘"
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 31
+
+[node name="EnemySubtitle" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/EnemyCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "金线回廊庄家"
+theme_override_colors/font_color = Color(0.66, 0.78, 0.9, 1)
+
+[node name="EnemyHealth" type="ProgressBar" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/EnemyCopy"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="EnemyHealthLabel" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/EnemyCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "总账 100 / 100"
+
+[node name="IntentPanel" type="PanelContainer" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+
+[node name="IntentCopy" type="VBoxContainer" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/IntentPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="IntentEyebrow" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/IntentPanel/IntentCopy"]
+layout_mode = 2
+text = "公开意图 / NEXT ACTION"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.47, 0.57, 1)
+
+[node name="IntentTitle" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/IntentPanel/IntentCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "征税 · 9伤害"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+
+[node name="IntentDescription" type="Label" parent="SafeArea/Root/BattlePanel/EnemyPanel/EnemyRow/IntentPanel/IntentCopy"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "引擎未通过时再 +3。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.82, 0.92, 1)
+
+[node name="LaneRow" type="HBoxContainer" parent="SafeArea/Root/BattlePanel"]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="AttackLane" type="PanelContainer" parent="SafeArea/Root/BattlePanel/LaneRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/AttackLane"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/AttackLane/Content"]
+layout_mode = 2
+text = "破绽台 / ATTACK"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.47, 0.57, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="AttackRuleLabel" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/AttackLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "精确为 7 · 系数 ×2"
+horizontal_alignment = 1
+
+[node name="AttackSlots" type="HBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/AttackLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="GuardLane" type="PanelContainer" parent="SafeArea/Root/BattlePanel/LaneRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/GuardLane"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/GuardLane/Content"]
+layout_mode = 2
+text = "护契台 / GUARD"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="GuardRuleLabel" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/GuardLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "同奇偶 · 系数 ×2"
+horizontal_alignment = 1
+
+[node name="GuardSlots" type="HBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/GuardLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="EngineLane" type="PanelContainer" parent="SafeArea/Root/BattlePanel/LaneRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/EngineLane"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/EngineLane/Content"]
+layout_mode = 2
+text = "引擎台 / ENGINE"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.76, 0.46, 0.95, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="EngineRuleLabel" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/EngineLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "高点蓄能 ≥4"
+horizontal_alignment = 1
+
+[node name="EngineChargeLabel" type="Label" parent="SafeArea/Root/BattlePanel/LaneRow/EngineLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "充能 0/3 · 满3爆破15"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.92, 0.76, 1, 1)
+
+[node name="EngineSlots" type="HBoxContainer" parent="SafeArea/Root/BattlePanel/LaneRow/EngineLane/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="PreviewLabel" type="Label" parent="SafeArea/Root/BattlePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "预览：破绽 0 · 护契 0 · 承受 7 · 引擎未通过"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+
+[node name="DiceRow" type="HBoxContainer" parent="SafeArea/Root/BattlePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="TechniqueRow" type="HBoxContainer" parent="SafeArea/Root/BattlePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="TacticRow" type="HBoxContainer" parent="SafeArea/Root/BattlePanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="ActionBar" type="HBoxContainer" parent="SafeArea/Root/BattlePanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ErrorLabel" type="Label" parent="SafeArea/Root/BattlePanel/ActionBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "先选择一张手法或一颗骰子。"
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.84, 0.94, 1)
+
+[node name="UndoButton" type="Button" parent="SafeArea/Root/BattlePanel/ActionBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 2
+text = "撤销"
+
+[node name="CommitButton" type="Button" parent="SafeArea/Root/BattlePanel/ActionBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "执行本轮"
+
+[node name="NextTurnButton" type="Button" parent="SafeArea/Root/BattlePanel/ActionBar"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "进入下一轮"
+
+[node name="RewardPanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/RewardPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="SafeArea/Root/RewardPanel/Content"]
+layout_mode = 2
+text = "把一次胜利变成下一轮的新动作"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 34
+
+[node name="RewardButtons" type="HBoxContainer" parent="SafeArea/Root/RewardPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="RewardChoiceRow" type="HBoxContainer" parent="SafeArea/Root/RewardPanel/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="RewardReplaceOption" type="OptionButton" parent="SafeArea/Root/RewardPanel/Content/RewardChoiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 50)
+layout_mode = 2
+
+[node name="RewardAButton" type="Button" parent="SafeArea/Root/RewardPanel/Content/RewardChoiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 50)
+layout_mode = 2
+text = "选择升级 A"
+
+[node name="RewardBButton" type="Button" parent="SafeArea/Root/RewardPanel/Content/RewardChoiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 50)
+layout_mode = 2
+text = "选择升级 B"
+
+[node name="RewardConfirmButton" type="Button" parent="SafeArea/Root/RewardPanel/Content/RewardChoiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 50)
+layout_mode = 2
+text = "确认替换"
+
+[node name="ShopPanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/ShopPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SafeArea/Root/ShopPanel/Content"]
+layout_mode = 2
+text = "金线休整站"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 36
+
+[node name="ShopStatus" type="Label" parent="SafeArea/Root/ShopPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "把情报换成能活到庄家面前的选择。"
+horizontal_alignment = 1
+
+[node name="ServiceRow" type="HBoxContainer" parent="SafeArea/Root/ShopPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="HealButton" type="Button" parent="SafeArea/Root/ShopPanel/Content/ServiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 66)
+layout_mode = 2
+text = "恢复 10 生命\n2 情报"
+
+[node name="BuyTacticButton" type="Button" parent="SafeArea/Root/ShopPanel/Content/ServiceRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 66)
+layout_mode = 2
+text = "购买新战术\n2 情报"
+
+[node name="UpgradeRow" type="HBoxContainer" parent="SafeArea/Root/ShopPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="UpgradeOption" type="OptionButton" parent="SafeArea/Root/ShopPanel/Content/UpgradeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+
+[node name="ShopUpgradeAButton" type="Button" parent="SafeArea/Root/ShopPanel/Content/UpgradeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "升级 A · 3情报"
+
+[node name="ShopUpgradeBButton" type="Button" parent="SafeArea/Root/ShopPanel/Content/UpgradeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "升级 B · 3情报"
+
+[node name="RemoveRow" type="HBoxContainer" parent="SafeArea/Root/ShopPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="RemoveOption" type="OptionButton" parent="SafeArea/Root/ShopPanel/Content/RemoveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+
+[node name="RemoveButton" type="Button" parent="SafeArea/Root/ShopPanel/Content/RemoveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "移除战术 · 1情报"
+
+[node name="LeaveShopButton" type="Button" parent="SafeArea/Root/ShopPanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "离开休整站，进入第二组路线"
+
+[node name="ResultPanel" type="PanelContainer" parent="SafeArea/Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Root/ResultPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="ResultTitle" type="Label" parent="SafeArea/Root/ResultPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "契据完成"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.98, 0.82, 0.36, 1)
+theme_override_font_sizes/font_size = 44
+
+[node name="ResultDescription" type="Label" parent="SafeArea/Root/ResultPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "铁算盘的总账已经清零。"
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="BuildSummary" type="Label" parent="SafeArea/Root/ResultPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.96, 0.9, 1)
+
+[node name="ResultActions" type="HBoxContainer" parent="SafeArea/Root/ResultPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="RestartButton" type="Button" parent="SafeArea/Root/ResultPanel/Content/ResultActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "同种子重新开始"
+
+[node name="NewRunButton" type="Button" parent="SafeArea/Root/ResultPanel/Content/ResultActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 56)
+layout_mode = 2
+text = "返回构筑选择"
